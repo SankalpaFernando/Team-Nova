@@ -1,0 +1,82 @@
+.register-page{
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+background:#e6f2ec;
+}
+
+.register-options{
+display:flex;
+gap:30px;
+margin-top:30px;
+}
+
+.register-btn{
+padding:15px 30px;
+font-size:16px;
+background:#2f5d50;
+color:white;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
+.register-btn:hover{
+background:#25483e;
+}
+
+.back-btn{
+margin-top:40px;
+padding:10px 25px;
+background:#d7e7dc;
+color:#1f4d3a;
+border:none;
+border-radius:20px;
+cursor:pointer.register-page{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#e7f1ec;
+}
+
+.register-box{
+background:white;
+padding:40px;
+border-radius:10px;
+width:350px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.register-box h2{
+text-align:center;
+margin-bottom:20px;
+color:#2f5d50;
+}
+
+.register-box input,
+.register-box select{
+width:100%;
+padding:10px;
+margin:10px 0;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+.register-box button{
+width:100%;
+padding:12px;
+background:#2f5d50;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.register-box button:hover{
+background:#23463c;
+};
+}
