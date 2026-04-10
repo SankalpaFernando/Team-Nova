@@ -6,7 +6,8 @@ import Contact from "./pages/Contact";
 import Sites from "./pages/Sites";
 import Register from "./pages/Register";
 import UserDashboard from "./pages/UserDashboard";
-
+import Alerts from "./pages/Alerts"; 
+import Profile from "./pages/Profile";
 
 
 function App() {
@@ -17,8 +18,10 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/sites" element={<Sites />} />
         <Route path="/about" element={<About />} />
+        <Route path="alerts" element={<Alerts />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/dashboard" element={<UserDashboard />} />
         
       </Routes>

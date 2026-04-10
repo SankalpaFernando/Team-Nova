@@ -1,4 +1,5 @@
 import "./UserDashboard.css";
+import { Link } from "react-router-dom";
 
 function UserDashboard() {
   return (
@@ -9,12 +10,12 @@ function UserDashboard() {
         <div className="logo">🌿 MangroveGuard</div>
 
         <div className="nav-links">
-          <span>Dashboard</span>
-          <span>Maps</span>
-          <span>Alerts</span>
-          <span>About</span>
-          <span>Contact</span>
-          <span>Profile</span>
+          <Link to="/dashboard">Dashboard</Link>
+          <Link to="/sites">Sites</Link>
+          <Link to="/alerts">Alerts</Link>
+          <Link to="/about">About</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/profile">Profile</Link>
         </div>
       </div>
 
