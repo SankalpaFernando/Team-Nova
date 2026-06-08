@@ -22,7 +22,8 @@ const deviceSchema = new mongoose.Schema({
     ref: 'Site',
     required: [true, 'Site is required']
   },
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+  lastSeen: { type: Date, default: null }
+},{ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
 module.exports = mongoose.model('Device', deviceSchema);
