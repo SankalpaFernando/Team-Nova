@@ -4,9 +4,10 @@ const { createReading, getReadings, getLatestReadings, getStats } = require('../
 const { protect } = require('../middleware/auth');
  
 router.use(protect);
- 
-router.route('/').get(getReadings).post(createReading);
 router.get('/latest', getLatestReadings);
 router.get('/stats', getStats);
+ 
+router.route('/').get(getReadings).post(createReading);
+
  
 module.exports = router;
