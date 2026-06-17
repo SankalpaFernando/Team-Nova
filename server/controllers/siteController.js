@@ -87,3 +87,16 @@ exports.deleteSite = async (req, res, next) => {
     next(error);
   }
 };
+exports.updateThresholds = async (req, res, next) => {
+  try {
+    const device = await Device.findByIdAndUpdate(
+      req.params.id,
+      { thresholds: req.body },
+      { new: true, runValidators: true }
+    );
+    if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
+    res.status(200).json({ success: true, data: device });
+  } catch (error) {
+    next(error);
+  }
+};
