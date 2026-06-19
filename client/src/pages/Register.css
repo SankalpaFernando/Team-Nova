@@ -1,82 +1,62 @@
-.register-page{
-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-background:#e6f2ec;
+.register-page {
+  height: 100vh;
 }
 
-.register-options{
-display:flex;
-gap:30px;
-margin-top:30px;
+/* reuse same hero style */
+.hero {
+  height: 90vh;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;   /* center box */
+  align-items: center;
 }
 
-.register-btn{
-padding:15px 30px;
-font-size:16px;
-background:#2f5d50;
-color:white;
-border:none;
-border-radius:10px;
-cursor:pointer;
+/* Register box (same style as login-box) */
+.register-box {
+  width: 320px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 25px;
+  border-radius: 15px;
 }
 
-.register-btn:hover{
-background:#25483e;
+.register-box h2 {
+  margin-bottom: 20px;
+  color: #1f4d3a;
+  text-align: center;
 }
 
-.back-btn{
-margin-top:40px;
-padding:10px 25px;
-background:#d7e7dc;
-color:#1f4d3a;
-border:none;
-border-radius:20px;
-cursor:pointer.register-page{
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-background:#e7f1ec;
+.register-box label {
+  font-size: 16px;
 }
 
-.register-box{
-background:white;
-padding:40px;
-border-radius:10px;
-width:350px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
+.register-box input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
-.register-box h2{
-text-align:center;
-margin-bottom:20px;
-color:#2f5d50;
+/* button same as login */
+.register-btn {
+  width: 100%;
+  padding: 10px;
+  background: #2f5d50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-.register-box input,
-.register-box select{
-width:100%;
-padding:10px;
-margin:10px 0;
-border-radius:6px;
-border:1px solid #ccc;
+.register-btn:hover {
+  background: #25483e;
 }
 
-.register-box button{
-width:100%;
-padding:12px;
-background:#2f5d50;
-color:white;
-border:none;
-border-radius:6px;
-cursor:pointer;
-margin-top:10px;
-}
-
-.register-box button:hover{
-background:#23463c;
-};
+/* error text */
+.error {
+  color: red;
+  font-size: 12px;
+  margin-bottom: 10px;
+  display: block;
 }
