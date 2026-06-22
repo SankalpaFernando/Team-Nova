@@ -1,5 +1,6 @@
 import "./UserDashboard.css";
 import { Link } from "react-router-dom";
+import mangrove from "../assests/mangrove.png";
 
 function UserDashboard() {
   return (
@@ -19,35 +20,74 @@ function UserDashboard() {
         </div>
       </div>
 
-      {/* Title */}
-      <h2 className="dashboard-title">Mangrove Monitoring Dashboard</h2>
+      {/* Background Image */}
+      <div
+        className="dashboard-hero"
+        style={{ backgroundImage: `url(${mangrove})` }}
+      >
 
-      {/* First Row */}
-      <div className="card-row">
-        <div className="card">Water Level</div>
-        <div className="card">Temperature</div>
-        <div className="card">Salinity</div>
-      </div>
+        {/* Title */}
+        <h2 className="dashboard-title">
+          Mangrove Monitoring Dashboard
+        </h2>
 
-      {/* Second Row */}
-      <div className="card-row">
-        <div className="card">Battery Status</div>
-        <div className="card">Active Devices</div>
-        <div className="card">Alerts</div>
-      </div>
+        {/* First Row */}
+        <div className="card-row">
 
-      {/* Graph Section */}
-      <div className="graph-box">
-        Sensor Data Graph  
-        <br/>
-        (Temperature / Salinity)
-      </div>
+          <div className="card">
+            <h3>Water Level</h3>
+          </div>
 
-      {/* Alerts */}
-      <div className="alerts-box">
-        <h3>Recent Alerts</h3>
-        <p>- High salinity detected</p>
-        <p>- Water level rising</p>
+          <div className="card">
+            <h3>Temperature</h3>
+          </div>
+
+          <div className="card">
+            <h3>Salinity</h3>
+          </div>
+
+        </div>
+
+        {/* Second Row */}
+        <div className="card-row">
+
+          <div className="card">
+            <h3>Battery Status</h3>
+          </div>
+
+          <div className="card">
+            <h3>Active Devices</h3>
+          </div>
+
+          <div className="card">
+            <h3>Alerts</h3>
+          </div>
+
+        </div>
+
+        {/* Graph */}
+
+        <div className="graph-box">
+
+          <h3>Sensor Data Graph</h3>
+
+          <div className="graph-placeholder">
+            Temperature / Salinity
+          </div>
+
+        </div>
+
+        {/* Alerts */}
+
+        <div className="alerts-box">
+
+          <h3>Recent Alerts</h3>
+
+          <p>• High salinity detected</p>
+          <p>• Water level rising</p>
+
+        </div>
+
       </div>
 
     </div>

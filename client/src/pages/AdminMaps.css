@@ -1,58 +1,124 @@
+/* Reset */
+
 body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#f4f8f4;
+    margin:0;
+    font-family:Arial, sans-serif;
 }
 
+/* Background */
+
+.admin-maps-page{
+    min-height:100vh;
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+}
+
+/* Overlay */
+
+.admin-maps-overlay{
+    min-height:100vh;
+    background:rgba(0,0,0,0.35);
+    padding-bottom:40px;
+}
+
+/* Navbar */
+
 .admin-navbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:#1f4d3a;
-  padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#1f4d3a;
+    padding:15px 30px;
 }
 
 .logo{
-  color:white;
-  font-size:22px;
-  font-weight:bold;
+    color:white;
+    font-size:22px;
+    font-weight:bold;
 }
 
 .nav-links{
-  display:flex;
-  gap:25px;
+    display:flex;
+    gap:25px;
 }
 
 .nav-links a{
-  color:white;
-  text-decoration:none;
+    color:white;
+    text-decoration:none;
+    font-weight:500;
+    transition:0.3s;
 }
+
+.nav-links a:hover{
+    color:#b7ff7a;
+}
+
+/* Title */
 
 .title{
-  text-align:center;
-  margin-top:30px;
-  color:#1f4d3a;
+    text-align:center;
+    margin:30px 0;
+    color:white;
+    font-size:40px;
+    text-shadow:2px 2px 8px rgba(0,0,0,0.7);
 }
+
+/* Sites Grid */
 
 .sites-grid{
-  width:90%;
-  margin:30px auto;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:25px;
+    width:90%;
+    margin:30px auto;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:25px;
 }
 
+/* Site Cards */
+
 .site-card{
-  background:white;
-  padding:25px;
-  border-radius:12px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.1);
+    background:rgba(255,255,255,0.9);
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.2);
+    transition:0.3s;
+}
+
+.site-card:hover{
+    transform:translateY(-6px);
 }
 
 .site-card h3{
-  color:#1f4d3a;
+    color:#1f4d3a;
+    margin-bottom:15px;
 }
 
 .site-card p{
-  margin:10px 0;
+    margin:10px 0;
+    color:#333;
+}
+
+/* Responsive */
+
+@media(max-width:768px){
+
+    .admin-navbar{
+        flex-direction:column;
+        gap:15px;
+    }
+
+    .nav-links{
+        flex-wrap:wrap;
+        justify-content:center;
+    }
+
+    .title{
+        font-size:30px;
+    }
+
+    .sites-grid{
+        grid-template-columns:1fr;
+        width:95%;
+    }
+
 }
