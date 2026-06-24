@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createReading, getReadings, getLatestReadings, getStats } = require('../controllers/readingController');
+const { createReading, getReadings, getLatestReadings, getStats } = require('../controllers/sensorreadingController');
 const { protect } = require('../middleware/auth');
  
 router.use(protect);
