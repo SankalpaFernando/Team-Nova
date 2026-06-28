@@ -10,11 +10,14 @@ function Navbar() {
       <ul className="nav-links">
         <li><Link to="/">Home</Link></li>
 
-        <li><Link to="/sites">Sites</Link></li>
+        
 
-        <li><Link to="/about">About Us</Link></li>
+        <Link to="/visitor-sites">Sites</Link>
+         
+         <li><Link to="/visitor-about">About</Link></li>
 
-        <li><Link to="/contact">Contact Us</Link></li>
+        
+         <li><Link to="/visitor-contactus">Contact</Link></li>
       </ul>
 
       <Link to="/register">
