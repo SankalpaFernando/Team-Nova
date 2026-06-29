@@ -27,7 +27,7 @@ exports.getSite = async (req, res, next) => {
         }
     
     const devices = await Device.find({ site: req.params.id })
-      .select('device_id status installation_date thresholds lastSeen');
+      .select('device_id status installation_date lastSeen');
     
     res.status(200).json({ success: true, 
         data: {site, devices }
@@ -89,13 +89,13 @@ exports.deleteSite = async (req, res, next) => {
 };
 exports.updateThresholds = async (req, res, next) => {
   try {
-    const device = await Device.findByIdAndUpdate(
+    const site = await Site.findByIdAndUpdate(
       req.params.id,
       { thresholds: req.body },
       { new: true, runValidators: true }
     );
-    if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
-    res.status(200).json({ success: true, data: device });
+    if (!site) return res.status(404).json({ success: false, message: 'Site not found' });
+    res.status(200).json({ success: true, data: site });
   } catch (error) {
     next(error);
   }
