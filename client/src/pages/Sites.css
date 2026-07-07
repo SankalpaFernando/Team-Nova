@@ -72,6 +72,17 @@
     flex-wrap:wrap;
 }
 
+/* Clickable Link */
+
+.site-link{
+    text-decoration:none;
+    color:inherit;
+}
+
+.site-link:hover{
+    text-decoration:none;
+}
+
 .site-card{
     width:300px;
     background:rgba(255,255,255,0.9);
@@ -79,10 +90,12 @@
     border-radius:15px;
     box-shadow:0 8px 20px rgba(0,0,0,0.2);
     transition:0.3s;
+    cursor:pointer;
 }
 
 .site-card:hover{
     transform:translateY(-6px);
+    box-shadow:0 12px 25px rgba(0,0,0,0.3);
 }
 
 .site-card h3{

@@ -30,44 +30,66 @@ function Alerts() {
           Alerts & Notifications
         </h2>
 
-        {/* Alert Cards */}
-        <div className="alerts-cards">
+        {/* Alerts Table */}
 
-          <div className="alert-card high">
-            <h3>High Salinity</h3>
-            <p>Salinity levels have exceeded safe limits.</p>
-            <span className="time">5 mins ago</span>
-          </div>
+        <div className="alerts-table-container">
 
-          <div className="alert-card warning">
-            <h3>Water Level Rising</h3>
-            <p>Water level increasing rapidly in Site A.</p>
-            <span className="time">15 mins ago</span>
-          </div>
+          <table className="alerts-table">
 
-          <div className="alert-card normal">
-            <h3>Temperature Stable</h3>
-            <p>Temperature is within normal range.</p>
-            <span className="time">30 mins ago</span>
-          </div>
+            <thead>
 
-        </div>
+              <tr>
+                <th>Site Name</th>
+                <th>Problem</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+              </tr>
 
-        {/* Recent Alerts */}
-        <div className="alerts-list">
+            </thead>
 
-          <h3>Recent Alerts</h3>
+            <tbody>
 
-          <ul>
-            <li>🚨 High salinity detected at Site B</li>
-            <li>⚠️ Water level rising at Site A</li>
-            <li>✅ All sensors active</li>
-            <li>🔋 Battery low in Device #3</li>
-          </ul>
+              <tr>
+                <td>Site A</td>
+                <td>High Salinity</td>
+                <td>12/03/2026</td>
+                <td>10:30 AM</td>
+                <td><span className="pending">Pending</span></td>
+              </tr>
+
+              <tr>
+                <td>Site B</td>
+                <td>Water Level Rising</td>
+                <td>12/03/2026</td>
+                <td>09:45 AM</td>
+                <td><span className="resolved">Resolved</span></td>
+              </tr>
+
+              <tr>
+                <td>Site C</td>
+                <td>Low Battery</td>
+                <td>11/03/2026</td>
+                <td>08:10 PM</td>
+                <td><span className="pending">Pending</span></td>
+              </tr>
+
+              <tr>
+                <td>Site D</td>
+                <td>Sensor Offline</td>
+                <td>11/03/2026</td>
+                <td>03:15 PM</td>
+                <td><span className="resolved">Resolved</span></td>
+              </tr>
+
+            </tbody>
+
+          </table>
 
         </div>
 
       </div>
+
     </div>
   );
 }
