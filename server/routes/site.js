@@ -15,7 +15,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect);
 
-router.route('/device/:id/thresholds')
+router.route('/:id/thresholds')
   .put(authorize('admin'), updateThresholds); // only admin can update
 
 router.route('/')
