@@ -1,119 +1,483 @@
-/* Page Background */
+/* ==========================================================
+   GLOBAL
+========================================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f4f6f8;
+}
+
+/* ==========================================================
+   BACKGROUND
+========================================================== */
 
 .profile-page{
     min-height:100vh;
     background-size:cover;
     background-position:center;
     background-repeat:no-repeat;
-    font-family:Arial, sans-serif;
 }
-
-/* Overlay */
 
 .profile-overlay{
     min-height:100vh;
-    background:rgba(0,0,0,0.35);
-    padding:40px 20px;
+    background:rgba(0,0,0,.45);
+    padding-bottom:50px;
 }
 
-/* Title */
+/* ==========================================================
+   NAVBAR
+========================================================== */
 
-.profile-title{
-    text-align:center;
-    color:white;
-    font-size:40px;
-    margin-bottom:35px;
-    text-shadow:2px 2px 8px rgba(0,0,0,0.7);
-}
+.dashboard-navbar{
 
-/* Profile Card */
-
-.profile-card{
-    width:60%;
-    margin:0 auto 30px;
-    background:rgba(255,255,255,0.9);
-    padding:25px;
-    border-radius:15px;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    box-shadow:0 8px 20px rgba(0,0,0,0.2);
-    transition:0.3s;
+
+    background:#1f4d3a;
+
+    padding:18px 40px;
+
 }
 
-.profile-card:hover{
-    transform:translateY(-5px);
+.logo{
+
+    color:#fff;
+
+    font-size:24px;
+
+    font-weight:bold;
+
 }
 
-.profile-info h3{
-    color:#1f4d3a;
-    margin-bottom:10px;
+.nav-links{
+
+    display:flex;
+
+    gap:30px;
+
 }
 
-.profile-info p{
-    margin:6px 0;
-    color:#333;
-}
+.nav-links a{
 
-/* Button */
+    text-decoration:none;
 
-.edit-btn{
-    padding:12px 22px;
-    background:#2f5d50;
     color:white;
-    border:none;
-    border-radius:6px;
+
+    font-weight:500;
+
+    transition:.3s;
+
+}
+
+.nav-links a:hover{
+
+    color:#b7ff7a;
+
+}
+
+/* ==========================================================
+   PAGE HEADER
+========================================================== */
+
+.profile-header{
+
+    text-align:center;
+
+    padding:35px 20px;
+
+}
+
+.profile-header h1{
+
+    color:white;
+
+    font-size:42px;
+
+    letter-spacing:1px;
+
+    text-shadow:2px 2px 8px rgba(0,0,0,.6);
+
+}
+
+/* ==========================================================
+   MAIN PROFILE SECTION
+========================================================== */
+
+.profile-container{
+
+    width:90%;
+
+    max-width:1200px;
+
+    margin:auto;
+
+    display:flex;
+
+    gap:35px;
+
+    align-items:flex-start;
+
+}
+
+/* ==========================================================
+   PROFILE CARD
+========================================================== */
+
+.profile-card{
+
+    width:360px;
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:30px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.25);
+
+}
+
+/* ==========================================================
+   PROFILE IMAGE
+========================================================== */
+
+.profile-image{
+
+    width:160px;
+    height:160px;
+
+    margin:0 auto 20px;
+
+    border-radius:50%;
+
+    overflow:hidden;
+
+    border:4px solid #1f4d3a;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:#f5f5f5;
+
+}
+
+.profile-image img{
+
+    width:100%;
+    height:100%;
+    object-fit:cover;
+
+}
+
+.default-avatar{
+
+    font-size:80px;
+
+}
+
+/* ==========================================================
+   IMAGE UPLOAD BUTTON
+========================================================== */
+
+.upload-btn{
+
+    display:block;
+
+    width:170px;
+
+    margin:15px auto 25px;
+
+    text-align:center;
+
+    background:#1f4d3a;
+
+    color:white;
+
+    padding:10px;
+
+    border-radius:8px;
+
     cursor:pointer;
-    font-size:15px;
-    transition:0.3s;
+
+    font-weight:bold;
+
+    transition:.3s;
+
 }
 
-.edit-btn:hover{
-    background:#24463c;
+.upload-btn:hover{
+
+    background:#2d6a4f;
+
 }
 
-/* Details */
+.profile-card hr{
+
+    border:none;
+
+    border-top:1px solid #ddd;
+
+    margin:20px 0;
+
+}
+
+/* ==========================================================
+   PROFILE DETAILS
+========================================================== */
 
 .profile-details{
-    width:60%;
-    margin:auto;
-    background:rgba(255,255,255,0.9);
-    padding:25px;
+
+    width:100%;
+
+}
+
+.detail-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:15px 0;
+
+    border-bottom:1px solid #ececec;
+
+}
+
+.detail-row span{
+
+    color:#666;
+
+    font-size:15px;
+
+}
+
+.detail-row strong{
+
+    color:#222;
+
+    font-size:15px;
+
+}
+
+.active-status{
+
+    color:green;
+
+}
+
+/* ==========================================================
+   EDIT PROFILE CARD
+========================================================== */
+
+.edit-card{
+
+    flex:1;
+
+    background:white;
+
     border-radius:15px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.2);
+
+    padding:35px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.25);
+
 }
 
-.profile-details h3{
+.edit-card h2{
+
     color:#1f4d3a;
-    margin-bottom:15px;
+
+    margin-bottom:25px;
+
 }
 
-.profile-details p{
-    margin:10px 0;
+.edit-card label{
+
+    display:block;
+
+    margin-top:18px;
+
+    margin-bottom:8px;
+
     color:#333;
+
+    font-weight:bold;
+
 }
 
-/* Responsive */
+.edit-card input{
 
-@media(max-width:768px){
+    width:100%;
 
-    .profile-title{
-        font-size:30px;
+    padding:12px;
+
+    border:1px solid #ccc;
+
+    border-radius:6px;
+
+    font-size:15px;
+
+    transition:.3s;
+
+}
+
+.edit-card select{
+
+    width:100%;
+
+    padding:12px;
+
+    border:1px solid #ccc;
+
+    border-radius:6px;
+
+    font-size:15px;
+
+    transition:.3s;
+
+    background:white;
+
+}
+
+.edit-card select:focus{
+
+    outline:none;
+
+    border-color:#1f4d3a;
+
+    box-shadow:0 0 5px rgba(31,77,58,.3);
+
+}
+
+.edit-card input:focus{
+
+    outline:none;
+
+    border-color:#1f4d3a;
+
+    box-shadow:0 0 5px rgba(31,77,58,.3);
+
+}
+
+.edit-card button{
+
+    width:100%;
+
+    margin-top:30px;
+
+    padding:13px;
+
+    background:#1f4d3a;
+
+    color:white;
+
+    border:none;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+    transition:.3s;
+
+}
+
+.edit-card button:hover{
+
+    background:#2d6a4f;
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media(max-width:992px){
+
+    .profile-container{
+
+        flex-direction:column;
+
     }
 
     .profile-card{
-        width:95%;
-        flex-direction:column;
-        text-align:center;
-        gap:20px;
-    }
 
-    .profile-details{
-        width:95%;
-    }
-
-    .edit-btn{
         width:100%;
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    .dashboard-navbar{
+
+        flex-direction:column;
+
+        gap:15px;
+
+    }
+
+    .nav-links{
+
+        flex-wrap:wrap;
+
+        justify-content:center;
+
+    }
+
+    .profile-header h1{
+
+        font-size:34px;
+
+    }
+
+}
+
+@media(max-width:600px){
+
+    .profile-card{
+
+        padding:20px;
+
+    }
+
+    .edit-card{
+
+        padding:20px;
+
+    }
+
+    .profile-image{
+
+        width:130px;
+        height:130px;
+
+    }
+
+    .default-avatar{
+
+        font-size:60px;
+
+    }
+
+    .upload-btn{
+
+        width:150px;
+
+        font-size:14px;
+
     }
 
 }
