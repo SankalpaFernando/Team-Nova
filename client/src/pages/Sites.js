@@ -6,7 +6,7 @@ function Sites() {
   return (
     <div className="sites-page">
 
-      {/* Dashboard Navbar */}
+      {/* Navbar */}
       <div className="dashboard-navbar">
 
         <div className="logo">
@@ -38,12 +38,20 @@ function Sites() {
 
           <div className="sites-container">
 
-            <div className="site-card">
-              <h3>Site 1</h3>
-              <p><strong>Location:</strong> Negombo Lagoon</p>
-              <p><strong>Devices Installed:</strong> 3</p>
-              <p><strong>Status:</strong> Active</p>
-            </div>
+            {/* Clickable Negombo Card */}
+
+            <Link to="/negombo" className="site-link">
+
+              <div className="site-card">
+                <h3>Site 1</h3>
+                <p><strong>Location:</strong> Negombo Lagoon</p>
+                <p><strong>Devices Installed:</strong> 3</p>
+                <p><strong>Status:</strong> Active</p>
+              </div>
+
+            </Link>
+
+            {/* Site 2 */}
 
             <div className="site-card">
               <h3>Site 2</h3>
@@ -51,6 +59,8 @@ function Sites() {
               <p><strong>Devices Installed:</strong> 2</p>
               <p><strong>Status:</strong> Active</p>
             </div>
+
+            {/* Site 3 */}
 
             <div className="site-card">
               <h3>Site 3</h3>

@@ -17,6 +17,7 @@ import ManageDevices from "./pages/ManageDevices";
 import AdminAlerts from "./pages/AdminAlerts";
 import AdminMaps from "./pages/AdminMaps";
 import AdminProfile from "./pages/AdminProfile";
+import NegomboLagoon from "./pages/NegomboLagoon";
 
 function App() {
   return (
@@ -47,6 +48,8 @@ function App() {
         <Route path="/admin-alerts" element={<AdminAlerts />} />
         <Route path="/admin-maps" element={<AdminMaps />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
+        <Route path="/negombo"element={<NegomboLagoon/>}
+/>
 
       </Routes>
 
