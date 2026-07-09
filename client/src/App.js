@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 import Home from "./pages/home";
 import About from "./pages/About";
@@ -19,40 +20,86 @@ import AdminMaps from "./pages/AdminMaps";
 import AdminProfile from "./pages/AdminProfile";
 import NegomboLagoon from "./pages/NegomboLagoon";
 
+// Protected route — must be logged in
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/" replace />;
+
+  return children;
+};
+
+// Admin route — must be admin
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/" replace />;
+  if (user.role !== "admin") return <Navigate to="/dashboard" replace />;
+
+  return children;
+};
+
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
 
-        {/* Visitor Pages */}
+        {/* Public Pages — anyone can visit */}
         <Route path="/" element={<Home />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/visitor-about" element={<VisitorAbout />} />
         <Route path="/visitor-sites" element={<VisitorSites />} />
-       <Route path="/visitor-contactus" element={<VisitorContactus />} />
+        <Route path="/visitor-contactus" element={<VisitorContactus />} />
 
+        {/* User Pages — must be logged in */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute><UserDashboard /></ProtectedRoute>
+        } />
+        <Route path="/sites" element={
+          <ProtectedRoute><Sites /></ProtectedRoute>
+        } />
+        <Route path="/alerts" element={
+          <ProtectedRoute><Alerts /></ProtectedRoute>
+        } />
+        <Route path="/about" element={
+          <ProtectedRoute><About /></ProtectedRoute>
+        } />
+        <Route path="/contact" element={
+          <ProtectedRoute><Contact /></ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute><Profile /></ProtectedRoute>
+        } />
+        <Route path="/negombo" element={
+          <ProtectedRoute><NegomboLagoon /></ProtectedRoute>
+        } />
 
-        {/* User Pages */}
-        <Route path="/dashboard" element={<UserDashboard />} />
-        <Route path="/sites" element={<Sites />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/alerts" element={<Alerts />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/register" element={<Register />} />
+        {/* Admin Pages — must be admin */}
+        <Route path="/admin-dashboard" element={
+          <AdminRoute><AdminDashboard /></AdminRoute>
+        } />
+        <Route path="/manage-users" element={
+          <AdminRoute><ManageUsers /></AdminRoute>
+        } />
+        <Route path="/manage-devices" element={
+          <AdminRoute><ManageDevices /></AdminRoute>
+        } />
+        <Route path="/admin-alerts" element={
+          <AdminRoute><AdminAlerts /></AdminRoute>
+        } />
+        <Route path="/admin-maps" element={
+          <AdminRoute><AdminMaps /></AdminRoute>
+        } />
+        <Route path="/admin-profile" element={
+          <AdminRoute><AdminProfile /></AdminRoute>
+        } />
 
-        {/* Admin Pages */}
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/manage-users" element={<ManageUsers />} />
-        <Route path="/manage-devices" element={<ManageDevices />} />
-        <Route path="/admin-alerts" element={<AdminAlerts />} />
-        <Route path="/admin-maps" element={<AdminMaps />} />
-        <Route path="/admin-profile" element={<AdminProfile />} />
-        <Route path="/negombo"element={<NegomboLagoon/>}
-/>
+        {/* Catch all — redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
-
     </BrowserRouter>
   );
 }

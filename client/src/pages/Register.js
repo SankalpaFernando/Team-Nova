@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import mangrove from "../assests/mangrove.png";
 import "./Register.css";
@@ -12,6 +13,11 @@ function Register() {
   });
 
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({
@@ -44,34 +50,41 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setServerError("");
 
     const validationErrors = validate();
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
+      setLoading(true);
       try {
-        await axios.post("http://localhost:5000/api/register", form);
-        alert("Registration successful! Check your email.");
-      } catch (error) {
-        alert("Error registering user");
+        await register(form.name, form.email, form.password);
+        // Registered users always go to dashboard
+        navigate("/dashboard");
+      } catch (err) {
+        setServerError(err.response?.data?.message || "Registration failed. Please try again.");
+      } finally {
+        setLoading(false);
       }
     }
   };
 
   return (
     <div className="register-page">
-
       <Navbar />
 
       <div
         className="hero"
         style={{ backgroundImage: `url(${mangrove})` }}
       >
-
-        {/* Register Box (same as login-box style) */}
         <div className="register-box">
-
           <h2>User Register</h2>
+
+          {serverError && (
+            <p style={{ color: "red", fontSize: "14px", marginBottom: "10px" }}>
+              {serverError}
+            </p>
+          )}
 
           <form onSubmit={handleSubmit}>
 
@@ -105,14 +118,12 @@ function Register() {
             />
             <span className="error">{errors.password}</span>
 
-            <button type="submit" className="register-btn">
-              Register
+            <button type="submit" className="register-btn" disabled={loading}>
+              {loading ? "Registering..." : "Register"}
             </button>
 
           </form>
-
         </div>
-
       </div>
     </div>
   );
