@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Home from "./pages/home";
 import About from "./pages/About";
@@ -20,86 +21,58 @@ import AdminMaps from "./pages/AdminMaps";
 import AdminProfile from "./pages/AdminProfile";
 import NegomboLagoon from "./pages/NegomboLagoon";
 
-// Protected route — must be logged in
-const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/" replace />;
-
-  return children;
-};
-
-// Admin route — must be admin
-const AdminRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/" replace />;
-  if (user.role !== "admin") return <Navigate to="/dashboard" replace />;
-
-  return children;
-};
-
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <AuthProvider>
+        <Routes>
 
-        {/* Public Pages — anyone can visit */}
-        <Route path="/" element={<Home />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/visitor-about" element={<VisitorAbout />} />
-        <Route path="/visitor-sites" element={<VisitorSites />} />
-        <Route path="/visitor-contactus" element={<VisitorContactus />} />
+          {/* Visitor Pages */}
+          <Route path="/" element={<Home />} />
+          <Route path="/visitor-about" element={<VisitorAbout />} />
+          <Route path="/visitor-sites" element={<VisitorSites />} />
+          <Route path="/visitor-contactus" element={<VisitorContactus />} />
 
-        {/* User Pages — must be logged in */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute><UserDashboard /></ProtectedRoute>
-        } />
-        <Route path="/sites" element={
-          <ProtectedRoute><Sites /></ProtectedRoute>
-        } />
-        <Route path="/alerts" element={
-          <ProtectedRoute><Alerts /></ProtectedRoute>
-        } />
-        <Route path="/about" element={
-          <ProtectedRoute><About /></ProtectedRoute>
-        } />
-        <Route path="/contact" element={
-          <ProtectedRoute><Contact /></ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute><Profile /></ProtectedRoute>
-        } />
-        <Route path="/negombo" element={
-          <ProtectedRoute><NegomboLagoon /></ProtectedRoute>
-        } />
+          {/* User Pages (behind login) */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute><UserDashboard /></ProtectedRoute>
+          } />
+          <Route path="/sites" element={
+            <ProtectedRoute><Sites /></ProtectedRoute>
+          } />
+          <Route path="/about" element={<About />} />
+          <Route path="/alerts" element={
+            <ProtectedRoute><Alerts /></ProtectedRoute>
+          } />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/profile" element={
+            <ProtectedRoute><Profile /></ProtectedRoute>
+          } />
+          <Route path="/register" element={<Register />} />
 
-        {/* Admin Pages — must be admin */}
-        <Route path="/admin-dashboard" element={
-          <AdminRoute><AdminDashboard /></AdminRoute>
-        } />
-        <Route path="/manage-users" element={
-          <AdminRoute><ManageUsers /></AdminRoute>
-        } />
-        <Route path="/manage-devices" element={
-          <AdminRoute><ManageDevices /></AdminRoute>
-        } />
-        <Route path="/admin-alerts" element={
-          <AdminRoute><AdminAlerts /></AdminRoute>
-        } />
-        <Route path="/admin-maps" element={
-          <AdminRoute><AdminMaps /></AdminRoute>
-        } />
-        <Route path="/admin-profile" element={
-          <AdminRoute><AdminProfile /></AdminRoute>
-        } />
+          {/* Admin Pages (behind login + admin role) */}
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>
+          } />
+          <Route path="/manage-users" element={
+            <ProtectedRoute adminOnly><ManageUsers /></ProtectedRoute>
+          } />
+          <Route path="/manage-devices" element={
+            <ProtectedRoute adminOnly><ManageDevices /></ProtectedRoute>
+          } />
+          <Route path="/admin-alerts" element={
+            <ProtectedRoute adminOnly><AdminAlerts /></ProtectedRoute>
+          } />
+          <Route path="/admin-maps" element={
+            <ProtectedRoute adminOnly><AdminMaps /></ProtectedRoute>
+          } />
+          <Route path="/admin-profile" element={
+            <ProtectedRoute adminOnly><AdminProfile /></ProtectedRoute>
+          } />
+          <Route path="/negombo" element={<NegomboLagoon />} />
 
-        {/* Catch all — redirect to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-
-      </Routes>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
