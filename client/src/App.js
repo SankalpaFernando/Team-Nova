@@ -19,7 +19,7 @@ import ManageDevices from "./pages/ManageDevices";
 import AdminAlerts from "./pages/AdminAlerts";
 import AdminMaps from "./pages/AdminMaps";
 import AdminProfile from "./pages/AdminProfile";
-import NegomboLagoon from "./pages/NegomboLagoon";
+import SiteDetails from "./pages/SiteDetails";
 
 function App() {
   return (
@@ -39,6 +39,9 @@ function App() {
           } />
           <Route path="/sites" element={
             <ProtectedRoute><Sites /></ProtectedRoute>
+          } />
+          <Route path="/sites/:id" element={
+            <ProtectedRoute><SiteDetails /></ProtectedRoute>
           } />
           <Route path="/about" element={<About />} />
           <Route path="/alerts" element={
@@ -69,7 +72,6 @@ function App() {
           <Route path="/admin-profile" element={
             <ProtectedRoute adminOnly><AdminProfile /></ProtectedRoute>
           } />
-          <Route path="/negombo" element={<NegomboLagoon />} />
 
         </Routes>
       </AuthProvider>

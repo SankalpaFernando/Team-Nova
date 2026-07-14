@@ -8,10 +8,9 @@ exports.getAlerts = async (req, res, next) => {
     const { status, severity, page = 1, limit = 20 } = req.query;
     const query = {};
 
-    // Non-admins only see their own alerts
-    if (req.user.role !== 'admin') {
-      query.recipients = req.user._id;
-    }
+    // NOTE: alerts aren't scoped per-user (no site-subscription concept
+    // on the User model), so every logged-in user sees all alerts —
+    // same as sites/devices/readings elsewhere in this app.
 
     if (status) query.status = status;
     if (severity) query.severity_level = severity;
@@ -82,7 +81,7 @@ exports.updateAlertStatus = async (req, res, next) => {
 // @access  Private
 exports.markAllRead = async (req, res, next) => {
   try {
-    const query = req.user.role === 'admin' ? {} : { recipients: req.user._id };
+    const query = {};
     await Alert.updateMany({ ...query, status: 'unread' }, { status: 'read' });
     res.status(200).json({ success: true, message: 'All alerts marked as read' });
   } catch (error) {
@@ -96,7 +95,6 @@ exports.markAllRead = async (req, res, next) => {
 exports.getUnreadCount = async (req, res, next) => {
   try {
     const query = { status: 'unread' };
-    if (req.user.role !== 'admin') query.recipients = req.user._id;
     const count = await Alert.countDocuments(query);
     res.status(200).json({ success: true, count });
   } catch (error) {
