@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./Alerts.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const STATUS_LABEL = {
   unread: "Pending",
@@ -28,6 +29,26 @@ function formatTime(isoString) {
 }
 
 function Alerts() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,7 +81,24 @@ function Alerts() {
           <Link to="/alerts">Alerts</Link>
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
-          <Link to="/profile">Profile</Link>
+
+          <div className="profile-menu" ref={menuRef}>
+            <button
+              className="avatar-btn"
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {user?.name ? user.name.charAt(0).toUpperCase() : "👤"}
+            </button>
+
+            {menuOpen && (
+              <div className="profile-dropdown">
+                <Link to="/profile" onClick={() => setMenuOpen(false)}>
+                  👤 Profile
+                </Link>
+                <button onClick={handleLogout}>🚪 Logout</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
