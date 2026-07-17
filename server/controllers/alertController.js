@@ -1,11 +1,12 @@
 const Alert = require('../models/Alert');
+const Device = require('../models/Device');
 
 // @desc    Get all alerts (admin) or user's alerts
 // @route   GET /api/alerts
 // @access  Private
 exports.getAlerts = async (req, res, next) => {
   try {
-    const { status, severity, page = 1, limit = 20 } = req.query;
+    const { status, severity, site, page = 1, limit = 20 } = req.query;
     const query = {};
 
     // NOTE: alerts aren't scoped per-user (no site-subscription concept
@@ -14,6 +15,12 @@ exports.getAlerts = async (req, res, next) => {
 
     if (status) query.status = status;
     if (severity) query.severity_level = severity;
+
+    // Filter by site — resolve to device IDs first, since Alert doesn't store site directly
+    if (site) {
+      const siteDevices = await Device.find({ site }).select('_id');
+      query.device = { $in: siteDevices.map(d => d._id) };
+    }
 
     const pageNum = parseInt(page);
     const limitNum = Math.min(parseInt(limit), 100);

@@ -7,7 +7,7 @@ function VisitorSites() {
     <div className="visitor-sites-page">
 
       {/* Navbar */}
-      <Navbar />
+      <Navbar showBackHome={true} />
 
       {/* Hero Section */}
       <section

@@ -406,4 +406,90 @@
 
 }
 
+/* ===============================
+   THANK YOU MESSAGE
+================================ */
 
+.thank-you-box{
+
+    text-align:center;
+
+    padding:40px 20px;
+
+    animation:fadeIn .5s ease;
+}
+
+.thank-you-icon{
+
+    font-size:70px;
+
+    margin-bottom:20px;
+}
+
+.thank-you-box h2{
+
+    color:#0b5d3b;
+
+    font-size:34px;
+
+    margin-bottom:20px;
+}
+
+.thank-you-box p{
+
+    color:#444;
+
+    font-size:18px;
+
+    line-height:1.8;
+
+    margin-bottom:12px;
+}
+
+.send-another-btn{
+
+    margin-top:30px;
+
+    padding:14px 35px;
+
+    border:none;
+
+    border-radius:30px;
+
+    background:#0b5d3b;
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+.send-another-btn:hover{
+
+    background:#087548;
+
+    transform:scale(1.05);
+}
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(20px);
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+    }
+
+}

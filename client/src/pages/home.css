@@ -2,10 +2,14 @@
    HOME PAGE
 ========================= */
 
-* {
+* 
+{
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+html{
+  scroll-behavior:smooth;
 }
 
 .home {
@@ -123,6 +127,9 @@
 .about-section {
   padding: 90px 8%;
   background: #f8faf8;
+
+  /* Prevent navbar from covering the title */
+  scroll-margin-top: 90px;
 }
 
 .about-section h2 {

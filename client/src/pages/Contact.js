@@ -1,14 +1,23 @@
+import { useState, useEffect, useRef } from "react";
 import "./Contact.css";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
 import mangrove from "../assests/mangrove.png";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 function Contact() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    subject: "",
+    message: ""
+  });
+  const [statusMsg, setStatusMsg] = useState("");
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
@@ -26,21 +35,32 @@ function Contact() {
     navigate("/");
   };
 
-  const handleSubmit = (e) => {
-    // No backend endpoint exists yet for this form, so this just gives
-    // the user feedback instead of doing a native page reload/submit.
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSent(true);
-    e.target.reset();
+    setStatusMsg("");
+    setSent(false);
+    try {
+      const response = await axios.post("http://localhost:5000/api/messages", formData);
+      if (response.data.success) {
+        setSent(true);
+        setStatusMsg("Message sent successfully!");
+        setFormData({ fullName: "", email: "", subject: "", message: "" });
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setStatusMsg("Failed to send message. Please try again.");
+    }
   };
 
   return (
     <div className="contact-page">
-
       {/* Navbar */}
       <div className="dashboard-navbar">
         <div className="logo">🌿 MangroveGuard</div>
-
         <div className="nav-links">
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/sites">Sites</Link>
@@ -95,30 +115,53 @@ function Contact() {
             </p>
           )}
 
+          {statusMsg && !sent && (
+            <p className="status-msg" style={{ color: "red", backgroundColor: "white", padding: "10px", borderRadius: "5px" }}>{statusMsg}</p>
+          )}
+
           <form className="contact-form" onSubmit={handleSubmit}>
 
             <div className="input-row">
-              <input type="text" placeholder="Full Name" required />
-              <input type="email" placeholder="Email Address" required />
+              <input
+                type="text"
+                name="fullName"
+                placeholder="Full Name"
+                value={formData.fullName}
+                onChange={handleChange}
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
             </div>
 
-            <input type="text" placeholder="Subject" required />
+            <input
+              type="text"
+              name="subject"
+              placeholder="Subject"
+              value={formData.subject}
+              onChange={handleChange}
+              required
+            />
 
             <textarea
+              name="message"
               rows="6"
               placeholder="Write your message..."
+              value={formData.message}
+              onChange={handleChange}
               required
             ></textarea>
-
-            <button type="submit">
-              Send Message
-            </button>
-
+            <button type="submit">Send Message</button>
           </form>
 
         </div>
       </div>
-
     </div>
   );
 }

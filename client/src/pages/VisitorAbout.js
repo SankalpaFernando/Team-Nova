@@ -8,7 +8,7 @@ function VisitorAbout() {
 
 
       {/* Navbar */}
-      <Navbar />
+      <Navbar showBackHome={true} />
 
 
 

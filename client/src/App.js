@@ -7,6 +7,7 @@ import About from "./pages/About";
 import VisitorAbout from "./pages/VisitorAbout";
 import VisitorSites from "./pages/VisitorSites";
 import VisitorContactus from "./pages/VisitorContactus";
+import SearchResults from "./pages/SearchResults";   // <-- NEW IMPORT
 import Contact from "./pages/Contact";
 import Sites from "./pages/Sites";
 import Register from "./pages/Register";
@@ -20,6 +21,7 @@ import AdminAlerts from "./pages/AdminAlerts";
 import AdminMaps from "./pages/AdminMaps";
 //import AdminProfile from "./pages/AdminProfile";
 import SiteDetails from "./pages/SiteDetails";
+import AdminMessages from "./pages/AdminMessages";
 
 function App() {
   return (
@@ -27,7 +29,8 @@ function App() {
       <AuthProvider>
         <Routes>
 
-          {/* Visitor Pages */}
+          {/* ================= Visitor Pages ================= */}
+
           <Route path="/" element={<Home />} />
           <Route path="/visitor-about" element={<VisitorAbout />} />
           <Route path="/visitor-sites" element={<VisitorSites />} />

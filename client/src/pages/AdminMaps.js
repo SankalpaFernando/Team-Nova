@@ -156,6 +156,7 @@ function AdminMaps() {
             { to: "/manage-devices",  icon: "📡", label: "Devices"   },
             { to: "/admin-alerts",    icon: "🔔", label: "Alerts"    },
             { to: "/admin-maps",      icon: "📍", label: "Sites", active: true },
+            { to: "/admin-messages",  icon: "✉️", label: "Messages" },
             { to: "/profile",   icon: "👤", label: "Profile"   },
           ].map(({ to, icon, label, active }) => (
             <Link key={to} to={to} className={`am-nav-link ${active ? "am-nav-link--active" : ""}`}>
