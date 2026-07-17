@@ -115,20 +115,6 @@ function AdminProfile() {
             <div className="mu-brand-name">MangroveGuard</div>
             <div className="mu-brand-role">Admin Panel</div>
           </div>
-<<<<<<< Updated upstream
-
-          <div className="nav-links">
-            <Link to="/admin-dashboard">Dashboard</Link>
-            <Link to="/manage-users">Users</Link>
-            <Link to="/manage-devices">Devices</Link>
-            <Link to="/admin-alerts">Alerts</Link>
-            <Link to="/admin-maps">Sites</Link>
-            <Link to="/admin-messages">Messages</Link>
-            <Link to="/admin-profile">Profile</Link>
-          </div>
-
-=======
->>>>>>> Stashed changes
         </div>
 
         <nav className="mu-nav">
