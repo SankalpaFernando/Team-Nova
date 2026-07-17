@@ -6,7 +6,9 @@ const Site = require('../models/Site');
 // @access  Private
 exports.getDevices = async (req, res, next) => {
   try {
-    const query = req.query.site ? { site: req.query.site } : {};
+    const query = {};
+    if (req.query.site) query.site = req.query.site;
+    if (req.query.status) query.status = req.query.status;
     const devices = await Device.find(query).populate('site', 'name location region');
     res.status(200).json({ success: true, count: devices.length, data: devices });
   } catch (error) {
