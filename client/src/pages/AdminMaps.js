@@ -157,7 +157,7 @@ function AdminMaps() {
             { to: "/admin-alerts",    icon: "🔔", label: "Alerts"    },
             { to: "/admin-maps",      icon: "📍", label: "Sites", active: true },
             { to: "/admin-messages",  icon: "✉️", label: "Messages" },
-            { to: "/admin-profile",   icon: "👤", label: "Profile"   },
+            { to: "/profile",   icon: "👤", label: "Profile"   },
           ].map(({ to, icon, label, active }) => (
             <Link key={to} to={to} className={`am-nav-link ${active ? "am-nav-link--active" : ""}`}>
               <span className="am-nav-icon">{icon}</span>
