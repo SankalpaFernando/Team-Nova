@@ -1,11 +1,16 @@
-import { Link, useNavigate  } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { FaSearch } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import "./navbar.css";
 
 function Navbar() {
 
+  const navigate = useNavigate();
+
   const [showLogin, setShowLogin] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [loginData, setLoginData] = useState({
     email: "",
@@ -29,6 +34,18 @@ function Navbar() {
   else navigate("/dashboard");
 };
 
+  const handleSearch = (e) => {
+
+    e.preventDefault();
+
+    if (searchTerm.trim() === "") return;
+
+    navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+
+    setSearchTerm("");
+
+  };
+
   return (
     <>
 
@@ -39,6 +56,8 @@ function Navbar() {
         <div className="logo">
           🌿 MangroveGuard
         </div>
+
+        {/* Navigation Links */}
 
         <ul className="nav-links">
 
@@ -60,12 +79,42 @@ function Navbar() {
 
         </ul>
 
-        <button
-          className="login-nav-btn"
-          onClick={() => setShowLogin(true)}
+        {/* Search */}
+
+        <form
+          className="search-form"
+          onSubmit={handleSearch}
         >
-          Login
-        </button>
+
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+
+          <button
+            type="submit"
+            className="search-icon-btn"
+          >
+            <FaSearch />
+          </button>
+
+        </form>
+
+        {/* Login Button */}
+
+        <div className="nav-buttons">
+
+          <button
+            className="login-nav-btn"
+            onClick={() => setShowLogin(true)}
+          >
+            Login
+          </button>
+
+        </div>
 
       </nav>
 
