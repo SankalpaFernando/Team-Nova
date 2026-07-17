@@ -7,6 +7,7 @@ import About from "./pages/About";
 import VisitorAbout from "./pages/VisitorAbout";
 import VisitorSites from "./pages/VisitorSites";
 import VisitorContactus from "./pages/VisitorContactus";
+import SearchResults from "./pages/SearchResults";   // <-- NEW IMPORT
 import Contact from "./pages/Contact";
 import Sites from "./pages/Sites";
 import Register from "./pages/Register";
@@ -27,49 +28,145 @@ function App() {
       <AuthProvider>
         <Routes>
 
-          {/* Visitor Pages */}
+          {/* ================= Visitor Pages ================= */}
+
           <Route path="/" element={<Home />} />
-          <Route path="/visitor-about" element={<VisitorAbout />} />
-          <Route path="/visitor-sites" element={<VisitorSites />} />
-          <Route path="/visitor-contactus" element={<VisitorContactus />} />
 
-          {/* User Pages (behind login) */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute><UserDashboard /></ProtectedRoute>
-          } />
-          <Route path="/sites" element={
-            <ProtectedRoute><Sites /></ProtectedRoute>
-          } />
-          <Route path="/about" element={<About />} />
-          <Route path="/alerts" element={
-            <ProtectedRoute><Alerts /></ProtectedRoute>
-          } />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/profile" element={
-            <ProtectedRoute><Profile /></ProtectedRoute>
-          } />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/visitor-about"
+            element={<VisitorAbout />}
+          />
 
-          {/* Admin Pages (behind login + admin role) */}
-          <Route path="/admin-dashboard" element={
-            <ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>
-          } />
-          <Route path="/manage-users" element={
-            <ProtectedRoute adminOnly><ManageUsers /></ProtectedRoute>
-          } />
-          <Route path="/manage-devices" element={
-            <ProtectedRoute adminOnly><ManageDevices /></ProtectedRoute>
-          } />
-          <Route path="/admin-alerts" element={
-            <ProtectedRoute adminOnly><AdminAlerts /></ProtectedRoute>
-          } />
-          <Route path="/admin-maps" element={
-            <ProtectedRoute adminOnly><AdminMaps /></ProtectedRoute>
-          } />
-          <Route path="/admin-profile" element={
-            <ProtectedRoute adminOnly><AdminProfile /></ProtectedRoute>
-          } />
-          <Route path="/negombo" element={<NegomboLagoon />} />
+          <Route
+            path="/visitor-sites"
+            element={<VisitorSites />}
+          />
+
+          <Route
+            path="/visitor-contactus"
+            element={<VisitorContactus />}
+          />
+
+          {/* NEW SEARCH PAGE */}
+
+          <Route
+            path="/search"
+            element={<SearchResults />}
+          />
+
+          {/* ================= User Pages ================= */}
+
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/sites"
+            element={
+              <ProtectedRoute>
+                <Sites />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/about"
+            element={<About />}
+          />
+
+          <Route
+            path="/alerts"
+            element={
+              <ProtectedRoute>
+                <Alerts />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/contact"
+            element={<Contact />}
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/register"
+            element={<Register />}
+          />
+
+          {/* ================= Admin Pages ================= */}
+
+          <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/manage-users"
+            element={
+              <ProtectedRoute adminOnly>
+                <ManageUsers />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/manage-devices"
+            element={
+              <ProtectedRoute adminOnly>
+                <ManageDevices />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin-alerts"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminAlerts />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin-maps"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminMaps />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin-profile"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminProfile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/negombo"
+            element={<NegomboLagoon />}
+          />
 
         </Routes>
       </AuthProvider>
