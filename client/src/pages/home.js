@@ -4,6 +4,19 @@ import Navbar from "../components/navbar";
 import mangrove from "../assests/mangrove.png";
 
 function Home() {
+
+  // Scroll to "Why Mangroves Matter" section
+  const scrollToAboutSection = () => {
+    const section = document.getElementById("about-section");
+
+    if (section) {
+      section.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  };
+
   return (
     <div className="home">
 
@@ -18,6 +31,7 @@ function Home() {
         <div className="hero-overlay">
 
           <div className="hero-content">
+
             <h1>Mangrove Guard</h1>
 
             <h3>
@@ -30,26 +44,36 @@ function Home() {
             </p>
 
             <div className="hero-buttons">
-              <Link to="/visitor-about">
-                <button className="learn-btn">
-                  Learn More
-                </button>
-              </Link>
 
+              {/* Learn More Button */}
+              <button
+                className="learn-btn"
+                onClick={scrollToAboutSection}
+              >
+                Learn More
+              </button>
+
+              {/* Sites Button */}
               <Link to="/visitor-sites">
                 <button className="sites-btn">
                   View Monitoring Sites
                 </button>
               </Link>
+
             </div>
+
           </div>
 
         </div>
+
       </section>
 
       {/* ================= About Mangroves Section ================= */}
 
-      <section className="about-section">
+      <section
+        id="about-section"
+        className="about-section"
+      >
 
         <h2>Why Mangroves Matter</h2>
 
