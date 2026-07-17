@@ -62,6 +62,7 @@ app.use('/api/sites',   require('./routes/site'));
 app.use('/api/devices', require('./routes/device'));
 app.use('/api/readings',require('./routes/sensorreading'));
 app.use('/api/alerts',  require('./routes/alert'));
+app.use('/api/messages',require('./routes/message'));
 
 // 404 handler — catches any route that doesn't match above
 app.use((req, res) => {
