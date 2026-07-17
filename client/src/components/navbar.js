@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { FaSearch } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
 import "./navbar.css";
 
 function Navbar() {
@@ -16,6 +17,9 @@ function Navbar() {
     password: ""
   });
 
+  const { login } = useAuth();      // ← add this
+  const navigate = useNavigate();   // ← add this
+
   const handleChange = (e) => {
     setLoginData({
       ...loginData,
@@ -23,17 +27,12 @@ function Navbar() {
     });
   };
 
-  const handleLogin = (e) => {
-
-    e.preventDefault();
-
-    console.log(loginData);
-
-    alert("Login functionality will be connected to the backend.");
-
-    setShowLogin(false);
-
-  };
+  const handleLogin = async (e) => {
+  e.preventDefault();
+  const user = await login(loginData.email, loginData.password);
+  if (user.role === "admin") navigate("/admin-dashboard");
+  else navigate("/dashboard");
+};
 
   const handleSearch = (e) => {
 
