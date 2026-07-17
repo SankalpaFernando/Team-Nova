@@ -72,6 +72,9 @@ function App() {
           <Route path="/admin-maps" element={
             <ProtectedRoute adminOnly><AdminMaps /></ProtectedRoute>
           } />
+          <Route path="/admin-messages" element={
+            <ProtectedRoute adminOnly><AdminMessages /></ProtectedRoute>
+          } />
 
         </Routes>
       </AuthProvider>
