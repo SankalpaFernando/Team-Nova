@@ -20,6 +20,7 @@ import AdminAlerts from "./pages/AdminAlerts";
 import AdminMaps from "./pages/AdminMaps";
 import AdminProfile from "./pages/AdminProfile";
 import SiteDetails from "./pages/SiteDetails";
+import AdminMessages from "./pages/AdminMessages";
 
 function App() {
   return (
@@ -71,6 +72,9 @@ function App() {
           } />
           <Route path="/admin-profile" element={
             <ProtectedRoute adminOnly><AdminProfile /></ProtectedRoute>
+          } />
+          <Route path="/admin-messages" element={
+            <ProtectedRoute adminOnly><AdminMessages /></ProtectedRoute>
           } />
 
         </Routes>
