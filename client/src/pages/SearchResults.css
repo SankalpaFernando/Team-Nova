@@ -1,0 +1,241 @@
+/* ===============================
+   SEARCH PAGE
+================================ */
+
+.search-page{
+
+    width:100%;
+
+    min-height:100vh;
+
+    font-family:Arial, Helvetica, sans-serif;
+
+    overflow-x:hidden;
+
+}
+
+/* ===============================
+   BACKGROUND IMAGE
+================================ */
+
+.search-hero{
+
+    width:100%;
+
+    min-height:100vh;
+
+    background-size:cover;
+
+    background-position:center;
+
+    background-repeat:no-repeat;
+
+    background-attachment:fixed;
+
+}
+
+/* ===============================
+   DARK OVERLAY
+================================ */
+
+.search-overlay{
+
+    width:100%;
+
+    min-height:100vh;
+
+    background:rgba(0,0,0,.5);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:40px 20px;
+
+}
+
+/* ===============================
+   MAIN CARD
+================================ */
+
+.search-container{
+
+    width:1000px;
+
+    max-width:95%;
+
+    background:rgba(255,255,255,.95);
+
+    border-radius:20px;
+
+    padding:35px;
+
+    margin-top:70px;
+
+    box-shadow:0 15px 35px rgba(0,0,0,.35);
+
+    text-align:center;
+
+}
+
+/* ===============================
+   TITLE
+================================ */
+
+.search-container h1{
+
+    color:#0b5d3b;
+
+    font-size:42px;
+
+    margin-bottom:15px;
+
+}
+
+.search-text{
+
+    font-size:18px;
+
+    color:#444;
+
+    margin-bottom:35px;
+
+}
+
+.search-query{
+
+    margin-left:8px;
+
+    color:#0b5d3b;
+
+    font-weight:bold;
+
+}
+
+/* ===============================
+   RESULTS GRID
+================================ */
+
+.results-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+
+    gap:25px;
+
+}
+
+/* ===============================
+   RESULT CARD
+================================ */
+
+.result-card{
+
+    text-decoration:none;
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:25px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.18);
+
+    transition:.3s;
+
+}
+
+.result-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 18px 35px rgba(0,0,0,.25);
+
+}
+
+.result-card h2{
+
+    color:#0b5d3b;
+
+    margin-bottom:15px;
+
+    font-size:24px;
+
+}
+
+.result-card p{
+
+    color:#555;
+
+    line-height:1.7;
+
+}
+
+/* ===============================
+   NO RESULTS
+================================ */
+
+.no-results{
+
+    padding:45px;
+
+    border-radius:15px;
+
+    background:white;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.18);
+
+}
+
+.no-results h2{
+
+    color:#d32f2f;
+
+    margin-bottom:20px;
+
+}
+
+.no-results p{
+
+    color:#555;
+
+    line-height:1.8;
+
+    font-size:17px;
+
+}
+
+/* ===============================
+   RESPONSIVE
+================================ */
+
+@media(max-width:800px){
+
+    .search-container{
+
+        margin-top:90px;
+
+        padding:25px;
+
+    }
+
+    .search-container h1{
+
+        font-size:32px;
+
+    }
+
+}
+
+@media(max-width:600px){
+
+    .results-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
