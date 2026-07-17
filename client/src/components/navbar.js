@@ -6,8 +6,6 @@ import "./navbar.css";
 
 function Navbar() {
 
-  const navigate = useNavigate();
-
   const [showLogin, setShowLogin] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
