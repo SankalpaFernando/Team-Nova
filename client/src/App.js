@@ -18,7 +18,7 @@ import ManageUsers from "./pages/ManageUsers";
 import ManageDevices from "./pages/ManageDevices";
 import AdminAlerts from "./pages/AdminAlerts";
 import AdminMaps from "./pages/AdminMaps";
-import AdminProfile from "./pages/AdminProfile";
+//import AdminProfile from "./pages/AdminProfile";
 import SiteDetails from "./pages/SiteDetails";
 
 function App() {
@@ -68,9 +68,6 @@ function App() {
           } />
           <Route path="/admin-maps" element={
             <ProtectedRoute adminOnly><AdminMaps /></ProtectedRoute>
-          } />
-          <Route path="/admin-profile" element={
-            <ProtectedRoute adminOnly><AdminProfile /></ProtectedRoute>
           } />
 
         </Routes>

@@ -66,7 +66,7 @@ function AdminProfile() {
             <Link to="/manage-devices">Devices</Link>
             <Link to="/admin-alerts">Alerts</Link>
             <Link to="/admin-maps">Sites</Link>
-            <Link to="/admin-profile">Profile</Link>
+            <Link to="/profile">Profile</Link>
           </div>
 
         </div>

@@ -7,6 +7,7 @@ import api from "../services/api";
 
 function Profile() {
   const { user, logout } = useAuth();
+  console.log(user);
   const navigate = useNavigate();
 
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -132,12 +133,24 @@ function Profile() {
           <div className="logo">🌿 MangroveGuard</div>
 
           <div className="nav-links">
-            <Link to="/dashboard">Dashboard</Link>
-            <Link to="/sites">Sites</Link>
-            <Link to="/alerts">Alerts</Link>
-            <Link to="/about">About</Link>
-            <Link to="/contact">Contact</Link>
-
+            {user?.role === "admin" ? (
+              <>
+                <Link to="/admin-dashboard">Dashboard</Link>
+                <Link to="/manage-users">Users</Link>
+                <Link to="/manage-devices">Devices</Link>
+                <Link to="/admin-alerts">Alerts</Link>
+                <Link to="/admin-maps">Sites</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/dashboard">Dashboard</Link>
+                <Link to="/sites">Sites</Link>
+                <Link to="/alerts">Alerts</Link>
+                <Link to="/about">About</Link>
+                <Link to="/contact">Contact</Link>
+              </>
+            )}
+            
             <div className="profile-menu" ref={menuRef}>
               <button
                 className="avatar-btn"
