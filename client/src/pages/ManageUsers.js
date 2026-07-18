@@ -176,7 +176,7 @@ function ManageUsers() {
             { to: "/admin-alerts",    icon: "🔔", label: "Alerts"   },
             { to: "/admin-maps",      icon: "📍", label: "Sites"    },
             { to: "/admin-messages",  icon: "✉️", label: "Messages" },
-            { to: "/profile",   icon: "👤", label: "Profile"  },
+            { to: "/admin-profile",   icon: "👤", label: "Profile"  },
           ].map(({ to, icon, label, active }) => (
             <Link
               key={to}

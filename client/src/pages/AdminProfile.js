@@ -1,223 +1,305 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./AdminProfile.css";
-import mangrove from "../assests/mangrove.png";
+import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 
 function AdminProfile() {
-  // Profile Image
-  const [profileImage, setProfileImage] = useState(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  // Admin Profile Data
-  const [profile, setProfile] = useState({
-    fullName: "Admin User",
-    email: "admin@mangroveguard.com",
-    status: "Active",
-    memberSince: "2025-01",
-    lastLogin: new Date().toLocaleString(),
-    password: "",
-    confirmPassword: "",
-  });
+  // ── Avatar ─────────────────────────────────────────────
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
-  // Upload Profile Image
+  // ── Editable fields ────────────────────────────────────
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [editingField, setEditingField] = useState(null); // "name" | "email" | "password" | null
+  const [saving, setSaving] = useState(false);
+  const [fieldError, setFieldError] = useState("");
+
   const handleImageUpload = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setProfileImage(URL.createObjectURL(e.target.files[0]));
+      setAvatarPreview(URL.createObjectURL(e.target.files[0]));
     }
   };
 
-  // Handle Form Input Changes
-  const handleChange = (e) => {
-    setProfile({
-      ...profile,
-      [e.target.name]: e.target.value,
-    });
+  const startEdit = (field) => {
+    setFieldError("");
+    setEditingField(field);
+    // Reset password fields fresh every time that editor opens
+    if (field === "password") {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
   };
 
-  // Save Changes
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const cancelEdit = () => {
+    setEditingField(null);
+    setFieldError("");
+    setName(user?.name || "");
+    setEmail(user?.email || "");
+  };
 
-    if (profile.password !== profile.confirmPassword) {
-      alert("Passwords do not match!");
+  const saveNameOrEmail = async () => {
+    setFieldError("");
+    setSaving(true);
+    try {
+      const res = await api.put("/users/profile", { name, email });
+      const updatedUser = res.data.data;
+      localStorage.setItem("mg_user", JSON.stringify({ ...user, ...updatedUser }));
+      setEditingField(null);
+      // Reflects instantly here; a page refresh will also pick it up
+      // via AuthContext reading mg_user on next load.
+      window.location.reload();
+    } catch (err) {
+      setFieldError(err.response?.data?.message || "Couldn't save changes.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const savePassword = async () => {
+    setFieldError("");
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setFieldError("Please fill in all password fields.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setFieldError("New passwords don't match.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setFieldError("New password must be at least 6 characters.");
       return;
     }
 
-    alert("Profile Updated Successfully!");
+    setSaving(true);
+    try {
+      const res = await api.put("/auth/updatepassword", {
+        currentPassword,
+        newPassword,
+      });
+      // Backend issues a fresh token on password change
+      localStorage.setItem("mg_token", res.data.token);
+      setEditingField(null);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setFieldError(err.response?.data?.message || "Couldn't update password.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
-    <div
-      className="admin-profile-page"
-      style={{ backgroundImage: `url(${mangrove})` }}
-    >
-      <div className="admin-profile-overlay">
+    <div className="mu-page">
 
-        {/* ================= Navbar ================= */}
-
-        <div className="admin-navbar">
-
-          <div className="logo">
-            🌿 MangroveGuard Admin
+      {/* ── Sidebar (same as other admin pages) ── */}
+      <aside className="mu-sidebar">
+        <div className="mu-brand">
+          <span className="mu-brand-icon">🌿</span>
+          <div>
+            <div className="mu-brand-name">MangroveGuard</div>
+            <div className="mu-brand-role">Admin Panel</div>
           </div>
-
-          <div className="nav-links">
-            <Link to="/admin-dashboard">Dashboard</Link>
-            <Link to="/manage-users">Users</Link>
-            <Link to="/manage-devices">Devices</Link>
-            <Link to="/admin-alerts">Alerts</Link>
-            <Link to="/admin-maps">Sites</Link>
-            <Link to="/admin-messages">Sites</Link>
-            <Link to="/profile">Profile</Link>
-          </div>
-
         </div>
 
-        {/* ================= Header ================= */}
+        <nav className="mu-nav">
+          {[
+            { to: "/admin-dashboard", icon: "⬛", label: "Dashboard" },
+            { to: "/manage-users",    icon: "👥", label: "Users"    },
+            { to: "/manage-devices",  icon: "📡", label: "Devices"  },
+            { to: "/admin-alerts",    icon: "🔔", label: "Alerts"   },
+            { to: "/admin-maps",      icon: "📍", label: "Sites"    },
+            { to: "/admin-messages",  icon: "✉️", label: "Messages" },
+            { to: "/admin-profile",   icon: "👤", label: "Profile", active: true },
+          ].map(({ to, icon, label, active }) => (
+            <Link
+              key={to}
+              to={to}
+              className={`mu-nav-link ${active ? "mu-nav-link--active" : ""}`}
+            >
+              <span className="mu-nav-icon">{icon}</span>
+              <span>{label}</span>
+            </Link>
+          ))}
+        </nav>
 
-        <div className="profile-header">
-          <h1>Admin Profile</h1>
+        <div className="mu-sidebar-bottom">
+          <div className="mu-user-card">
+            <div className="mu-user-avatar">
+              {user?.name?.[0]?.toUpperCase() || "A"}
+            </div>
+            <div>
+              <div className="mu-user-name">{user?.name || "Admin"}</div>
+              <div className="mu-user-email">{user?.email || ""}</div>
+            </div>
+          </div>
+          <button className="mu-logout-btn" onClick={handleLogout}>
+            ⏻ Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main ── */}
+      <main className="mu-main">
+
+        {/* Header */}
+        <div className="mu-header">
+          <div>
+            <p className="mu-breadcrumb">Admin › Profile</p>
+            <h1 className="mu-title">Admin Profile</h1>
+            <p className="mu-subtitle">
+              Manage your account details and security settings.
+            </p>
+          </div>
         </div>
 
-        {/* ================= Main Content ================= */}
+        {/* Profile Card */}
+        <div className="ap-container">
+          <div className="ap-card">
 
-        <div className="profile-container">
-
-          {/* ================= Left Profile Card ================= */}
-
-          <div className="profile-card">
-
-            <div className="profile-image">
-
-              {profileImage ? (
-                <img src={profileImage} alt="Admin Profile" />
+            <div className="ap-image">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Admin" />
               ) : (
-                <div className="default-avatar">👨‍💼</div>
+                <div className="ap-default-avatar">
+                  {user?.name?.[0]?.toUpperCase() || "👤"}
+                </div>
               )}
-
             </div>
 
-            <label className="upload-btn">
+            <label className="ap-upload-btn">
               Upload Image
               <input
                 type="file"
                 accept="image/*"
-                hidden
                 onChange={handleImageUpload}
+                hidden
               />
             </label>
 
             <hr />
 
-            <div className="profile-details">
+            {fieldError && <p className="ap-field-error">{fieldError}</p>}
 
-              <div className="detail-row">
+            <div className="ap-details">
+
+              {/* Name */}
+              <div className="ap-row">
                 <span>Full Name</span>
-                <strong>{profile.fullName}</strong>
+
+                {editingField === "name" ? (
+                  <div className="ap-edit-inline">
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      autoFocus
+                    />
+                    <button className="ap-save-btn" onClick={saveNameOrEmail} disabled={saving}>✓</button>
+                    <button className="ap-cancel-btn" onClick={cancelEdit} disabled={saving}>✕</button>
+                  </div>
+                ) : (
+                  <div className="ap-value-inline">
+                    <strong>{user?.name}</strong>
+                    <button className="ap-pencil-btn" onClick={() => startEdit("name")}>✎</button>
+                  </div>
+                )}
               </div>
 
-              <div className="detail-row">
+              {/* Email */}
+              <div className="ap-row">
                 <span>Email</span>
-                <strong>{profile.email}</strong>
+
+                {editingField === "email" ? (
+                  <div className="ap-edit-inline">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoFocus
+                    />
+                    <button className="ap-save-btn" onClick={saveNameOrEmail} disabled={saving}>✓</button>
+                    <button className="ap-cancel-btn" onClick={cancelEdit} disabled={saving}>✕</button>
+                  </div>
+                ) : (
+                  <div className="ap-value-inline">
+                    <strong>{user?.email}</strong>
+                    <button className="ap-pencil-btn" onClick={() => startEdit("email")}>✎</button>
+                  </div>
+                )}
               </div>
 
-              <div className="detail-row">
-                <span>Status</span>
-                <strong
-                  className={
-                    profile.status === "Active"
-                      ? "status-active"
-                      : "status-inactive"
-                  }
-                >
-                  {profile.status}
-                </strong>
+              {/* Role (admin-only, read-only) */}
+              <div className="ap-row">
+                <span>Role</span>
+                <div className="ap-value-inline">
+                  <strong className="ap-role-badge">Admin</strong>
+                </div>
               </div>
 
-              <div className="detail-row">
-                <span>Last Login</span>
-                <strong>{profile.lastLogin}</strong>
-              </div>
+              {/* Password */}
+              <div className="ap-row ap-password-row">
+                <span>Password</span>
 
-              <div className="detail-row">
-                <span>Member Since</span>
-                <strong>{profile.memberSince}</strong>
+                {editingField === "password" ? (
+                  <div className="ap-edit-inline ap-password-edit">
+                    <input
+                      type="password"
+                      placeholder="Current password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      autoFocus
+                    />
+                    <input
+                      type="password"
+                      placeholder="New password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <input
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <div className="ap-password-edit-actions">
+                      <button className="ap-save-btn ap-save-btn--wide" onClick={savePassword} disabled={saving}>
+                        {saving ? "Saving…" : "Save"}
+                      </button>
+                      <button className="ap-cancel-btn ap-cancel-btn--wide" onClick={cancelEdit} disabled={saving}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="ap-value-inline">
+                    <strong>••••••••</strong>
+                    <button className="ap-pencil-btn" onClick={() => startEdit("password")}>✎</button>
+                  </div>
+                )}
               </div>
 
             </div>
 
           </div>
-
-          {/* ================= Edit Profile Card ================= */}
-
-          <div className="edit-card">
-
-            <h2>Edit Profile</h2>
-
-            <form onSubmit={handleSubmit}>
-
-              <label>Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                value={profile.fullName}
-                onChange={handleChange}
-              />
-
-              <label>Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={profile.email}
-                onChange={handleChange}
-              />
-
-              <label>Status</label>
-              <select
-                name="status"
-                value={profile.status}
-                onChange={handleChange}
-              >
-                <option value="Active">🟢 Active</option>
-                <option value="Inactive">🔴 Inactive</option>
-              </select>
-
-              <label>Member Since</label>
-              <input
-                type="month"
-                name="memberSince"
-                value={profile.memberSince}
-                onChange={handleChange}
-              />
-
-              <label>New Password</label>
-              <input
-                type="password"
-                name="password"
-                value={profile.password}
-                onChange={handleChange}
-                placeholder="Enter New Password"
-              />
-
-              <label>Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={profile.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm Password"
-              />
-
-              <button type="submit">
-                Save Changes
-              </button>
-
-            </form>
-
-          </div>
-
         </div>
 
-      </div>
+      </main>
     </div>
   );
 }
