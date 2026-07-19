@@ -521,9 +521,9 @@ html{
 
     width:100%;
 
-    min-height:100vh;
+    height:100vh;
 
-    overflow-x:hidden;
+    overflow:hidden;
 
     font-family:Arial, Helvetica, sans-serif;
 
@@ -533,24 +533,17 @@ html{
 
 .visitor-about-hero {
 
-
     width:100%;
 
-
-    min-height:100vh;
-
+    height:100vh;
 
     background-size:cover;
 
-
     background-position:center;
-
 
     background-repeat:no-repeat;
 
-
     background-attachment:fixed;
-
 
 }
 
@@ -558,27 +551,21 @@ html{
 
 .visitor-about-overlay {
 
-
     width:100%;
 
-
-    min-height:100vh;
-
+    height:100vh;
 
     background:rgba(0,0,0,0.45);
 
-
     display:flex;
-
 
     justify-content:center;
 
-
     align-items:center;
 
+    padding:85px 20px 20px;
 
-    padding:40px 20px;
-
+    box-sizing:border-box;
 
 }
 
@@ -587,27 +574,21 @@ html{
 
 .visitor-about-container {
 
-
     width:1000px;
-
 
     max-width:95%;
 
+    max-height:100%;
+
+    overflow:hidden;
 
     background:rgba(255,255,255,0.94);
 
-
     border-radius:18px;
 
-
-    padding:25px;
-
-
-    margin-top:70px;
-
+    padding:16px 25px;
 
     box-shadow:0 15px 35px rgba(0,0,0,0.35);
-
 
 }
 
@@ -615,175 +596,88 @@ html{
 
 
 .visitor-about-mission {
-
-
     background:#0b5d3b;
-
-
     color:white;
-
-
     border-radius:12px;
-
-
-    padding:18px;
-
-
+    padding:10px 18px;
     text-align:center;
-
-
-    margin-bottom:20px;
-
-
+    margin-bottom:12px;
 }
-
-
-
 
 .visitor-about-mission h2 {
-
-
-    margin-bottom:10px;
-
-
+    margin-bottom:4px;
+    font-size:19px;
 }
 
-
-
+.visitor-about-mission p {
+    margin:0;
+    font-size:14px;
+}
 
 .visitor-about-title {
-
-
     text-align:center;
-
-
     color:#0b5d3b;
-
-
+    font-size:24px;
+    margin:0 0 6px;
 }
-
-
 
 .visitor-about-description {
-
-
     text-align:center;
-
-
     color:#444;
-
-
-    line-height:1.7;
-
-
-    margin:15px 0 25px;
-
-
+    line-height:1.5;
+    font-size:14px;
+    margin:0 0 14px;
 }
-
-
-
 
 .visitor-monitor-title {
-
-
     text-align:center;
-
-
     color:#0b5d3b;
-
-
-    margin-bottom:20px;
-
-
+    font-size:17px;
+    margin-bottom:10px;
 }
-
-
-
 
 .visitor-monitor-grid {
-
-
     display:grid;
-
-
-    grid-template-columns:repeat(2,1fr);
-
-
-    gap:15px;
-
-
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
 }
-
-
 
 .visitor-monitor-card {
-
-
     background:#eef9f2;
-
-
     border-radius:10px;
-
-
-    padding:18px;
-
-
+    padding:10px;
     text-align:center;
-
-
 }
-
-
-
 
 .visitor-monitor-card h4 {
-
-
     color:#0b5d3b;
-
-
+    font-size:14px;
+    margin-bottom:4px;
 }
 
-
-
+.visitor-monitor-card p {
+    font-size:12px;
+    margin:0;
+    color:#555;
+}
 
 .visitor-about-why {
-
-
-    margin-top:25px;
-
-
+    margin-top:14px;
     text-align:center;
-
-
 }
-
-
 
 .visitor-about-why h3 {
-
-
     color:#0b5d3b;
-
-
+    font-size:16px;
+    margin-bottom:4px;
 }
-
-
 
 .visitor-about-why p {
-
-
     color:#444;
-
-
-    line-height:1.7;
-
-
+    line-height:1.5;
+    font-size:13px;
+    margin:0;
 }
-
-
-
 
 @media(max-width:800px){
 
@@ -793,18 +687,24 @@ html{
 
         grid-template-columns:1fr;
 
-
     }
 
+    .visitor-about-page{
+        height:auto;
+        overflow-y:auto;
+    }
+
+    .visitor-about-hero,
+    .visitor-about-overlay{
+        height:auto;
+        min-height:100vh;
+    }
 
     .visitor-about-container {
-
-
-        margin-top:80px;
-
-
+        margin:80px 0 20px;
+        max-height:none;
+        overflow:visible;
     }
-
 
 }
 /* Dashboard-style navbar (used by About.js) */
@@ -837,6 +737,51 @@ html{
 
 .dashboard-navbar .nav-links a:hover{
     color:#d7f3dc;
+}
+
+.dashboard-navbar .nav-links a.active{
+    color:#ffd166;
+    font-weight:700;
+}
+
+/* Search bar */
+
+.search-form{
+    display:flex;
+    align-items:center;
+    background:white;
+    border-radius:30px;
+    overflow:hidden;
+}
+
+.search-input{
+    width:150px;
+    border:none;
+    outline:none;
+    padding:8px 12px;
+    font-size:13px;
+    background:white;
+}
+
+.search-input::placeholder{
+    color:#888;
+}
+
+.search-icon-btn{
+    width:38px;
+    height:34px;
+    border:none;
+    background:white;
+    color:#1f4d3a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.search-icon-btn:hover{
+    background:#d7efe2;
 }
 
 /* Navbar profile avatar + dropdown */
@@ -897,10 +842,9 @@ html{
     font-family:inherit;
 }
 
-.profile-dropdown a:hover,
-.profile-dropdown button:hover{
-    background:#eef5f0;
-    color:#1f4d3a;
+.profile-dropdown a:hover{
+    background:#f0f0f0;
+    color:#000;
 }
 
 .profile-dropdown button{

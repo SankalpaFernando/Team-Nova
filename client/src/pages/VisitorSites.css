@@ -140,6 +140,93 @@
 }
 
 /* ===========================
+   CARD HEADER + STATUS PILL
+=========================== */
+
+.visitor-site-card-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    gap:10px;
+
+    margin-bottom:12px;
+}
+
+.visitor-site-card-header h3{
+
+    margin:0;
+}
+
+.status-pill{
+
+    flex-shrink:0;
+
+    padding:4px 12px;
+
+    border-radius:20px;
+
+    font-size:11px;
+
+    font-weight:bold;
+
+    text-transform:uppercase;
+
+    letter-spacing:.5px;
+
+    white-space:nowrap;
+}
+
+.status-active{ background:#d4edda; color:#155724; }
+.status-partial{ background:#fff3cd; color:#856404; }
+.status-inactive{ background:#f8d7da; color:#721c24; }
+.status-none{ background:#e2e3e5; color:#555; }
+
+/* ===========================
+   STATUS / ERROR MESSAGES
+=========================== */
+
+.visitor-sites-status-msg{
+
+    color:white;
+
+    font-size:18px;
+
+    text-shadow:1px 1px 4px rgba(0,0,0,.6);
+}
+
+.visitor-sites-error{
+
+    max-width:500px;
+
+    margin:0 auto 25px;
+
+    background:#fdecea;
+
+    color:#b3261e;
+
+    border-radius:8px;
+
+    padding:10px 16px;
+
+    font-size:14px;
+}
+
+.visitor-sites-hint{
+
+    margin-top:30px;
+
+    color:#d7f3dc;
+
+    font-size:14px;
+
+    text-shadow:1px 1px 4px rgba(0,0,0,.6);
+}
+
+/* ===========================
    RESPONSIVE
 =========================== */
 
