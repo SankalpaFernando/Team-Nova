@@ -1,19 +1,99 @@
 import { useEffect, useRef, useState } from "react";
 import "./UserDashboard.css";
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
-// How each sensor parameter should be labeled/scaled on the bar graph.
-// "max" is only used to size the bar width (based on the valid ranges
-// already enforced in server/models/SensorReading.js).
+// Sensor range (min assumed 0, matching server/models/SensorReading.js
+// validation) and display info for each parameter.
 const PARAM_META = {
   pH: { label: "pH", unit: "", max: 14 },
   temperature: { label: "Temperature", unit: "°C", max: 40 },
   salinity: { label: "Salinity", unit: " ppt", max: 60 },
   dissolved_o2: { label: "Dissolved O₂", unit: " mg/L", max: 15 },
 };
+
+const navClass = ({ isActive }) => (isActive ? "active" : "");
+
+// -- Gauge geometry helpers -------------------------------------------
+// A gauge sweeps from 180° (left, value = min) to 0° (right, value = max)
+// over the top of the circle, matching a speedometer.
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+}
+
+function arcPath(cx, cy, r, fracStart, fracEnd) {
+  const angleStart = 180 - fracStart * 180;
+  const angleEnd = 180 - fracEnd * 180;
+  const p1 = polarToCartesian(cx, cy, r, angleStart);
+  const p2 = polarToCartesian(cx, cy, r, angleEnd);
+  return `M ${p1.x} ${p1.y} A ${r} ${r} 0 0 1 ${p2.x} ${p2.y}`;
+}
+
+// One gauge card for a single sensor parameter
+function ParamGauge({ label, value, unit, max, threshold }) {
+  const cx = 60, cy = 60, r = 48;
+  const clamped = Math.max(0, Math.min(value, max));
+  const valueFrac = clamped / max;
+
+  const safeMinFrac = threshold ? Math.max(0, Math.min(threshold.min / max, 1)) : 0;
+  const safeMaxFrac = threshold ? Math.max(0, Math.min(threshold.max / max, 1)) : 1;
+
+  let status = "In safe range";
+  let statusClass = "gauge-status-safe";
+  if (threshold) {
+    if (value < threshold.min) {
+      status = "Below safe range";
+      statusClass = "gauge-status-danger";
+    } else if (value > threshold.max) {
+      status = "Above safe range";
+      statusClass = "gauge-status-danger";
+    }
+  }
+
+  const needleAngle = 180 - valueFrac * 180;
+  const needleTip = polarToCartesian(cx, cy, 38, needleAngle);
+
+  return (
+    <div className="gauge-card">
+      <p className="gauge-label">{label}</p>
+      <svg viewBox="0 0 120 68" className="gauge-svg">
+        {safeMinFrac > 0 && (
+          <path d={arcPath(cx, cy, r, 0, safeMinFrac)} className="gauge-arc gauge-arc-danger" />
+        )}
+        <path d={arcPath(cx, cy, r, safeMinFrac, safeMaxFrac)} className="gauge-arc gauge-arc-safe" />
+        {safeMaxFrac < 1 && (
+          <path d={arcPath(cx, cy, r, safeMaxFrac, 1)} className="gauge-arc gauge-arc-danger" />
+        )}
+        <line
+          x1={cx} y1={cy}
+          x2={needleTip.x} y2={needleTip.y}
+          className="gauge-needle"
+        />
+        <circle cx={cx} cy={cy} r="4" className="gauge-pivot" />
+      </svg>
+      <p className="gauge-value">{value.toFixed(1)}{unit}</p>
+      <p className={`gauge-status ${statusClass}`}>{status}</p>
+    </div>
+  );
+}
+
+// Relative time, e.g. "2h ago"
+function timeAgo(isoString) {
+  const seconds = Math.floor((Date.now() - new Date(isoString)) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+const SEVERITY_LABEL = { low: "Low", medium: "Medium", high: "High", critical: "Critical" };
+const STATUS_LABEL = { unread: "Pending", read: "Read", resolved: "Resolved" };
 
 function UserDashboard() {
   const { user, logout } = useAuth();
@@ -29,6 +109,7 @@ function UserDashboard() {
   const [error, setError] = useState("");
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const menuRef = useRef(null);
 
   // Close the navbar profile dropdown on outside click
@@ -42,10 +123,19 @@ function UserDashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim() === "") return;
+    navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+    setSearchTerm("");
+  };
+
+const handleLogout = () => {
     logout();
     navigate("/");
   };
+
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -96,11 +186,27 @@ function UserDashboard() {
         <div className="logo">🌿 MangroveGuard</div>
 
         <div className="nav-links">
-          <Link to="/dashboard">Dashboard</Link>
-          <Link to="/sites">Sites</Link>
-          <Link to="/alerts">Alerts</Link>
-          <Link to="/about">About</Link>
-          <Link to="/contact">Contact</Link>
+          <NavLink to="/dashboard" className={navClass}>Dashboard</NavLink>
+          <NavLink to="/sites" className={navClass}>Sites</NavLink>
+          <NavLink to="/alerts" className={navClass}>Alerts</NavLink>
+          <NavLink to="/about" className={navClass}>About</NavLink>
+          <NavLink to="/contact" className={navClass}>Contact</NavLink>
+
+          <form className="search-form" onSubmit={handleSearch}>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button type="submit" className="search-icon-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
+          </form>
 
           <div className="profile-menu" ref={menuRef}>
             <button
@@ -133,28 +239,37 @@ function UserDashboard() {
 
         {/* Summary Cards */}
         <div className="card-row">
-          <div className="card">
-            <h3>No. of Sites</h3>
-            <h2>{loading ? "…" : sites.length}</h2>
-            <p>Monitoring Sites Registered</p>
+          <div className="card card-sites">
+            <div className="card-icon">🌍</div>
+            <div className="card-body">
+              <h3>No. of Sites</h3>
+              <h2>{loading ? "…" : sites.length}</h2>
+              <p>Monitoring sites registered</p>
+            </div>
           </div>
 
-          <div className="card">
-            <h3>Active Devices</h3>
-            <h2>{loading ? "…" : activeDeviceCount}</h2>
-            <p>Devices Currently Online</p>
+          <div className="card card-devices">
+            <div className="card-icon">🔌</div>
+            <div className="card-body">
+              <h3>Active Devices</h3>
+              <h2>{loading ? "…" : activeDeviceCount}</h2>
+              <p>Devices currently online</p>
+            </div>
           </div>
 
-          <div className="card">
-            <h3>Total Alerts</h3>
-            <h2>{loading ? "…" : attentionCount}</h2>
-            <p>Alerts Requiring Attention</p>
+          <div className="card card-alerts">
+            <div className="card-icon">🚨</div>
+            <div className="card-body">
+              <h3>Total Alerts</h3>
+              <h2>{loading ? "…" : attentionCount}</h2>
+              <p>Alerts requiring attention</p>
+            </div>
           </div>
         </div>
 
         {/* Graph (left) + Recent Alerts (right) */}
         <div className="dashboard-main-grid">
-          {/* Graph */}
+          {/* Sensor Data Overview */}
           <div className="graph-box">
             <div className="graph-header">
               <h3>Sensor Data Overview</h3>
@@ -180,28 +295,22 @@ function UserDashboard() {
                 No readings yet for {selectedSite?.name || "this site"}
               </div>
             ) : (
-              <div className="param-bars">
+              <div className="param-gauges">
                 {Object.keys(PARAM_META).map((param) => {
                   const meta = PARAM_META[param];
                   const avg =
                     siteReadings.reduce((sum, r) => sum + (r[param] ?? 0), 0) /
                     siteReadings.length;
-                  const widthPct = Math.min((avg / meta.max) * 100, 100);
 
                   return (
-                    <div className="param-bar-row" key={param}>
-                      <span className="param-label">{meta.label}</span>
-                      <div className="param-bar-track">
-                        <div
-                          className="param-bar-fill"
-                          style={{ width: `${widthPct}%` }}
-                        />
-                      </div>
-                      <span className="param-value">
-                        {avg.toFixed(1)}
-                        {meta.unit}
-                      </span>
-                    </div>
+                    <ParamGauge
+                      key={param}
+                      label={meta.label}
+                      value={avg}
+                      unit={meta.unit}
+                      max={meta.max}
+                      threshold={selectedSite?.thresholds?.[param]}
+                    />
                   );
                 })}
               </div>
@@ -216,7 +325,8 @@ function UserDashboard() {
               <thead>
                 <tr>
                   <th>Site</th>
-                  <th>Alert</th>
+                  <th>Severity</th>
+                  <th>When</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -224,19 +334,24 @@ function UserDashboard() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="3">Loading alerts…</td>
+                    <td colSpan="4" className="table-empty-msg">Loading alerts…</td>
                   </tr>
                 ) : alerts.length === 0 ? (
                   <tr>
-                    <td colSpan="3">No recent alerts</td>
+                    <td colSpan="4" className="table-empty-msg">No recent alerts</td>
                   </tr>
                 ) : (
                   alerts.map((alert) => (
-                    <tr key={alert._id}>
+                    <tr key={alert._id} className={`severity-row-${alert.severity_level}`}>
                       <td>{alert.device?.site?.name || "—"}</td>
-                      <td>{alert.message}</td>
+                      <td>
+                        <span className={`severity-badge severity-${alert.severity_level}`}>
+                          {SEVERITY_LABEL[alert.severity_level] || alert.severity_level}
+                        </span>
+                      </td>
+                      <td className="alert-time-cell">{timeAgo(alert.created_at)}</td>
                       <td className={alert.status === "resolved" ? "resolved" : "pending"}>
-                        {alert.status === "resolved" ? "Resolved" : "Pending"}
+                        {STATUS_LABEL[alert.status] || (alert.status === "resolved" ? "Resolved" : "Pending")}
                       </td>
                     </tr>
                   ))

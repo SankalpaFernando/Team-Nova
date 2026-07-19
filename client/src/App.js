@@ -32,6 +32,7 @@ function App() {
           {/* ================= Visitor Pages ================= */}
 
           <Route path="/" element={<Home />} />
+          <Route path="/search" element={<SearchResults />} />
           <Route path="/visitor-about" element={<VisitorAbout />} />
           <Route path="/visitor-sites" element={<VisitorSites />} />
           <Route path="/visitor-contactus" element={<VisitorContactus />} />

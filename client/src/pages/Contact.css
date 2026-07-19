@@ -1,7 +1,10 @@
 /* Page */
 .contact-page {
     font-family: Arial, sans-serif;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Navbar */
@@ -36,24 +39,74 @@
     color: #d7f3dc;
 }
 
+.nav-links a.active {
+    color: #ffd166;
+    font-weight: 700;
+}
+
+/* Search bar */
+
+.search-form{
+    display:flex;
+    align-items:center;
+    background:white;
+    border-radius:30px;
+    overflow:hidden;
+}
+
+.search-input{
+    width:150px;
+    border:none;
+    outline:none;
+    padding:8px 12px;
+    font-size:13px;
+    background:white;
+}
+
+.search-input::placeholder{
+    color:#888;
+}
+
+.search-icon-btn{
+    width:38px;
+    height:34px;
+    border:none;
+    background:white;
+    color:#1f4d3a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.search-icon-btn:hover{
+    background:#d7efe2;
+}
+
 /* Background Section */
 
 .contact-hero {
-    min-height: 90vh;
+    flex: 1;
+    min-height: 0;
     background-size: cover;
     background-position: center;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 60px 20px;
+    padding: 20px;
+    overflow: hidden;
 }
 
 /* Contact Container */
 
 .contact-container {
     width: 700px;
+    max-width: 95%;
+    max-height: 100%;
+    overflow: hidden;
     background: rgba(255, 255, 255, 0.88);
-    padding: 40px;
+    padding: 20px 30px;
     border-radius: 15px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
@@ -61,14 +114,16 @@
 .contact-container h1 {
     text-align: center;
     color: #1f4d3a;
-    margin-bottom: 15px;
+    font-size: 26px;
+    margin: 0 0 6px;
 }
 
 .contact-text {
     text-align: center;
     color: #444;
-    margin-bottom: 30px;
-    line-height: 1.6;
+    font-size: 14px;
+    margin-bottom: 14px;
+    line-height: 1.5;
 }
 
 /* Form */
@@ -76,16 +131,16 @@
 .contact-form {
     display: flex;
     flex-direction: column;
+    gap: 10px;
 }
 
 .contact-form input,
 .contact-form textarea {
     width: 100%;
-    padding: 12px;
-    margin-bottom: 18px;
+    padding: 9px 12px;
     border: 1px solid #ccc;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 14px;
     outline: none;
     box-sizing: border-box;
 }
@@ -102,10 +157,10 @@
 .contact-form button {
     background: #2f5d50;
     color: white;
-    padding: 12px;
+    padding: 10px;
     border: none;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 14px;
     cursor: pointer;
     transition: 0.3s;
 }
@@ -117,20 +172,22 @@
 /* Contact Info (now shown at the top, above the form) */
 
 .contact-info {
-    margin-bottom: 30px;
+    margin-bottom: 12px;
     text-align: center;
     border-bottom: 1px solid #ddd;
-    padding-bottom: 25px;
+    padding-bottom: 10px;
 }
 
 .contact-info h2 {
     color: #1f4d3a;
-    margin-bottom: 15px;
+    font-size: 19px;
+    margin-bottom: 6px;
 }
 
 .contact-info p {
-    margin: 8px 0;
+    margin: 3px 0;
     color: #444;
+    font-size: 13px;
 }
 
 /* Two fields side by side (Name / Email) */
@@ -213,10 +270,9 @@
     font-family:inherit;
 }
 
-.profile-dropdown a:hover,
-.profile-dropdown button:hover{
-    background:#eef5f0;
-    color:#1f4d3a;
+.profile-dropdown a:hover{
+    background:#f0f0f0;
+    color:#000;
 }
 
 .profile-dropdown button{
@@ -233,6 +289,17 @@
 
 @media (max-width: 768px) {
 
+    .contact-page {
+        height: auto;
+        overflow: visible;
+    }
+
+    .contact-hero {
+        min-height: 100vh;
+        height: auto;
+        overflow: visible;
+    }
+
     .dashboard-navbar {
         flex-direction: column;
         gap: 15px;
@@ -245,11 +312,13 @@
 
     .contact-container {
         width: 100%;
+        max-height: none;
+        overflow: visible;
         padding: 25px;
     }
 
     .contact-container h1 {
-        font-size: 30px;
+        font-size: 26px;
     }
 
     .input-row {
