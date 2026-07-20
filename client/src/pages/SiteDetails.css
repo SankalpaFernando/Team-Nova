@@ -38,6 +38,52 @@
     color:#c8ff9c;
 }
 
+.nav-links a.active{
+    color:#ffd166;
+    font-weight:700;
+}
+
+/* Search bar */
+
+.search-form{
+    display:flex;
+    align-items:center;
+    background:white;
+    border-radius:30px;
+    overflow:hidden;
+}
+
+.search-input{
+    width:150px;
+    border:none;
+    outline:none;
+    padding:8px 12px;
+    font-size:13px;
+    background:white;
+}
+
+.search-input::placeholder{
+    color:#888;
+}
+
+.search-icon-btn{
+    width:38px;
+    height:34px;
+    border:none;
+    background:white;
+    color:#1f4d3a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.search-icon-btn:hover{
+    background:#d7efe2;
+}
+
+
 /* Title */
 
 .site-title{
@@ -307,10 +353,9 @@
     font-family:inherit;
 }
 
-.profile-dropdown a:hover,
-.profile-dropdown button:hover{
-    background:#eef5f0;
-    color:#1f4d3a;
+.profile-dropdown a:hover{
+    background:#f0f0f0;
+    color:#000;
 }
 
 .profile-dropdown button{

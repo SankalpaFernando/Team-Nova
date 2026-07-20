@@ -1,6 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { FaSearch } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import "./navbar.css";
 
@@ -60,19 +59,27 @@ function Navbar() {
         <ul className="nav-links">
 
           <li>
-            <Link to="/">Home</Link>
+            <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
+              Home
+            </NavLink>
           </li>
 
           <li>
-            <Link to="/visitor-sites">Sites</Link>
+            <NavLink to="/visitor-sites" className={({ isActive }) => (isActive ? "active" : "")}>
+              Sites
+            </NavLink>
           </li>
 
           <li>
-            <Link to="/visitor-about">About</Link>
+            <NavLink to="/visitor-about" className={({ isActive }) => (isActive ? "active" : "")}>
+              About
+            </NavLink>
           </li>
 
           <li>
-            <Link to="/visitor-contactus">Contact</Link>
+            <NavLink to="/visitor-contactus" className={({ isActive }) => (isActive ? "active" : "")}>
+              Contact
+            </NavLink>
           </li>
 
         </ul>
@@ -96,7 +103,19 @@ function Navbar() {
             type="submit"
             className="search-icon-btn"
           >
-            <FaSearch />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
           </button>
 
         </form>

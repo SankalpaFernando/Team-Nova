@@ -25,6 +25,18 @@ exports.getUser = async (req, res, next) => {
   }
 };
 
+exports.getRecentLogins = async (req, res, next) => {
+  try {
+    const users = await User.find({ lastLogin: { $ne: null } })
+      .sort('-lastLogin')
+      .limit(10)
+      .select('name email lastLogin');
+    res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Create user (admin)
 // @route   POST /api/users
 // @access  Private/Admin

@@ -26,7 +26,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['registered_user', 'admin'],
     default: 'registered_user'
-  }
+  },
+  lastLogin: {
+  type: Date,
+  default: null
+}
 },{
   timestamps: true
 });

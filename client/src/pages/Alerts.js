@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./Alerts.css";
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -18,6 +18,8 @@ const SEVERITY_LABEL = {
   critical: "Critical",
 };
 
+const navClass = ({ isActive }) => (isActive ? "active" : "");
+
 function formatDate(isoString) {
   const d = new Date(isoString);
   return d.toLocaleDateString("en-GB"); // dd/mm/yyyy, matches the old placeholder format
@@ -32,6 +34,7 @@ function Alerts() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -44,10 +47,19 @@ function Alerts() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim() === "") return;
+    navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+    setSearchTerm("");
+  };
+
+const handleLogout = () => {
     logout();
     navigate("/");
   };
+
 
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,11 +88,27 @@ function Alerts() {
         <div className="logo">🌿 MangroveGuard</div>
 
         <div className="nav-links">
-          <Link to="/dashboard">Dashboard</Link>
-          <Link to="/sites">Sites</Link>
-          <Link to="/alerts">Alerts</Link>
-          <Link to="/about">About</Link>
-          <Link to="/contact">Contact</Link>
+          <NavLink to="/dashboard" className={navClass}>Dashboard</NavLink>
+          <NavLink to="/sites" className={navClass}>Sites</NavLink>
+          <NavLink to="/alerts" className={navClass}>Alerts</NavLink>
+          <NavLink to="/about" className={navClass}>About</NavLink>
+          <NavLink to="/contact" className={navClass}>Contact</NavLink>
+
+          <form className="search-form" onSubmit={handleSearch}>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button type="submit" className="search-icon-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
+          </form>
 
           <div className="profile-menu" ref={menuRef}>
             <button
@@ -137,18 +165,22 @@ function Alerts() {
 
               {loading ? (
                 <tr>
-                  <td colSpan="6">Loading alerts…</td>
+                  <td colSpan="6" className="table-empty-msg">Loading alerts…</td>
                 </tr>
               ) : alerts.length === 0 ? (
                 <tr>
-                  <td colSpan="6">No alerts to show</td>
+                  <td colSpan="6" className="table-empty-msg">No alerts to show</td>
                 </tr>
               ) : (
                 alerts.map((alert) => (
-                  <tr key={alert._id}>
+                  <tr key={alert._id} className={`severity-row-${alert.severity_level}`}>
                     <td>{alert.device?.site?.name || "—"}</td>
-                    <td>{alert.message}</td>
-                    <td>{SEVERITY_LABEL[alert.severity_level] || alert.severity_level}</td>
+                    <td className="alert-message-cell">{alert.message}</td>
+                    <td>
+                      <span className={`severity-badge severity-${alert.severity_level}`}>
+                        {SEVERITY_LABEL[alert.severity_level] || alert.severity_level}
+                      </span>
+                    </td>
                     <td>{formatDate(alert.created_at)}</td>
                     <td>{formatTime(alert.created_at)}</td>
                     <td>

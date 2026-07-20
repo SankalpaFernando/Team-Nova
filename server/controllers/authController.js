@@ -52,6 +52,9 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
+    user.lastLogin = new Date();
+    await user.save({ validateBeforeSave: false });
+
     sendTokenResponse(user, 200, res);
   } catch (error) {
     next(error);

@@ -1,496 +1,389 @@
-/* ==========================================================
-   GLOBAL
-========================================================== */
+/* ═══════════════════════════════════════════════
+   AdminProfile.css  —  MangroveGuard Admin Panel
+   Design: matches Users / Sites admin pages
+═══════════════════════════════════════════════ */
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Layout ─────────────────────────────────── */
+.mu-page {
+  display: flex;
+  min-height: 100vh;
+  background: #eef3f0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #1a2e24;
 }
 
-body{
-    font-family:Arial, Helvetica, sans-serif;
-    background:#f4f6f8;
+/* ── Sidebar ─────────────────────────────────── */
+.mu-sidebar {
+  width: 248px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #152b1f 0%, #1c3a2a 100%);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255,255,255,0.04);
 }
 
-/* ==========================================================
-   BACKGROUND
-========================================================== */
-
-.admin-profile-page{
-    min-height:100vh;
-    background-size:cover;
-    background-position:center;
-    background-repeat:no-repeat;
+.mu-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 26px 20px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
-.admin-profile-overlay{
-    min-height:100vh;
-    background:rgba(0,0,0,.45);
-    padding-bottom:50px;
+.mu-brand-icon { font-size: 30px; line-height: 1; }
+
+.mu-brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.2px;
 }
 
-/* ==========================================================
-   NAVBAR
-========================================================== */
-
-.admin-navbar{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-
-    background:#1f4d3a;
-
-    padding:18px 40px;
-
+.mu-brand-role {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6fcf97;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  margin-top: 2px;
 }
 
-.logo{
-
-    color:#fff;
-
-    font-size:24px;
-
-    font-weight:bold;
-
+.mu-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  flex: 1;
+  gap: 2px;
 }
 
-.nav-links{
-
-    display:flex;
-
-    gap:30px;
-
+.mu-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 9px;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
 }
 
-.nav-links a{
-
-    text-decoration:none;
-
-    color:white;
-
-    font-weight:500;
-
-    transition:.3s;
-
+.mu-nav-link:hover {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.9);
 }
 
-.nav-links a:hover{
-
-    color:#b7ff7a;
-
+.mu-nav-link--active {
+  background: rgba(111,207,151,0.15) !important;
+  color: #6fcf97 !important;
+  font-weight: 600;
 }
 
-/* ==========================================================
-   PAGE TITLE
-========================================================== */
+.mu-nav-icon { font-size: 16px; width: 20px; text-align: center; }
 
-.profile-header{
-
-    text-align:center;
-
-    padding:35px 20px;
-
+.mu-sidebar-bottom {
+  padding: 16px 14px 20px;
+  border-top: 1px solid rgba(255,255,255,0.07);
 }
 
-.profile-header h1{
-
-    color:white;
-
-    font-size:42px;
-
-    letter-spacing:1px;
-
-    text-shadow:2px 2px 8px rgba(0,0,0,.6);
-
+.mu-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  margin-bottom: 10px;
 }
 
-/* ==========================================================
-   PROFILE LAYOUT
-========================================================== */
-
-.profile-container{
-
-    width:90%;
-
-    max-width:1200px;
-
-    margin:auto;
-
-    display:flex;
-
-    gap:35px;
-
-    align-items:flex-start;
-
+.mu-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #27ae60, #1a6640);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-/* ==========================================================
-   PROFILE CARD
-========================================================== */
-
-.profile-card{
-
-    width:360px;
-
-    background:white;
-
-    border-radius:15px;
-
-    padding:30px;
-
-    box-shadow:0 8px 25px rgba(0,0,0,.25);
-
+.mu-user-name  { font-size: 13px; font-weight: 600; color: #fff; }
+.mu-user-email {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
 
-/* ==========================================================
-   PROFILE IMAGE
-========================================================== */
+.mu-logout-btn {
+  width: 100%;
+  padding: 9px;
+  background: rgba(231,76,60,0.12);
+  border: 1px solid rgba(231,76,60,0.25);
+  border-radius: 8px;
+  color: #e27a73;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mu-logout-btn:hover { background: rgba(231,76,60,0.22); }
 
-.profile-image{
-
-    width:160px;
-    height:160px;
-
-    margin:0 auto 20px;
-
-    border-radius:50%;
-
-    overflow:hidden;
-
-    border:4px solid #1f4d3a;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    background:#f5f5f5;
-
+/* ── Main ────────────────────────────────────── */
+.mu-main {
+  flex: 1;
+  padding: 32px 36px 48px;
+  overflow-y: auto;
 }
 
-.profile-image img{
-
-    width:100%;
-    height:100%;
-    object-fit:cover;
-
+.mu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 26px;
 }
 
-.default-avatar{
+.mu-breadcrumb { font-size: 12px; color: #8aaa98; margin-bottom: 5px; letter-spacing: 0.3px; }
+.mu-title      { font-size: 26px; font-weight: 700; color: #152b1f; letter-spacing: -0.4px; }
+.mu-subtitle   { font-size: 13px; color: #6a8878; margin-top: 4px; }
 
-    font-size:80px;
+/* ══════════════════════════════════════════════
+   PROFILE CARD (ap- = Admin Profile)
+═══════════════════════════════════════════════ */
 
+.ap-container {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
 }
 
-/* ==========================================================
-   IMAGE UPLOAD BUTTON
-========================================================== */
-
-.upload-btn{
-
-    display:block;
-
-    width:170px;
-
-    margin:15px auto 25px;
-
-    text-align:center;
-
-    background:#1f4d3a;
-
-    color:white;
-
-    padding:10px;
-
-    border-radius:8px;
-
-    cursor:pointer;
-
-    font-weight:bold;
-
-    transition:.3s;
-
+.ap-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  border: 1px solid #deeae3;
 }
 
-.upload-btn:hover{
-
-    background:#2d6a4f;
-
+/* Image */
+.ap-image {
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #1c3a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef8f2;
 }
 
-/* ==========================================================
-   DIVIDER
-========================================================== */
-
-.profile-card hr{
-
-    border:none;
-
-    border-top:1px solid #ddd;
-
-    margin:20px 0;
-
+.ap-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* ==========================================================
-   PROFILE DETAILS
-========================================================== */
-
-.profile-details{
-
-    width:100%;
-
+.ap-default-avatar {
+  font-size: 52px;
+  font-weight: 700;
+  color: #1c3a2a;
 }
 
-.detail-row{
+/* Upload button */
+.ap-upload-btn {
+  display: block;
+  width: 170px;
+  margin: 14px auto 22px;
+  text-align: center;
+  background: #1c3a2a;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.ap-upload-btn:hover { background: #27523c; }
 
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:15px 0;
-
-    border-bottom:1px solid #ececec;
-
+.ap-card hr {
+  border: none;
+  border-top: 1px solid #edf4ef;
+  margin: 20px 0;
 }
 
-.detail-row span{
-
-    color:#666;
-
-    font-size:15px;
-
+/* Error banner */
+.ap-field-error {
+  background: #fde8e8;
+  color: #b03020;
+  border: 1px solid #f0c0b0;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  text-align: center;
 }
 
-.detail-row strong{
+/* Details rows */
+.ap-details { width: 100%; }
 
-    color:#222;
+.ap-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #edf4ef;
+}
+.ap-row:last-child { border-bottom: none; }
 
-    font-size:15px;
-
+.ap-row span {
+  color: #6a8878;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.status-active{
-
-    color:#28a745;
-
-    font-weight:bold;
-
-}
-.status-active{
-    color:#28a745;
-    font-weight:bold;
+.ap-row strong {
+  color: #1c3a2a;
+  font-size: 14px;
 }
 
-.status-inactive{
-    color:#dc3545;
-    font-weight:bold;
+.ap-role-badge {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fde8e8;
+  color: #b03020;
 }
 
-/* ==========================================================
-   EDIT PROFILE CARD
-========================================================== */
-
-.edit-card{
-
-    flex:1;
-
-    background:white;
-
-    border-radius:15px;
-
-    padding:35px;
-
-    box-shadow:0 8px 25px rgba(0,0,0,.25);
-
+/* Inline value + pencil */
+.ap-value-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.edit-card h2{
-
-    color:#1f4d3a;
-
-    margin-bottom:25px;
-
+.ap-pencil-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #8aaa98;
+  padding: 2px 5px;
+  border-radius: 5px;
+  transition: 0.15s;
+}
+.ap-pencil-btn:hover {
+  color: #1c3a2a;
+  background: #eef8f2;
 }
 
-.edit-card label{
-
-    display:block;
-
-    margin-top:18px;
-
-    margin-bottom:8px;
-
-    color:#333;
-
-    font-weight:bold;
-
+/* Inline editing */
+.ap-edit-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
-.edit-card input{
-
-    width:100%;
-
-    padding:12px;
-
-    border:1px solid #ccc;
-
-    border-radius:6px;
-
-    font-size:15px;
-
-    transition:.3s;
-
+.ap-edit-inline input {
+  padding: 8px 11px;
+  border: 1.5px solid #cce0d6;
+  border-radius: 7px;
+  font-size: 13px;
+  max-width: 180px;
+  background: #f7fbf9;
+  color: #1c3a2a;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ap-edit-inline input:focus {
+  border-color: #1c3a2a;
+  box-shadow: 0 0 0 3px rgba(28,58,42,0.1);
+  background: #fff;
 }
 
-/* For future dropdowns */
-
-.edit-card select{
-
-    width:100%;
-
-    padding:12px;
-
-    border:1px solid #ccc;
-
-    border-radius:6px;
-
-    font-size:15px;
-
-    background:white;
-
-    transition:.3s;
-
+.ap-save-btn, .ap-cancel-btn {
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  transition: background 0.15s;
 }
 
-.edit-card input:focus,
-.edit-card select:focus{
+.ap-save-btn {
+  background: #1c3a2a;
+  color: #fff;
+}
+.ap-save-btn:hover { background: #27523c; }
+.ap-save-btn:disabled { background: #9bbdad; cursor: not-allowed; }
 
-    outline:none;
+.ap-cancel-btn {
+  background: #edf4ef;
+  color: #5a7a6c;
+}
+.ap-cancel-btn:hover { background: #dcebe3; }
+.ap-cancel-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    border-color:#1f4d3a;
-
-    box-shadow:0 0 5px rgba(31,77,58,.3);
-
+.ap-save-btn--wide, .ap-cancel-btn--wide {
+  width: auto;
+  border-radius: 7px;
+  padding: 9px 18px;
+  font-size: 13px;
 }
 
-.edit-card button{
+/* Password block */
+.ap-password-row { align-items: flex-start; }
 
-    width:100%;
-
-    margin-top:30px;
-
-    padding:13px;
-
-    background:#1f4d3a;
-
-    color:white;
-
-    border:none;
-
-    border-radius:6px;
-
-    cursor:pointer;
-
-    font-size:16px;
-
-    font-weight:bold;
-
-    transition:.3s;
-
+.ap-password-edit {
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
 }
 
-.edit-card button:hover{
-
-    background:#2d6a4f;
-
+.ap-password-edit input {
+  max-width: 100%;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
-/* ==========================================================
-   RESPONSIVE
-========================================================== */
-
-@media(max-width:992px){
-
-    .profile-container{
-
-        flex-direction:column;
-
-    }
-
-    .profile-card{
-
-        width:100%;
-
-    }
-
+.ap-password-edit-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
-@media(max-width:768px){
-
-    .admin-navbar{
-
-        flex-direction:column;
-
-        gap:15px;
-
-    }
-
-    .nav-links{
-
-        flex-wrap:wrap;
-
-        justify-content:center;
-
-        gap:18px;
-
-    }
-
-    .profile-header h1{
-
-        font-size:34px;
-
-    }
-
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 768px) {
+  .mu-sidebar { display: none; }
+  .mu-main    { padding: 20px 16px; }
+  .ap-container { max-width: 100%; }
 }
 
-@media(max-width:600px){
-
-    .profile-card{
-
-        padding:20px;
-
-    }
-
-    .edit-card{
-
-        padding:20px;
-
-    }
-
-    .profile-image{
-
-        width:130px;
-
-        height:130px;
-
-    }
-
-    .default-avatar{
-
-        font-size:60px;
-
-    }
-
-    .upload-btn{
-
-        width:150px;
-
-        font-size:14px;
-
-    }
-
+@media (max-width: 480px) {
+  .ap-card { padding: 22px; }
+  .ap-image { width: 110px; height: 110px; }
+  .ap-default-avatar { font-size: 40px; }
 }
