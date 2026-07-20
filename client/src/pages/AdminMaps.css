@@ -270,17 +270,27 @@
 .am-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
+  table-layout: fixed;
 }
 
 .am-table thead tr { background: #1c3a2a; }
+
+.am-table th:nth-child(1) { width: 2px; }
+.am-table th:nth-child(2) { width: 40%; }
+.am-table th:nth-child(3) { width: 30%; }
+.am-table th:nth-child(4) { width: 25%; }
+.am-table th:nth-child(5) { width: 25%; }
+.am-table th:nth-child(6) { width: 25%; }
+.am-table th:nth-child(7) { width: 25%; }
+.am-table th:nth-child(8) { width: 50%; }
 
 .am-table thead th {
   color: rgba(255,255,255,0.82);
   font-weight: 600;
   font-size: 12px;
   padding: 14px 16px;
-  text-align: center;
+  text-align: middle;
   letter-spacing: 0.4px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -288,6 +298,11 @@
 
 .am-table td:nth-child(2) {
   text-align: left;
+  padding-left: 16px;
+}
+
+.am-table th:nth-child(8) {
+  text-align: center;
   padding-left: 16px;
 }
 
@@ -300,7 +315,7 @@
 
 .am-table td { padding: 13px 16px; vertical-align: middle; color: #2d4a3e; }
 
-.am-td-num  { color: #8aaa98 !important; font-weight: 700; width: 40px; }
+.am-td-num  { color: #8aaa98 !important; font-weight: 700; width: 10px; text-align: center; padding: 13px 6px !important; }
 .am-td-name { font-weight: 600; color: #1c3a2a !important; }
 .am-td-loc  { font-size: 13px; color: #5a7a6c !important; }
 .am-td-data { font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -331,7 +346,7 @@
 .am-actions { display: flex; gap: 6px; flex-wrap: nowrap; }
 
 .am-act {
-  padding: 6px 11px;
+  padding: 5px 8px;
   border-radius: 7px;
   font-size: 12px;
   font-weight: 600;
