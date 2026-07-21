@@ -32,7 +32,8 @@ function AdminMaps() {
   const [formErr, setFormErr]   = useState("");
 
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
-
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
   
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -134,6 +135,15 @@ function AdminMaps() {
   const regionClass = (r) => ({ Northern:"rn", Southern:"rs", Eastern:"re", Western:"rw" }[r] || "rn");
 
   const handleLogout = () => { logout(); navigate("/"); };
+  
+  //filter for site names
+  const filteredSites = sites
+  .filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
+  .sort((a, b) =>
+    sortOrder === "asc"
+      ? a.name.localeCompare(b.name)
+      : b.name.localeCompare(a.name)
+  );
 
   // ── render ────────────────────────────────────────────
   return (
@@ -197,7 +207,8 @@ function AdminMaps() {
             { icon: "📍", val: sites.length,                     label: "Total Sites"       },
             { icon: "🧭", val: byRegion("Northern"),             label: "Northern Province" },
             { icon: "🌊", val: byRegion("Southern"),             label: "Southern Province" },
-            { icon: "🗺️", val: byRegion("Eastern")+byRegion("Western"), label: "East / West" },
+            { icon: "➡️", val: byRegion("Eastern"),  label: "Eastern Province" },
+            { icon: "⬅️", val: byRegion("Western"),  label: "Western Province" },
           ].map((s, i) => (
             <div className="am-stat-card" key={i}>
               <span className="am-stat-icon">{s.icon}</span>
@@ -207,6 +218,19 @@ function AdminMaps() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Site Filter */}
+        <div className="am-card" style={{ padding: "16px 20px", marginBottom: "20px", display: "flex", gap: "14px", alignItems: "center" }}>
+          <label className="am-lbl" style={{ margin: 0 }}>Filter by Site Name:</label>
+          <input 
+            type="text" 
+            className="am-inp" 
+            style={{ width: "300px", margin: 0 }} 
+            placeholder="Search sites..." 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
+          />
         </div>
 
         {/* Error */}
@@ -226,7 +250,13 @@ function AdminMaps() {
               <thead>
                 <tr>
                   <th></th>
-                  <th>Site Name</th>
+                  <th 
+                    onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")} 
+                    style={{ cursor: "pointer", userSelect: "none" }}
+                    title="Click to toggle sort order"
+                  >
+                    Site Name {sortOrder === "asc" ? "▲" : "▼"}
+                  </th>
                   <th>Location</th>
                   <th>Region</th>
                   <th>pH Range</th>
@@ -236,13 +266,13 @@ function AdminMaps() {
                 </tr>
               </thead>
               <tbody>
-                {sites.length === 0 ? (
+                {filteredSites.length === 0 ? (
                   <tr>
                     <td colSpan="8" className="am-empty">
                       No sites found. Click <strong>＋ Add New Site</strong> to get started.
                     </td>
                   </tr>
-                ) : sites.map((site, i) => (
+                ) : filteredSites.map((site, i) => (
                   <tr key={site._id} className="am-tr">
                     <td className="am-td-num">{i + 1}</td>
                     <td className="am-td-name">{site.name}</td>
