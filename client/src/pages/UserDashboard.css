@@ -31,7 +31,7 @@
 .nav-links a{
     color:white;
     text-decoration:none;
-    font-weight:bold;
+    font-weight:500; /* was bold — now matches AdminDashboard's nav font-weight */
 }
 
 .nav-links a:hover{
@@ -198,27 +198,26 @@
 /* Cards */
 
 .card-row{
-    display:flex;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
     align-items:stretch;
-    gap:20px;
-    margin-bottom:20px;
+    gap:24px;
+    margin-bottom:24px;
     flex-shrink:0;
-    flex-wrap:wrap;
 }
 
 .card{
-    flex:1 1 0;
-    min-width:200px;
     background:white;
-    padding:16px 18px;
-    border-radius:12px;
+    padding:26px 28px;
+    border-radius:14px;
     box-shadow:0 5px 12px rgba(0,0,0,.25);
     transition:.3s;
     display:flex;
     align-items:center;
-    gap:14px;
+    gap:20px;
     text-align:left;
-    border-top:4px solid #2f5d50;
+    border-top:5px solid #2f5d50;
+    min-height:110px;
 }
 
 .card:hover{
@@ -228,14 +227,14 @@
 
 .card-icon{
     flex-shrink:0;
-    width:46px;
-    height:46px;
+    width:60px;
+    height:60px;
     border-radius:50%;
     background:#eef5f0;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:22px;
+    font-size:28px;
 }
 
 .card-sites{ border-top-color:#2f5d50; }
@@ -253,21 +252,21 @@
 
 .card h3{
     color:#2f5d50;
-    margin:0 0 4px;
-    font-size:12px;
+    margin:0 0 6px;
+    font-size:13px;
     text-transform:uppercase;
     letter-spacing:.4px;
 }
 
 .card h2{
     color:#1f4d3a;
-    font-size:26px;
+    font-size:34px;
     margin:2px 0;
 }
 
 .card p{
     color:#777;
-    font-size:11px;
+    font-size:12px;
     margin:0;
     line-height:1.3;
 }
@@ -285,7 +284,7 @@
 .graph-box,
 .alerts-box{
     background:white;
-    padding:20px 24px;
+    padding:24px 26px;
     border-radius:12px;
     box-shadow:0 5px 12px rgba(0,0,0,.25);
     min-height:0;
@@ -324,36 +323,38 @@
     flex:1;
     display:grid;
     grid-template-columns:repeat(4, 1fr);
-    gap:12px;
-    align-content:center;
+    gap:16px;
+    align-content:stretch;
+    align-items:stretch;
 }
 
 .gauge-card{
-    background:#f7faf8;
-    border-radius:12px;
-    padding:12px 8px;
+    background:#eef5f0;
+    border-radius:14px;
+    padding:20px 12px;
     text-align:center;
     display:flex;
     flex-direction:column;
     align-items:center;
+    justify-content:center;
 }
 
 .gauge-label{
-    font-size:13px;
+    font-size:14px;
     font-weight:bold;
     color:#2f5d50;
-    margin:0 0 4px;
+    margin:0 0 6px;
 }
 
 .gauge-svg{
     width:100%;
-    max-width:130px;
+    max-width:170px;
     height:auto;
 }
 
 .gauge-arc{
     fill:none;
-    stroke-width:10;
+    stroke-width:14;
     stroke-linecap:round;
 }
 
@@ -376,15 +377,15 @@
 }
 
 .gauge-value{
-    font-size:19px;
+    font-size:22px;
     font-weight:bold;
     color:#1f4d3a;
-    margin:2px 0 0;
+    margin:6px 0 0;
 }
 
 .gauge-status{
-    font-size:11px;
-    margin:2px 0 0;
+    font-size:12px;
+    margin:6px 0 0;
     font-weight:bold;
 }
 
@@ -418,24 +419,25 @@
 .dashboard-table{
     width:100%;
     border-collapse:collapse;
-    font-size:13px;
+    font-size:14px;
 }
 
 .dashboard-table th{
     background:#1f4d3a;
     color:white;
-    padding:10px 8px;
+    padding:14px 10px;
     position:sticky;
     top:0;
-    font-size:11px;
+    font-size:12px;
     text-transform:uppercase;
     letter-spacing:.4px;
 }
 
 .dashboard-table td{
-    padding:10px 8px;
+    padding:16px 10px;
     text-align:center;
     border-bottom:1px solid #eee;
+    font-size:14px;
 }
 
 .dashboard-table tbody tr{
@@ -454,12 +456,12 @@
 
 .alert-message-cell{
     text-align:left;
-    max-width:180px;
+    max-width:none;
 }
 
 .alert-time-cell{
     color:#777;
-    font-size:12px;
+    font-size:13px;
     white-space:nowrap;
 }
 
@@ -471,10 +473,10 @@
 .severity-row-low{ box-shadow:inset 3px 0 0 #6aa84f; }
 
 .severity-badge{
-    padding:3px 10px;
+    padding:5px 14px;
     border-radius:20px;
     font-weight:bold;
-    font-size:10px;
+    font-size:11px;
     text-transform:uppercase;
     letter-spacing:.4px;
     white-space:nowrap;
@@ -491,20 +493,20 @@
     display:inline-block;
     background:#fff3cd;
     color:#856404;
-    padding:3px 12px;
+    padding:5px 14px;
     border-radius:20px;
     font-weight:bold;
-    font-size:11px;
+    font-size:12px;
 }
 
 .resolved{
     display:inline-block;
     background:#d4edda;
     color:#155724;
-    padding:3px 12px;
+    padding:5px 14px;
     border-radius:20px;
     font-weight:bold;
-    font-size:11px;
+    font-size:12px;
 }
 
 /* Responsive: below this width we let the page scroll instead of
@@ -539,8 +541,8 @@
     font-size:26px;
 }
 
-.card{
-    flex-basis:100%;
+.card-row{
+    grid-template-columns:1fr;
 }
 
 .param-gauges{
