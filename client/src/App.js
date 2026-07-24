@@ -11,6 +11,8 @@ import SearchResults from "./pages/SearchResults";   // <-- NEW IMPORT
 import Contact from "./pages/Contact";
 import Sites from "./pages/Sites";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import UserDashboard from "./pages/UserDashboard";
 import Alerts from "./pages/Alerts";
 import Profile from "./pages/Profile";
@@ -56,6 +58,8 @@ function App() {
             <ProtectedRoute><Profile /></ProtectedRoute>
           } />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Admin Pages (behind login + admin role) */}
           <Route path="/admin-dashboard" element={

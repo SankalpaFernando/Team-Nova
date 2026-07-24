@@ -50,6 +50,22 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  // Forgot password — request a reset link be sent to the given email
+  const forgotPassword = async (email) => {
+    const res = await api.post('/auth/forgotpassword', { email });
+    return res.data; // { success, message, devResetUrl? }
+  };
+
+  // Reset password — submit new password using the token from the emailed link
+  const resetPassword = async (token, password) => {
+    const res = await api.put(`/auth/resetpassword/${token}`, { password });
+    const { token: authToken, user: userData } = res.data;
+    localStorage.setItem('mg_token', authToken);
+    localStorage.setItem('mg_user', JSON.stringify(userData));
+    setUser(userData);
+    return userData;
+  };
+
   // Logout function
   const logout = () => {
     localStorage.removeItem('mg_token');
@@ -67,6 +83,8 @@ export const AuthProvider = ({ children }) => {
       loading, 
       login, 
       register, 
+      forgotPassword,
+      resetPassword,
       logout, 
       isAdmin, 
       isLoggedIn 
