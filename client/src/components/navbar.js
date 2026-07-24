@@ -192,7 +192,9 @@ function Navbar() {
             </form>
 
             <p className="forgot-password">
-              Forgot Password?
+              <Link to="/forgot-password" onClick={() => setShowLogin(false)}>
+                Forgot Password?
+              </Link>
             </p>
 
             <p className="register-link">
