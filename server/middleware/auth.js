@@ -46,3 +46,29 @@ exports.authorize = (...roles) => {
     next();
   };
 };
+
+// Helper: Authorize Site Access for Site Engineers vs Admins
+exports.authorizeSiteAccess = (req, res, next) => {
+  if (req.user.role === 'admin') {
+    return next();
+  }
+
+  if (req.user.role === 'site_engineer') {
+    const targetSiteId = req.params.siteId || req.params.id || req.body.site;
+    const userAssignedSite = req.user.assignedSite ? req.user.assignedSite.toString() : null;
+
+    if (userAssignedSite && targetSiteId && userAssignedSite === targetSiteId.toString()) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: 'Forbidden: You do not have access to this site.'
+    });
+  }
+
+  return res.status(403).json({
+    success: false,
+    message: 'Forbidden: Role not authorized.'
+  });
+};

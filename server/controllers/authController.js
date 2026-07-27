@@ -14,6 +14,8 @@ const sendTokenResponse = (user, statusCode, res) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    assignedSite: user.assignedSite,
+    notificationPrefs: user.notificationPrefs,
     created_at: user.created_at
   };
   res.status(statusCode).json({ success: true, token, user: userObj });
@@ -49,7 +51,7 @@ exports.login = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password').populate('assignedSite', 'name location region');
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
@@ -68,7 +70,7 @@ exports.login = async (req, res, next) => {
 // @access  Private
 exports.getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).populate('assignedSite', 'name location region');
     res.status(200).json({ success: true, user });
   } catch (error) {
     next(error);

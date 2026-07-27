@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { getUsers, getUser, createUser, updateUser, deleteUser, updateProfile ,getRecentLogins } = require('../controllers/userController');
+const { getUsers, getUser, createUser, updateUser, deleteUser, updateProfile, getRecentLogins, changeUserRole } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect);
 
 router.put('/profile', updateProfile);
-router.get('/recent-logins', authorize('admin'), getRecentLogins);  //add recent login
+router.get('/recent-logins', authorize('admin'), getRecentLogins);
+router.put('/:id/role', authorize('admin'), changeUserRole);
 
 router.route('/')
   .get(authorize('admin'), getUsers)
