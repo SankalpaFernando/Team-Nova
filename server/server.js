@@ -56,13 +56,17 @@ app.get('/', (req, res) => {
 });
 
 // Mount routes
-app.use('/api/auth',    require('./routes/auth'));
-app.use('/api/users',   require('./routes/user'));
-app.use('/api/sites',   require('./routes/site'));
-app.use('/api/devices', require('./routes/device'));
-app.use('/api/readings',require('./routes/sensorreading'));
-app.use('/api/alerts',  require('./routes/alert'));
-app.use('/api/messages',require('./routes/message'));
+app.use('/api/auth',       require('./routes/auth'));
+app.use('/api/users',      require('./routes/user'));
+app.use('/api/sites',      require('./routes/site'));
+app.use('/api/devices',    require('./routes/device'));
+app.use('/api/sensors',    require('./routes/sensor'));
+app.use('/api/parameters', require('./routes/parameter'));
+app.use('/api/readings',   require('./routes/sensorreading'));
+app.use('/api/alerts',     require('./routes/alert'));
+app.use('/api/messages',   require('./routes/message'));
+app.use('/api/search',     require('./routes/search'));
+app.use('/api/change-requests', require('./routes/changeRequest'));
 
 // 404 handler — catches any route that doesn't match above
 app.use((req, res) => {
