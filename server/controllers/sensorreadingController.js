@@ -1,120 +1,185 @@
 const SensorReading = require('../models/SensorReading');
 const Device = require('../models/Device');
+const Sensor = require('../models/Sensor');
 const Alert = require('../models/Alert');
-const User = require('../models/User');
+const Parameter = require('../models/Parameter');
+const { processAlertSms } = require('../services/smsService');
 
 // Helper: check reading against site thresholds and generate alerts
-const generateAlerts = async (reading, device, site, io) => {
-  const parameters = ['pH', 'temperature', 'salinity', 'dissolved_o2'];
-  const alerts = [];
-
-  for (const param of parameters) {
-    const value = reading[param];
-    const threshold = site.thresholds[param];
-
-    if (!threshold || value === undefined || value === null) continue;
-
-    let breached = null;
-    let thresholdValue = null;
-
-    if (value < threshold.min) {
-      breached = 'min';
-      thresholdValue = threshold.min;
-    } else if (value > threshold.max) {
-      breached = 'max';
-      thresholdValue = threshold.max;
-    }
-
-    if (!breached) continue;
-
-    // Calculate severity based on how far the value is from threshold
-    const deviation = Math.abs(value - thresholdValue) / thresholdValue;
-    let severity = 'low';
-    if (deviation > 0.3) severity = 'critical';
-    else if (deviation > 0.2) severity = 'high';
-    else if (deviation > 0.1) severity = 'medium';
-
-    // Build a human readable message
-    const unit = { 
-      pH: '', 
-      temperature: '°C', 
-      salinity: ' ppt', 
-      dissolved_o2: ' mg/L' 
-    }[param];
-
-    const paramLabel = param === 'dissolved_o2' ? 'Dissolved O₂' : param.toUpperCase();
-    const direction = breached === 'min' ? 'dropped below minimum' : 'exceeded maximum';
-    const message = `${paramLabel} level of ${value}${unit} has ${direction} threshold of ${thresholdValue}${unit} at site ${site.name}.`;
-
-    // Send alert to all admin users
-    const adminUsers = await User.find({ role: 'admin' }, '_id');
-    const recipientIds = adminUsers.map(u => u._id);
-
-    const alert = await Alert.create({
-      reading: reading._id,
-      device: device._id,
-      parameter_name: param,
-      severity_level: severity,
-      measured_value: value,
-    //   threshold_breached: breached,
-    //   threshold_value: thresholdValue,
-      message,
-    //   recipients: recipientIds,
-      status: 'unread'
-    });
-
-    alerts.push(alert);
-
-    // Emit real-time alert via Socket.io if available
-    if (io) {
-      io.emit('new_alert', alert);
-    }
+const generateAlertForReading = async (readingDoc, sensorDoc, deviceDoc, siteDoc, io) => {
+  if (!sensorDoc || !sensorDoc.parameter || !siteDoc || !siteDoc.thresholds) {
+    return null;
   }
 
-  return alerts;
+  const parameter = sensorDoc.parameter;
+  const value = readingDoc.value;
+
+  // Find matching threshold for this parameter in site.thresholds
+  const thresholdObj = siteDoc.thresholds.find(t => {
+    const thresholdParamId = t.parameter._id ? t.parameter._id.toString() : t.parameter.toString();
+    const sensorParamId = parameter._id ? parameter._id.toString() : parameter.toString();
+    return thresholdParamId === sensorParamId;
+  });
+
+  if (!thresholdObj || value === undefined || value === null) {
+    return { alert: null, nearThreshold: false };
+  }
+
+  const { min, max } = thresholdObj;
+  let breached = null;
+  let thresholdValue = null;
+
+  if (value < min) {
+    breached = 'min';
+    thresholdValue = min;
+  } else if (value > max) {
+    breached = 'max';
+    thresholdValue = max;
+  }
+
+  // Check adaptive sampling proximity (within ~20% of min or max boundary)
+  const isNearMin = min !== 0 ? (value - min) / min <= 0.2 : value <= 1.2;
+  const isNearMax = max !== 0 ? (max - value) / max <= 0.2 : false;
+  const nearThreshold = breached !== null || isNearMin || isNearMax;
+
+  if (!breached) {
+    return { alert: null, nearThreshold };
+  }
+
+  // Calculate severity based on deviation percentage
+  const deviation = thresholdValue !== 0 ? Math.abs(value - thresholdValue) / thresholdValue : 0.2;
+  let severity = 'low';
+  if (deviation > 0.3) severity = 'critical';
+  else if (deviation > 0.2) severity = 'high';
+  else if (deviation > 0.1) severity = 'medium';
+
+  const unitStr = parameter.unit ? ` ${parameter.unit}` : '';
+  const direction = breached === 'min' ? 'dropped below minimum' : 'exceeded maximum';
+  const message = `${parameter.label} level of ${value}${unitStr} has ${direction} threshold of ${thresholdValue}${unitStr} at site ${siteDoc.name}.`;
+
+  // Create Alert document (persisting denormalized parameter_name and unit)
+  const alert = await Alert.create({
+    reading: readingDoc._id,
+    device: deviceDoc._id,
+    sensor: sensorDoc._id,
+    parameter: parameter._id,
+    parameter_name: parameter.label,
+    unit: parameter.unit || '',
+    severity_level: severity,
+    measured_value: value,
+    message,
+    status: 'unread'
+  });
+
+  // Process targeted SMS notifications (with DB-persisted cooldown check)
+  await processAlertSms(alert, siteDoc, parameter);
+
+  // Emit real-time alert via Socket.io if available
+  if (io) {
+    io.emit('new_alert', alert);
+  }
+
+  return { alert, nearThreshold };
 };
 
-// @desc    Submit a new sensor reading
+// @desc    Submit a batch of new sensor readings
 // @route   POST /api/readings
-// @access  Private
+// @access  Private (Device API Key or User JWT)
 exports.createReading = async (req, res, next) => {
   try {
-    const { device: deviceId, pH, temperature, salinity, dissolved_o2 } = req.body;
+    let deviceDoc = req.device;
+    const { device: deviceIdPayload, readings: rawReadings } = req.body;
 
-    // Find device and populate its site (with thresholds)
-    const device = await Device.findById(deviceId).populate('site');
-    if (!device) {
+    if (!deviceDoc) {
+      const deviceIdentifier = deviceIdPayload || req.body.device_id;
+      if (!deviceIdentifier) {
+        return res.status(400).json({ success: false, message: 'Device ID is required in body or x-device-key header' });
+      }
+
+      deviceDoc = await Device.findById(deviceIdentifier).populate({
+        path: 'site',
+        populate: { path: 'thresholds.parameter' }
+      });
+
+      if (!deviceDoc) {
+        deviceDoc = await Device.findOne({ device_id: deviceIdentifier.toUpperCase() }).populate({
+          path: 'site',
+          populate: { path: 'thresholds.parameter' }
+        });
+      }
+    } else if (!deviceDoc.site || !deviceDoc.site.thresholds) {
+      // Ensure site and thresholds are populated
+      deviceDoc = await Device.findById(deviceDoc._id).populate({
+        path: 'site',
+        populate: { path: 'thresholds.parameter' }
+      });
+    }
+
+    if (!deviceDoc) {
       return res.status(404).json({ success: false, message: 'Device not found' });
     }
-    if (device.status !== 'active') {
+
+    if (deviceDoc.status !== 'active') {
       return res.status(400).json({ success: false, message: 'Device is not active' });
     }
 
-    // Save the reading
-    const reading = await SensorReading.create({
-      device: deviceId,
-      pH,
-      temperature,
-      salinity,
-      dissolved_o2
-    });
+    // Support single reading object or array of readings
+    const readingList = Array.isArray(rawReadings) ? rawReadings : [req.body];
+
+    if (!readingList || readingList.length === 0) {
+      return res.status(400).json({ success: false, message: 'No readings provided' });
+    }
+
+    const createdReadings = [];
+    const generatedAlerts = [];
+    let adaptiveSamplingTriggered = false;
+
+    const io = req.app.get('io');
+
+    for (const item of readingList) {
+      if (!item.sensor || item.value === undefined) continue;
+
+      const sensorDoc = await Sensor.findById(item.sensor).populate('parameter');
+      if (!sensorDoc) continue;
+
+      const readingDoc = await SensorReading.create({
+        sensor: sensorDoc._id,
+        device: deviceDoc._id,
+        value: item.value,
+        recorded_at: item.recorded_at ? new Date(item.recorded_at) : new Date()
+      });
+
+      createdReadings.push(readingDoc);
+
+      const alertResult = await generateAlertForReading(readingDoc, sensorDoc, deviceDoc, deviceDoc.site, io);
+      if (alertResult) {
+        if (alertResult.alert) generatedAlerts.push(alertResult.alert);
+        if (alertResult.nearThreshold) adaptiveSamplingTriggered = true;
+      }
+
+      if (io) {
+        io.emit('new_reading', {
+          ...readingDoc.toObject(),
+          sensor: sensorDoc,
+          device: deviceDoc
+        });
+      }
+    }
 
     // Update device lastSeen timestamp
-    await Device.findByIdAndUpdate(deviceId, { lastSeen: new Date() });
+    await Device.findByIdAndUpdate(deviceDoc._id, { lastSeen: new Date() });
 
-    // Generate alerts based on site thresholds
-    const io = req.app.get('io');
-    const alerts = await generateAlerts(reading, device, device.site, io);
-
-    // Emit real-time reading to dashboard
-    if (io) {
-      io.emit('new_reading', reading);
-    }
+    // Adaptive sampling interval calculation:
+    // If value is within ~20% of threshold, suggest 60s sample rate; otherwise default sampling_interval_seconds
+    const defaultInterval = deviceDoc.sampling_interval_seconds || 900;
+    const next_sample_in_seconds = adaptiveSamplingTriggered ? Math.min(60, defaultInterval) : defaultInterval;
 
     res.status(201).json({
       success: true,
-      data: reading,
-      alertsGenerated: alerts.length
+      count: createdReadings.length,
+      data: createdReadings,
+      alertsGenerated: generatedAlerts.length,
+      next_sample_in_seconds
     });
   } catch (error) {
     next(error);
@@ -126,10 +191,11 @@ exports.createReading = async (req, res, next) => {
 // @access  Private
 exports.getReadings = async (req, res, next) => {
   try {
-    const { device, limit = 50, from, to, page = 1 } = req.query;
+    const { device, sensor, limit = 50, from, to, page = 1 } = req.query;
 
     const query = {};
     if (device) query.device = device;
+    if (sensor) query.sensor = sensor;
     if (from || to) {
       query.recorded_at = {};
       if (from) query.recorded_at.$gte = new Date(from);
@@ -142,7 +208,11 @@ exports.getReadings = async (req, res, next) => {
 
     const [readings, total] = await Promise.all([
       SensorReading.find(query)
-        .populate('device', 'device_id site')
+        .populate('device', 'device_id site status')
+        .populate({
+          path: 'sensor',
+          populate: { path: 'parameter', select: 'key label unit' }
+        })
         .sort({ recorded_at: -1 })
         .skip(skip)
         .limit(limitNum),
@@ -162,27 +232,26 @@ exports.getReadings = async (req, res, next) => {
   }
 };
 
-// @desc    Get latest reading per device
+// @desc    Get latest reading per sensor
 // @route   GET /api/readings/latest
 // @access  Private
 exports.getLatestReadings = async (req, res, next) => {
   try {
     const latestReadings = await SensorReading.aggregate([
       { $sort: { recorded_at: -1 } },
-      { $group: { _id: '$device', doc: { $first: '$$ROOT' } } },
+      { $group: { _id: '$sensor', doc: { $first: '$$ROOT' } } },
       { $replaceRoot: { newRoot: '$doc' } }
     ]);
 
-    const populated = await SensorReading.populate(latestReadings, {
-      path: 'device',
-      select: 'device_id status site',
-      populate: { path: 'site', select: 'name location region' }
-    });
+    const populated = await SensorReading.populate(latestReadings, [
+      { path: 'device', select: 'device_id status site', populate: { path: 'site', select: 'name location region' } },
+      { path: 'sensor', populate: { path: 'parameter', select: 'key label unit' } }
+    ]);
 
-    res.status(200).json({ 
-      success: true, 
-      count: populated.length, 
-      data: populated 
+    res.status(200).json({
+      success: true,
+      count: populated.length,
+      data: populated
     });
   } catch (error) {
     next(error);
@@ -198,30 +267,31 @@ exports.getStats = async (req, res, next) => {
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
     const matchStage = { recorded_at: { $gte: since } };
-    if (device) matchStage.device = new mongoose.Types.ObjectId(device);
+    if (device) matchStage.device = new Device.base.Types.ObjectId(device);
 
     const stats = await SensorReading.aggregate([
       { $match: matchStage },
       {
         $group: {
-          _id: null,
-          avgPH: { $avg: '$pH' },
-          minPH: { $min: '$pH' },
-          maxPH: { $max: '$pH' },
-          avgTemp: { $avg: '$temperature' },
-          minTemp: { $min: '$temperature' },
-          maxTemp: { $max: '$temperature' },
-          avgSalinity: { $avg: '$salinity' },
-          avgDO: { $avg: '$dissolved_o2' },
+          _id: '$sensor',
+          avgValue: { $avg: '$value' },
+          minValue: { $min: '$value' },
+          maxValue: { $max: '$value' },
           count: { $sum: 1 }
         }
       }
     ]);
 
-    res.status(200).json({ 
-      success: true, 
-      data: stats[0] || {}, 
-      hours: parseInt(hours) 
+    const populatedStats = await Sensor.populate(stats, {
+      path: '_id',
+      select: 'model_name parameter device',
+      populate: { path: 'parameter', select: 'key label unit' }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: populatedStats,
+      hours: parseInt(hours)
     });
   } catch (error) {
     next(error);
