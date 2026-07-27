@@ -9,15 +9,18 @@ exports.getAlerts = async (req, res, next) => {
     const { status, severity, site, page = 1, limit = 20 } = req.query;
     const query = {};
 
-    // NOTE: alerts aren't scoped per-user (no site-subscription concept
-    // on the User model), so every logged-in user sees all alerts —
-    // same as sites/devices/readings elsewhere in this app.
-
     if (status) query.status = status;
     if (severity) query.severity_level = severity;
 
-    // Filter by site — resolve to device IDs first, since Alert doesn't store site directly
-    if (site) {
+    // Site engineer scoping vs site query parameter
+    if (req.user && req.user.role === 'site_engineer') {
+      const assignedSite = req.user.assignedSite;
+      if (!assignedSite) {
+        return res.status(200).json({ success: true, count: 0, total: 0, page: 1, pages: 0, data: [] });
+      }
+      const siteDevices = await Device.find({ site: assignedSite }).select('_id');
+      query.device = { $in: siteDevices.map(d => d._id) };
+    } else if (site) {
       const siteDevices = await Device.find({ site }).select('_id');
       query.device = { $in: siteDevices.map(d => d._id) };
     }
@@ -65,18 +68,39 @@ exports.getAlert = async (req, res, next) => {
   }
 };
 
-// @desc    Update alert status
+// @desc    Update alert status (Admin or Site Engineer for target site)
 // @route   PUT /api/alerts/:id/status
 // @access  Private
 exports.updateAlertStatus = async (req, res, next) => {
   try {
-    const { status } = req.body;
+    let { status } = req.body;
+    
+    const existingAlert = await Alert.findById(req.params.id).populate('device');
+    if (!existingAlert) return res.status(404).json({ success: false, message: 'Alert not found' });
+
+    if (req.user && req.user.role === 'site_engineer') {
+      const engineerAssignedSite = req.user.assignedSite ? req.user.assignedSite.toString() : null;
+      const alertDeviceSite = existingAlert.device && existingAlert.device.site ? existingAlert.device.site.toString() : null;
+
+      if (!engineerAssignedSite || engineerAssignedSite !== alertDeviceSite) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: You are only authorized to update alerts for your assigned site.'
+        });
+      }
+
+      // Two-stage alert resolution flow: site_engineer resolving an alert sets status to 'pending_confirmation'
+      if (status === 'resolved' || status === 'pending_confirmation') {
+        status = 'pending_confirmation';
+      }
+    }
+
     const alert = await Alert.findByIdAndUpdate(
       req.params.id,
       { status },
       { new: true, runValidators: true }
-    );
-    if (!alert) return res.status(404).json({ success: false, message: 'Alert not found' });
+    ).populate({ path: 'device', select: 'device_id', populate: { path: 'site', select: 'name location' } });
+
     res.status(200).json({ success: true, data: alert });
   } catch (error) {
     next(error);
