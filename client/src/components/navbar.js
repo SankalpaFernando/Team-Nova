@@ -25,11 +25,12 @@ function Navbar() {
   };
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  const user = await login(loginData.email, loginData.password);
-  if (user.role === "admin") navigate("/admin-dashboard");
-  else navigate("/dashboard");
-};
+    e.preventDefault();
+    const user = await login(loginData.email, loginData.password);
+    if (user.role === "admin") navigate("/admin-dashboard");
+    else if (user.role === "site_engineer") navigate("/site-engineer-dashboard");
+    else navigate("/dashboard");
+  };
 
   const handleSearch = (e) => {
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import "./ManageUsers.css";
 
@@ -10,6 +11,7 @@ function ManageUsers() {
 
   // ── Data state ─────────────────────────────────────────
   const [users, setUsers]     = useState([]);
+  const [sites, setSites]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
 
@@ -21,7 +23,7 @@ function ManageUsers() {
 
   // ── Form state ─────────────────────────────────────────
   const [form, setForm] = useState({
-    name: "", email: "", password: "", role: "registered_user"
+    name: "", email: "", password: "", role: "registered_user", assignedSite: ""
   });
   const [saving, setSaving]   = useState(false);
   const [formErr, setFormErr] = useState("");
@@ -34,15 +36,19 @@ function ManageUsers() {
     setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
   };
 
-  // ── Fetch all users ────────────────────────────────────
+  // ── Fetch all users & sites ────────────────────────────
   const load = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get("/users");
-      setUsers(res.data.data || []);
+      const [userRes, siteRes] = await Promise.all([
+        api.get("/users"),
+        api.get("/sites")
+      ]);
+      setUsers(userRes.data.data || []);
+      setSites(siteRes.data.data || []);
     } catch {
-      setError("Could not load users. Check that the backend is running.");
+      setError("Could not load user or site data. Check backend status.");
     } finally {
       setLoading(false);
     }
@@ -55,7 +61,7 @@ function ManageUsers() {
 
   // ── Add user ───────────────────────────────────────────
   const openAdd = () => {
-    setForm({ name: "", email: "", password: "", role: "registered_user" });
+    setForm({ name: "", email: "", password: "", role: "registered_user", assignedSite: "" });
     setFormErr("");
     setShowAdd(true);
   };
@@ -66,9 +72,17 @@ function ManageUsers() {
       setFormErr("Name, email and password are required.");
       return;
     }
+    if (form.role === "site_engineer" && !form.assignedSite) {
+      setFormErr("Selecting an assigned site is required when setting role to Site Engineer.");
+      return;
+    }
     setSaving(true);
     try {
-      await api.post("/users", form);
+      const res = await api.post("/users", form);
+      const newUserId = res.data.data._id;
+      if (form.role === "site_engineer") {
+        await api.put(`/users/${newUserId}/role`, { role: form.role, assignedSite: form.assignedSite });
+      }
       setShowAdd(false);
       load();
       showToast("User created successfully!");
@@ -82,7 +96,8 @@ function ManageUsers() {
   // ── Edit user ──────────────────────────────────────────
   const openEdit = (u) => {
     setSelected(u);
-    setForm({ name: u.name, email: u.email, password: "", role: u.role });
+    const siteId = u.assignedSite?._id || u.assignedSite || "";
+    setForm({ name: u.name, email: u.email, password: "", role: u.role, assignedSite: siteId });
     setFormErr("");
     setShowEdit(true);
   };
@@ -93,13 +108,24 @@ function ManageUsers() {
       setFormErr("Name and email are required.");
       return;
     }
+    if (form.role === "site_engineer" && !form.assignedSite) {
+      setFormErr("Selecting an assigned site is required when setting role to Site Engineer.");
+      return;
+    }
     setSaving(true);
     try {
+      // 1. Update basic info
       await api.put(`/users/${selected._id}`, {
         name: form.name,
-        email: form.email,
-        role: form.role
+        email: form.email
       });
+
+      // 2. Call role update endpoint
+      await api.put(`/users/${selected._id}/role`, {
+        role: form.role,
+        assignedSite: form.assignedSite
+      });
+
       setShowEdit(false);
       load();
       showToast("User updated successfully!");
@@ -135,17 +161,20 @@ function ManageUsers() {
 
   const roleClass = (role) => ({
     admin:            "mu-badge--admin",
-    registered_user:  "mu-badge--user",
-    visitor:          "mu-badge--visitor"
+    site_engineer:    "mu-badge--engineer",
+    registered_user:  "mu-badge--user"
   }[role] || "mu-badge--user");
 
   const roleLabel = (role) => ({
     admin:            "Admin",
-    registered_user:  "Registered User",
-    visitor:          "Visitor"
+    site_engineer:    "Site Engineer",
+    registered_user:  "Registered User"
   }[role] || role);
 
-  const handleLogout = () => { logout(); navigate("/"); };
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "—";
@@ -159,51 +188,7 @@ function ManageUsers() {
     <div className="mu-page">
 
       {/* ── Sidebar ── */}
-      <aside className="mu-sidebar">
-        <div className="mu-brand">
-          <span className="mu-brand-icon">🌿</span>
-          <div>
-            <div className="mu-brand-name">MangroveGuard</div>
-            <div className="mu-brand-role">Admin Panel</div>
-          </div>
-        </div>
-
-        <nav className="mu-nav">
-          {[
-            { to: "/admin-dashboard", icon: "⬛", label: "Dashboard" },
-            { to: "/manage-users",    icon: "👥", label: "Users",   active: true },
-            { to: "/manage-devices",  icon: "📡", label: "Devices"  },
-            { to: "/admin-alerts",    icon: "🔔", label: "Alerts"   },
-            { to: "/admin-maps",      icon: "📍", label: "Sites"    },
-            { to: "/admin-messages",  icon: "✉️", label: "Messages" },
-            { to: "/admin-profile",   icon: "👤", label: "Profile"  },
-          ].map(({ to, icon, label, active }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`mu-nav-link ${active ? "mu-nav-link--active" : ""}`}
-            >
-              <span className="mu-nav-icon">{icon}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="mu-sidebar-bottom">
-          <div className="mu-user-card">
-            <div className="mu-user-avatar">
-              {user?.name?.[0]?.toUpperCase() || "A"}
-            </div>
-            <div>
-              <div className="mu-user-name">{user?.name || "Admin"}</div>
-              <div className="mu-user-email">{user?.email || ""}</div>
-            </div>
-          </div>
-          <button className="mu-logout-btn" onClick={handleLogout}>
-            ⏻ Logout
-          </button>
-        </div>
-      </aside>
+      <AdminSidebar activePage="users" />
 
       {/* ── Main ── */}
       <main className="mu-main">
@@ -214,7 +199,7 @@ function ManageUsers() {
             <p className="mu-breadcrumb">Admin › Users</p>
             <h1 className="mu-title">Manage Users</h1>
             <p className="mu-subtitle">
-              View, create, edit and remove system users.
+              View, create, edit and assign roles/sites to system users.
             </p>
           </div>
           <button className="mu-btn-primary" onClick={openAdd}>
@@ -225,10 +210,10 @@ function ManageUsers() {
         {/* Stats */}
         <div className="mu-stats">
           {[
-            { icon: "👥", val: users.length,                label: "Total Users"       },
-            { icon: "🛡️", val: countByRole("admin"),         label: "Admins"            },
-            { icon: "👤", val: countByRole("registered_user"), label: "Registered Users" },
-            { icon: "🌐", val: countByRole("visitor"),       label: "Visitors"          },
+            { icon: "👥", val: users.length,                    label: "Total Users"       },
+            { icon: "🛡️", val: countByRole("admin"),             label: "Admins"            },
+            { icon: "👷", val: countByRole("site_engineer"),    label: "Site Engineers"    },
+            { icon: "👤", val: countByRole("registered_user"),     label: "Registered Users" },
           ].map((s, i) => (
             <div className="mu-stat-card" key={i}>
               <span className="mu-stat-icon">{s.icon}</span>
@@ -259,7 +244,7 @@ function ManageUsers() {
                   <th>#</th>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Role</th>
+                  <th>Role & Assignment</th>
                   <th>Joined</th>
                   <th>Actions</th>
                 </tr>
@@ -287,6 +272,11 @@ function ManageUsers() {
                       <span className={`mu-badge ${roleClass(u.role)}`}>
                         {roleLabel(u.role)}
                       </span>
+                      {u.role === 'site_engineer' && (
+                        <div style={{ fontSize: '0.78rem', color: '#2b8a3e', marginTop: '4px' }}>
+                          📍 {u.assignedSite?.name || 'Unassigned Site'}
+                        </div>
+                      )}
                     </td>
                     <td className="mu-td-dim">{formatDate(u.created_at)}</td>
                     <td>
@@ -358,8 +348,21 @@ function ManageUsers() {
               <label className="mu-lbl">Role</label>
               <select className="mu-inp" name="role" value={form.role} onChange={fc}>
                 <option value="registered_user">Registered User</option>
+                <option value="site_engineer">Site Engineer</option>
                 <option value="admin">Admin</option>
               </select>
+
+              {form.role === "site_engineer" && (
+                <>
+                  <label className="mu-lbl">Assigned Site</label>
+                  <select className="mu-inp" name="assignedSite" value={form.assignedSite} onChange={fc}>
+                    <option value="">-- Select Assigned Site --</option>
+                    {sites.map(s => (
+                      <option key={s._id} value={s._id}>{s.name} ({s.region})</option>
+                    ))}
+                  </select>
+                </>
+              )}
 
               <div className="mu-modal-foot">
                 <button
@@ -387,7 +390,7 @@ function ManageUsers() {
         <div className="mu-overlay" onClick={() => setShowEdit(false)}>
           <div className="mu-modal" onClick={e => e.stopPropagation()}>
             <div className="mu-modal-head">
-              <h2>Edit User</h2>
+              <h2>Edit User & Role Assignment</h2>
               <button className="mu-close" onClick={() => setShowEdit(false)}>✕</button>
             </div>
             <form className="mu-modal-body" onSubmit={doEdit}>
@@ -410,11 +413,24 @@ function ManageUsers() {
                 onChange={fc}
               />
 
-              <label className="mu-lbl">Role</label>
+              <label className="mu-lbl">System Role</label>
               <select className="mu-inp" name="role" value={form.role} onChange={fc}>
                 <option value="registered_user">Registered User</option>
+                <option value="site_engineer">Site Engineer</option>
                 <option value="admin">Admin</option>
               </select>
+
+              {form.role === "site_engineer" && (
+                <>
+                  <label className="mu-lbl">Assigned Site</label>
+                  <select className="mu-inp" name="assignedSite" value={form.assignedSite} onChange={fc}>
+                    <option value="">-- Select Assigned Site --</option>
+                    {sites.map(s => (
+                      <option key={s._id} value={s._id}>{s.name} ({s.region})</option>
+                    ))}
+                  </select>
+                </>
+              )}
 
               <div className="mu-modal-foot">
                 <button
@@ -429,7 +445,7 @@ function ManageUsers() {
                   className="mu-btn-primary"
                   disabled={saving}
                 >
-                  {saving ? "Saving…" : "Save Changes"}
+                  {saving ? "Saving…" : "Save Role Changes"}
                 </button>
               </div>
             </form>

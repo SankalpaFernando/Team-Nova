@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer } from "recharts";
 import "./AdminAlerts.css";
@@ -27,8 +28,24 @@ function SiteAverageChart({ avgData, siteThresholds }) {
   ];
 
   const colorFor = (name, value) => {
-    const key = PARAM_KEY_MAP[name];
-    const t = siteThresholds?.[key];
+    if (value === null || value === undefined) return "#c9c9c9";
+    const targetKey = (PARAM_KEY_MAP[name] || "").toLowerCase();
+    let t = null;
+    if (Array.isArray(siteThresholds)) {
+      t = siteThresholds.find(entry => {
+        const k = (entry.parameter?.key || "").toLowerCase();
+        const lbl = (entry.parameter?.label || entry.parameter_name || "").toLowerCase();
+        if (k === targetKey) return true;
+        if ((targetKey === "ph") && (k === "ph" || lbl.includes("ph"))) return true;
+        if ((targetKey === "temperature") && (k === "temperature" || k === "temp" || lbl.includes("temp"))) return true;
+        if ((targetKey === "salinity") && (k === "salinity" || lbl.includes("salin"))) return true;
+        if ((targetKey === "dissolved_o2") && (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen"))) return true;
+        return false;
+      });
+    } else if (siteThresholds && typeof siteThresholds === "object") {
+      t = siteThresholds[targetKey] || siteThresholds[name];
+    }
+
     const status = getStatus(t?.min, t?.max, value);
     if (status === "breach") return "#e24b4a";
     if (status === "normal") return "#5a9c5a";
@@ -71,8 +88,8 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Accordion: which site row is expanded. null = none open.
-  const [expandedSiteId, setExpandedSiteId] = useState(null);
+  // Accordion: track which site rows are expanded (map of siteId -> boolean)
+  const [expandedSiteIds, setExpandedSiteIds] = useState({});
 
   const handleLogout = () => { logout(); navigate("/"); };
 
@@ -151,26 +168,39 @@ function AdminDashboard() {
     .slice(0, 5); // dashboard shows top 5; full list lives on /admin-alerts
 
   const toggleSite = (siteId) => {
-    setExpandedSiteId(prev => (prev === siteId ? null : siteId));
+    setExpandedSiteIds(prev => ({ ...prev, [siteId]: !prev[siteId] }));
   };
 
   // ── average latest readings across every device at a site ──
   const round1 = (n) => Math.round(n * 10) / 10;
   const getSiteAverages = (siteId) => {
-    const siteReadings = readings.filter(r => r.device?.site?._id === siteId);
+    const siteReadings = readings.filter(r => r.device?.site?._id === siteId || r.device?.site === siteId);
     if (siteReadings.length === 0) return null;
-    const sum = (key) => siteReadings.reduce((acc, r) => acc + (r[key] ?? 0), 0);
-    const countValid = (key) => siteReadings.filter(r => r[key] !== undefined && r[key] !== null).length;
-    const avg = (key) => {
-      const n = countValid(key);
-      return n ? round1(sum(key) / n) : null;
+
+    const extractVal = (r, paramKey) => {
+      if (!r) return null;
+      if (r[paramKey] !== undefined && r[paramKey] !== null) return r[paramKey];
+      const pKey = r.sensor?.parameter?.key || "";
+      const pLabel = (r.sensor?.parameter?.label || r.parameter_name || "").toLowerCase();
+      if (pKey === paramKey) return r.value;
+      if (paramKey === "pH" && (pKey === "pH" || pLabel.includes("ph"))) return r.value;
+      if (paramKey === "temperature" && (pKey === "temperature" || pKey === "temp" || pLabel.includes("temp"))) return r.value;
+      if (paramKey === "salinity" && (pKey === "salinity" || pLabel.includes("salin"))) return r.value;
+      if ((paramKey === "dissolved_o2" || paramKey === "do2") && (pKey === "dissolved_o2" || pKey === "do2" || pLabel.includes("o2") || pLabel.includes("oxygen"))) return r.value;
+      return null;
     };
+
+    const avgVal = (paramKey) => {
+      const validVals = siteReadings.map(r => extractVal(r, paramKey)).filter(v => v !== null && v !== undefined);
+      return validVals.length ? round1(validVals.reduce((a, b) => a + b, 0) / validVals.length) : null;
+    };
+
     return {
       deviceCount: siteReadings.length,
-      pH: avg("pH"),
-      temperature: avg("temperature"),
-      salinity: avg("salinity"),
-      dissolved_o2: avg("dissolved_o2"),
+      pH: avgVal("pH"),
+      temperature: avgVal("temperature"),
+      salinity: avgVal("salinity"),
+      dissolved_o2: avgVal("dissolved_o2"),
     };
   };
 
@@ -198,43 +228,7 @@ function AdminDashboard() {
     <div className="am-page">
 
       {/* ── Sidebar ── */}
-      <aside className="am-sidebar">
-        <div className="am-brand">
-          <span className="am-brand-icon">🌿</span>
-          <div>
-            <div className="am-brand-name">MangroveGuard</div>
-            <div className="am-brand-role">Admin Panel</div>
-          </div>
-        </div>
-
-        <nav className="am-nav">
-          {[
-            { to: "/admin-dashboard", icon: "⬛", label: "Dashboard", active: true },
-            { to: "/manage-users",    icon: "👥", label: "Users"     },
-            { to: "/manage-devices",  icon: "📡", label: "Devices"   },
-            { to: "/admin-alerts",    icon: "🔔", label: "Alerts"    },
-            { to: "/admin-maps",      icon: "📍", label: "Sites"     },
-            { to: "/admin-messages",  icon: "✉️", label: "Messages"  },
-            { to: "/admin-profile",   icon: "👤", label: "Profile"   },
-          ].map(({ to, icon, label, active }) => (
-            <Link key={to} to={to} className={`am-nav-link ${active ? "am-nav-link--active" : ""}`}>
-              <span className="am-nav-icon">{icon}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="am-sidebar-bottom">
-          <div className="am-user-card">
-            <div className="am-user-avatar">{user?.name?.[0]?.toUpperCase() || "A"}</div>
-            <div>
-              <div className="am-user-name">{user?.name || "Admin"}</div>
-              <div className="am-user-email">{user?.email || ""}</div>
-            </div>
-          </div>
-          <button className="am-logout-btn" onClick={handleLogout}>⏻ Logout</button>
-        </div>
-      </aside>
+      <AdminSidebar activePage="dashboard" />
 
       {/* ── Main ── */}
       <main className="am-main">
@@ -276,7 +270,7 @@ function AdminDashboard() {
               ))}
             </div>
 
-            {/* Sites needing attention — ranked accordion, most urgent first */}
+            {/* Sites needing attention — ranked accordion showing ONLY breaching sites sorted by severity */}
             <div className="am-card" style={{ padding: "18px 20px", marginBottom: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                 <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>📍 Sites needing attention</h2>
@@ -284,29 +278,31 @@ function AdminDashboard() {
               </div>
 
               {rankedSites.length === 0 ? (
-                <p style={{ fontSize: "13px", color: "#3b6d11" }}>All sites normal — no active alerts.</p>
+                <div style={{ padding: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", color: "#166534", fontSize: "13px" }}>
+                  🟢 All sites operating normally — no active parameter breaches.
+                </div>
               ) : (
                 <div style={{ border: "1px solid #deeae3", borderRadius: "10px", overflow: "hidden" }}>
                   {rankedSites.map((s, i) => {
-                    const isOpen = expandedSiteId === s.siteId;
+                    const isOpen = !!expandedSiteIds[s.siteId];
                     const avgData = getSiteAverages(s.siteId);
                     const thresholds = getSiteThresholds(s.siteId);
 
                     return (
                       <div key={s.siteId} style={{ borderTop: i > 0 ? "1px solid #deeae3" : "none" }}>
-                        {/* Row header — click to expand/collapse this site only */}
+                        {/* Row header */}
                         <div
                           onClick={() => toggleSite(s.siteId)}
                           style={{
                             display: "flex", justifyContent: "space-between", alignItems: "center",
                             padding: "12px 16px", cursor: "pointer", background: "#fff",
-                            borderLeft: `3px solid ${severityBorder[s.worst]}`,
+                            borderLeft: `4px solid ${severityBorder[s.worst] || "#e24b4a"}`,
                           }}
                         >
                           <div>
-                            <div style={{ fontSize: "13px", fontWeight: 500, color: "#1c3a2a" }}>{s.siteName}</div>
-                            <div style={{ fontSize: "11px", color: "#8aaa98" }}>
-                              {s.worst} · {s.count} active alert{s.count > 1 ? "s" : ""}
+                            <div style={{ fontSize: "14px", fontWeight: 600, color: "#1c3a2a" }}>{s.siteName}</div>
+                            <div style={{ fontSize: "11px", color: "#64748b" }}>
+                              Severity: <strong style={{ color: severityText[s.worst] }}>{s.worst.toUpperCase()}</strong> · {s.count} active breach{s.count > 1 ? "es" : ""}
                             </div>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -319,32 +315,26 @@ function AdminDashboard() {
                           </div>
                         </div>
 
-                        {/* Expanded detail — chart + alert list for this site only */}
+                        {/* Expanded detail — parameter breach chart & alert list */}
                         {isOpen && (
                           <div style={{ padding: "14px 18px", background: "#fafcfb", borderTop: "1px solid #edf4ef" }}>
+                            <div style={{ fontWeight: 600, fontSize: "12px", color: "#1c3a2a", marginBottom: "8px" }}>
+                              Active Breaching Parameters:
+                            </div>
                             {s.alerts.map(a => (
-                              <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #edf4ef" }}>
-                                <span style={{ fontSize: "13px", color: "#2d4a3e" }}>
-                                  {a.parameter_name} <span style={{ color: "#8aaa98" }}>· {a.measured_value} · {a.device?.device_id || "—"}</span>
-                                </span>
+                              <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: severityBg[a.severity_level] || "#fff", borderRadius: "6px", marginBottom: "6px", border: `1px solid ${severityBorder[a.severity_level] || "#ccc"}` }}>
+                                <div>
+                                  <strong style={{ fontSize: "13px", color: severityText[a.severity_level] }}>{a.parameter_name}: {a.measured_value} {a.unit}</strong>
+                                  <div style={{ fontSize: "11px", color: "#475569" }}>Device: {a.device?.device_id || "—"} · {a.message}</div>
+                                </div>
                                 <span className={`am-badge am-badge--${severityClass(a.severity_level)}`}>{a.severity_level}</span>
                               </div>
                             ))}
 
-                            <div style={{ fontSize: "12px", fontWeight: 500, color: "#1c3a2a", margin: "14px 0 4px" }}>
-                              {avgData ? `Current average · ${avgData.deviceCount} device${avgData.deviceCount > 1 ? "s" : ""} reporting` : "No readings yet"}
+                            <div style={{ fontSize: "12px", fontWeight: 600, color: "#1c3a2a", margin: "14px 0 6px" }}>
+                              Parameter Trend Chart ({s.siteName}):
                             </div>
-
-                            {avgData ? (
-                              <SiteAverageChart avgData={avgData} siteThresholds={thresholds} />
-                            ) : (
-                              <p style={{ fontSize: "11px", color: "#8aaa98" }}>No readings recorded yet for this site.</p>
-                            )}
-
-                            <p style={{ fontSize: "11px", color: "#8aaa98", marginTop: "8px" }}>
-                              Bars use each device's latest reading, averaged. Red = breaching this site's configured threshold.
-                              Once devices have reported for a few days, this upgrades to a time-trend chart.
-                            </p>
+                            <SiteAverageChart avgData={avgData} siteThresholds={thresholds} />
                           </div>
                         )}
                       </div>
@@ -392,7 +382,7 @@ function AdminDashboard() {
             <div className="am-card" style={{ padding: "18px 20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                 <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>🕒 Recently logged in</h2>
-                <Link to="/manage-users" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
+                <Link to="/recent-logins" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
               </div>
               {recentLogins.length === 0 ? (
                 <p style={{ fontSize: "13px", color: "#8aaa98" }}>No login activity recorded yet.</p>

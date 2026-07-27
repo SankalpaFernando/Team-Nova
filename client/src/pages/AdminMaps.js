@@ -1,8 +1,25 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import "./AdminMaps.css";
+
+const getParamRangeStr = (siteThresholds, paramKey) => {
+  if (!Array.isArray(siteThresholds) || siteThresholds.length === 0) return "—";
+  const targetKey = paramKey.toLowerCase();
+  const entry = siteThresholds.find(t => {
+    const pKey = (t.parameter?.key || "").toLowerCase();
+    const pLabel = (t.parameter?.label || t.parameter_name || "").toLowerCase();
+    if (pKey === targetKey) return true;
+    if (targetKey === "ph" && (pKey === "ph" || pLabel.includes("ph"))) return true;
+    if ((targetKey === "temperature" || targetKey === "temp") && (pKey === "temperature" || pKey === "temp" || pLabel.includes("temp"))) return true;
+    return false;
+  });
+  if (!entry || entry.min === undefined || entry.max === undefined) return "—";
+  const unitStr = entry.parameter?.unit ? ` ${entry.parameter.unit}` : (targetKey === 'temperature' || targetKey === 'temp' ? '°C' : '');
+  return `${entry.min}–${entry.max}${unitStr}`;
+};
 
 function AdminMaps() {
   const { user, logout } = useAuth();
@@ -150,43 +167,7 @@ function AdminMaps() {
     <div className="am-page">
 
       {/* ── Sidebar ── */}
-      <aside className="am-sidebar">
-        <div className="am-brand">
-          <span className="am-brand-icon">🌿</span>
-          <div>
-            <div className="am-brand-name">MangroveGuard</div>
-            <div className="am-brand-role">Admin Panel</div>
-          </div>
-        </div>
-
-        <nav className="am-nav">
-          {[
-            { to: "/admin-dashboard", icon: "⬛", label: "Dashboard" },
-            { to: "/manage-users",    icon: "👥", label: "Users"     },
-            { to: "/manage-devices",  icon: "📡", label: "Devices"   },
-            { to: "/admin-alerts",    icon: "🔔", label: "Alerts"    },
-            { to: "/admin-maps",      icon: "📍", label: "Sites", active: true },
-            { to: "/admin-messages",  icon: "✉️", label: "Messages" },
-            { to: "/admin-profile",   icon: "👤", label: "Profile"   },
-          ].map(({ to, icon, label, active }) => (
-            <Link key={to} to={to} className={`am-nav-link ${active ? "am-nav-link--active" : ""}`}>
-              <span className="am-nav-icon">{icon}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="am-sidebar-bottom">
-          <div className="am-user-card">
-            <div className="am-user-avatar">{user?.name?.[0]?.toUpperCase() || "A"}</div>
-            <div>
-              <div className="am-user-name">{user?.name || "Admin"}</div>
-              <div className="am-user-email">{user?.email || ""}</div>
-            </div>
-          </div>
-          <button className="am-logout-btn" onClick={handleLogout}>⏻ Logout</button>
-        </div>
-      </aside>
+      <AdminSidebar activePage="sites" />
 
       {/* ── Main ── */}
       <main className="am-main">
@@ -280,14 +261,8 @@ function AdminMaps() {
                     <td>
                       <span className={`am-badge am-badge--${regionClass(site.region)}`}>{site.region}</span>
                     </td>
-                    <td className="am-td-data">
-                      {site.thresholds?.pH ? `${site.thresholds.pH.min} – ${site.thresholds.pH.max}` : "—"}
-                    </td>
-                    <td className="am-td-data">
-                      {site.thresholds?.temperature
-                        ? `${site.thresholds.temperature.min}°C – ${site.thresholds.temperature.max}°C`
-                        : "—"}
-                    </td>
+                    <td className="am-td-data">{getParamRangeStr(site.thresholds, "ph")}</td>
+                    <td className="am-td-data">{getParamRangeStr(site.thresholds, "temperature")}</td>
                     <td className="am-td-dim">{site.createdBy?.name || "Admin"}</td>
                     <td>
                       <div className="am-actions">

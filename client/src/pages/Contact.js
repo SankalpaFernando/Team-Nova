@@ -1,50 +1,34 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import "./Contact.css";
-import { NavLink, Link, useNavigate } from "react-router-dom";
 import mangrove from "../assests/mangrove.png";
-import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import UserNavbar from "../components/UserNavbar";
 
 const navClass = ({ isActive }) => (isActive ? "active" : "");
 
 function Contact() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const menuRef = useRef(null);
-
+  const [sites, setSites] = useState([]);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     subject: "",
+    site: "",
     message: ""
   });
   const [statusMsg, setStatusMsg] = useState("");
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
+    const fetchSites = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/sites");
+        setSites(res.data.data || []);
+      } catch (err) {
+        console.error("Could not fetch sites list for contact form", err);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    fetchSites();
   }, []);
-
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchTerm.trim() === "") return;
-    navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
-    setSearchTerm("");
-  };
-
-const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
 
 
   const handleChange = (e) => {
@@ -71,50 +55,7 @@ const handleLogout = () => {
   return (
     <div className="contact-page">
       {/* Navbar */}
-      <div className="dashboard-navbar">
-        <div className="logo">🌿 MangroveGuard</div>
-        <div className="nav-links">
-          <NavLink to="/dashboard" className={navClass}>Dashboard</NavLink>
-          <NavLink to="/sites" className={navClass}>Sites</NavLink>
-          <NavLink to="/alerts" className={navClass}>Alerts</NavLink>
-          <NavLink to="/about" className={navClass}>About</NavLink>
-          <NavLink to="/contact" className={navClass}>Contact</NavLink>
-
-          <form className="search-form" onSubmit={handleSearch}>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button type="submit" className="search-icon-btn">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </button>
-          </form>
-
-          <div className="profile-menu" ref={menuRef}>
-            <button
-              className="avatar-btn"
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              {user?.name ? user.name.charAt(0).toUpperCase() : "👤"}
-            </button>
-
-            {menuOpen && (
-              <div className="profile-dropdown">
-                <Link to="/profile" onClick={() => setMenuOpen(false)}>
-                  👤 Profile
-                </Link>
-                <button onClick={handleLogout}>🚪 Logout</button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <UserNavbar />
 
       {/* Background Section */}
       <div
@@ -176,6 +117,22 @@ const handleLogout = () => {
               onChange={handleChange}
               required
             />
+
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ fontSize: "12px", color: "#475569", display: "block", marginBottom: "4px" }}>Which site is this about? (optional)</label>
+              <select
+                name="site"
+                className="input-row"
+                style={{ width: "100%", padding: "10px", borderRadius: "5px", border: "1px solid #ccc", background: "#fff", fontSize: "14px" }}
+                value={formData.site}
+                onChange={handleChange}
+              >
+                <option value="">General inquiry (No specific site)</option>
+                {sites.map(s => (
+                  <option key={s._id} value={s._id}>{s.name} ({s.region})</option>
+                ))}
+              </select>
+            </div>
 
             <textarea
               name="message"

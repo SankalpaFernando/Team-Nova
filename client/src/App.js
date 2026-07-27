@@ -7,7 +7,7 @@ import About from "./pages/About";
 import VisitorAbout from "./pages/VisitorAbout";
 import VisitorSites from "./pages/VisitorSites";
 import VisitorContactus from "./pages/VisitorContactus";
-import SearchResults from "./pages/SearchResults";   // <-- NEW IMPORT
+import SearchResults from "./pages/SearchResults";
 import Contact from "./pages/Contact";
 import Sites from "./pages/Sites";
 import Register from "./pages/Register";
@@ -24,6 +24,12 @@ import AdminMaps from "./pages/AdminMaps";
 import AdminProfile from "./pages/AdminProfile";
 import SiteDetails from "./pages/SiteDetails";
 import AdminMessages from "./pages/AdminMessages";
+import ParameterAdmin from "./pages/ParameterAdmin";
+import ManageSensors from "./pages/ManageSensors";
+import SiteEngineerDashboard from "./pages/SiteEngineerDashboard";
+import RecentLogins from "./pages/RecentLogins";
+import PendingRequests from "./pages/PendingRequests";
+import MyRequests from "./pages/MyRequests";
 
 function App() {
   return (
@@ -65,14 +71,20 @@ function App() {
           <Route path="/admin-dashboard" element={
             <ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>
           } />
+          <Route path="/pending-requests" element={
+            <ProtectedRoute adminOnly><PendingRequests /></ProtectedRoute>
+          } />
           <Route path="/manage-users" element={
             <ProtectedRoute adminOnly><ManageUsers /></ProtectedRoute>
           } />
+          <Route path="/recent-logins" element={
+            <ProtectedRoute adminOnly><RecentLogins /></ProtectedRoute>
+          } />
           <Route path="/manage-devices" element={
-            <ProtectedRoute adminOnly><ManageDevices /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin', 'site_engineer']}><ManageDevices /></ProtectedRoute>
           } />
           <Route path="/admin-alerts" element={
-            <ProtectedRoute adminOnly><AdminAlerts /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin', 'site_engineer']}><AdminAlerts /></ProtectedRoute>
           } />
           <Route path="/admin-maps" element={
             <ProtectedRoute adminOnly><AdminMaps /></ProtectedRoute>
@@ -81,7 +93,21 @@ function App() {
             <ProtectedRoute adminOnly><AdminProfile /></ProtectedRoute>
           } />
           <Route path="/admin-messages" element={
-            <ProtectedRoute adminOnly><AdminMessages /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin', 'site_engineer']}><AdminMessages /></ProtectedRoute>
+          } />
+
+          {/* Shared Admin & Site Engineer Pages */}
+          <Route path="/my-requests" element={
+            <ProtectedRoute allowedRoles={['admin', 'site_engineer']}><MyRequests /></ProtectedRoute>
+          } />
+          <Route path="/parameter-admin" element={
+            <ProtectedRoute allowedRoles={['admin', 'site_engineer']}><ParameterAdmin /></ProtectedRoute>
+          } />
+          <Route path="/manage-sensors" element={
+            <ProtectedRoute allowedRoles={['admin', 'site_engineer']}><ManageSensors /></ProtectedRoute>
+          } />
+          <Route path="/site-engineer-dashboard" element={
+            <ProtectedRoute allowedRoles={['site_engineer', 'admin']}><SiteEngineerDashboard /></ProtectedRoute>
           } />
 
         </Routes>

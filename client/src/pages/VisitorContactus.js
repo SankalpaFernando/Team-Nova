@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./VisitorContactus.css";
 import Navbar from "../components/navbar";
 import mangrove from "../assests/mangrove.png";
@@ -6,15 +6,29 @@ import axios from "axios";
 
 function VisitorContactus() {
 
+  const [sites, setSites] = useState([]);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     subject: "",
+    site: "",
     message: ""
   });
 
   const [submitted, setSubmitted] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
+
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/sites");
+        setSites(res.data.data || []);
+      } catch (err) {
+        console.error("Could not fetch sites for contact form", err);
+      }
+    };
+    fetchSites();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -36,6 +50,7 @@ function VisitorContactus() {
           fullName: "",
           email: "",
           subject: "",
+          site: "",
           message: ""
         });
       }
@@ -107,6 +122,21 @@ function VisitorContactus() {
                     onChange={handleChange}
                     required
                   />
+
+                  <div style={{ marginBottom: "12px" }}>
+                    <label style={{ fontSize: "12px", color: "#e2e8f0", display: "block", marginBottom: "4px" }}>Which site is this about? (optional)</label>
+                    <select
+                      name="site"
+                      style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "#fff", fontSize: "14px", color: "#0f172a", boxSizing: "border-box" }}
+                      value={formData.site}
+                      onChange={handleChange}
+                    >
+                      <option value="">General inquiry (No specific site)</option>
+                      {sites.map(s => (
+                        <option key={s._id} value={s._id}>{s.name} ({s.region})</option>
+                      ))}
+                    </select>
+                  </div>
 
                   <textarea
                     rows="4"

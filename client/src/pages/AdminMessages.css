@@ -349,7 +349,7 @@
 .msg-badge--rw { background: #f3e0ff; color: #7a00a8; }
 
 /* ── Action Buttons ──────────────────────────── */
-.msg-actions { display: flex; gap: 6px; flex-wrap: nowrap; }
+.msg-actions { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
 
 .msg-act {
   padding: 6px 11px;

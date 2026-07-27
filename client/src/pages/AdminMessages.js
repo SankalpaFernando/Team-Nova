@@ -4,8 +4,10 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import "./AdminMessages.css";
 
+import AdminSidebar from "../components/AdminSidebar";
+
 function AdminMessages() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [messages, setMessages]       = useState([]);
@@ -67,52 +69,12 @@ function AdminMessages() {
     }
   };
 
-  const handleLogout = () => { logout(); navigate("/"); };
-
   const unreadCount = messages.filter(m => m.status === 'unread').length;
   const readCount   = messages.filter(m => m.status === 'read').length;
 
   return (
     <div className="msg-page">
-
-      {/* ── Sidebar ── */}
-      <aside className="msg-sidebar">
-        <div className="msg-brand">
-          <span className="msg-brand-icon">🌿</span>
-          <div>
-            <div className="msg-brand-name">MangroveGuard</div>
-            <div className="msg-brand-role">Admin Panel</div>
-          </div>
-        </div>
-
-        <nav className="msg-nav">
-          {[
-            { to: "/admin-dashboard", icon: "⬛", label: "Dashboard"               },
-            { to: "/manage-users",    icon: "👥", label: "Users"                   },
-            { to: "/manage-devices",  icon: "📡", label: "Devices"                 },
-            { to: "/admin-alerts",    icon: "🔔", label: "Alerts"                  },
-            { to: "/admin-maps",      icon: "📍", label: "Sites"                   },
-            { to: "/admin-messages",  icon: "✉️", label: "Messages", active: true  },
-            { to: "/admin-profile",   icon: "👤", label: "Profile"                 },
-          ].map(({ to, icon, label, active }) => (
-            <Link key={to} to={to} className={`msg-nav-link ${active ? "msg-nav-link--active" : ""}`}>
-              <span className="msg-nav-icon">{icon}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="msg-sidebar-bottom">
-          <div className="msg-user-card">
-            <div className="msg-user-avatar">{user?.name?.[0]?.toUpperCase() || "A"}</div>
-            <div>
-              <div className="msg-user-name">{user?.name || "Admin"}</div>
-              <div className="msg-user-email">{user?.email || ""}</div>
-            </div>
-          </div>
-          <button className="msg-logout-btn" onClick={handleLogout}>⏻ Logout</button>
-        </div>
-      </aside>
+      <AdminSidebar activePage="messages" />
 
       {/* ── Main ── */}
       <main className="msg-main">

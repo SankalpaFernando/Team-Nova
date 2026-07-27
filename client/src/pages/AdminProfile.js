@@ -122,6 +122,8 @@ function AdminProfile() {
             { to: "/admin-dashboard", icon: "⬛", label: "Dashboard" },
             { to: "/manage-users",    icon: "👥", label: "Users"    },
             { to: "/manage-devices",  icon: "📡", label: "Devices"  },
+            { to: "/manage-sensors",  icon: "🔬", label: "Sensors"  },
+            { to: "/parameter-admin", icon: "⚙️", label: "Parameters"},
             { to: "/admin-alerts",    icon: "🔔", label: "Alerts"   },
             { to: "/admin-maps",      icon: "📍", label: "Sites"    },
             { to: "/admin-messages",  icon: "✉️", label: "Messages" },
