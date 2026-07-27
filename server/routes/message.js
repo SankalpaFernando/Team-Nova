@@ -7,12 +7,12 @@ const Message = require('../models/Message');
 
 router.route('/')
   .post(createMessage)
-  .get(protect, authorize('admin'), getMessages);
+  .get(protect, authorize('admin', 'site_engineer'), getMessages);
 
 router.route('/:id/status')
-  .put(protect, authorize('admin'), updateMessageStatus);
+  .put(protect, authorize('admin', 'site_engineer'), updateMessageStatus);
 
-router.post('/:id/reply', protect, authorize('admin'), async (req, res, next) => {
+router.post('/:id/reply', protect, authorize('admin', 'site_engineer'), async (req, res, next) => {
   try {
     const { subject, body } = req.body;
     const message = await Message.findById(req.params.id);

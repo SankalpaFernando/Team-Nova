@@ -31,6 +31,11 @@ const MessageSchema = new mongoose.Schema({
     enum: ['unread', 'read'],
     default: 'unread'
   },
+  site: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Site',
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
