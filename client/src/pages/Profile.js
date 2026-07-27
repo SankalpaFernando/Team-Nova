@@ -1,15 +1,19 @@
-import { NavLink, Link, useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Profile.css";
 import mangrove from "../assests/mangrove.png";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-
-const navClass = ({ isActive }) => (isActive ? "active" : "");
+import UserNavbar from "../components/UserNavbar";
 
 function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const [avatarPreview, setAvatarPreview] = useState(null);
 
@@ -19,24 +23,9 @@ function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [editingField, setEditingField] = useState(null); // "name" | "email" | "password" | null
+  const [editingField, setEditingField] = useState(null);
   const [saving, setSaving] = useState(false);
   const [fieldError, setFieldError] = useState("");
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const menuRef = useRef(null);
-
-  // Close the navbar dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleImageUpload = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -47,7 +36,6 @@ function Profile() {
   const startEdit = (field) => {
     setFieldError("");
     setEditingField(field);
-    // Reset password fields fresh every time that editor opens
     if (field === "password") {
       setCurrentPassword("");
       setNewPassword("");
@@ -70,8 +58,6 @@ function Profile() {
       const updatedUser = res.data.data;
       localStorage.setItem("mg_user", JSON.stringify({ ...user, ...updatedUser }));
       setEditingField(null);
-      // Reflects instantly here; a page refresh will also pick it up
-      // via AuthContext reading mg_user on next load.
       window.location.reload();
     } catch (err) {
       setFieldError(err.response?.data?.message || "Couldn't save changes.");
@@ -102,7 +88,6 @@ function Profile() {
         currentPassword,
         newPassword,
       });
-      // Backend issues a fresh token on password change
       localStorage.setItem("mg_token", res.data.token);
       setEditingField(null);
       setCurrentPassword("");
@@ -115,22 +100,6 @@ function Profile() {
     }
   };
 
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchTerm.trim() === "") return;
-    navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
-    setSearchTerm("");
-  };
-
-const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
-
-  const initial = user?.name ? user.name.charAt(0).toUpperCase() : null;
-
   return (
     <div
       className="profile-page"
@@ -139,59 +108,7 @@ const handleLogout = () => {
       <div className="profile-overlay">
 
         {/* Navbar */}
-        <div className="dashboard-navbar">
-
-          <div className="logo">🌿 MangroveGuard</div>
-
-          <div className="nav-links">
-            <NavLink to="/dashboard" className={navClass}>Dashboard</NavLink>
-            <NavLink to="/sites" className={navClass}>Sites</NavLink>
-            <NavLink to="/alerts" className={navClass}>Alerts</NavLink>
-            <NavLink to="/about" className={navClass}>About</NavLink>
-            <NavLink to="/contact" className={navClass}>Contact</NavLink>
-
-            <form className="search-form" onSubmit={handleSearch}>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button type="submit" className="search-icon-btn">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </button>
-          </form>
-
-          <div className="profile-menu" ref={menuRef}>
-              <button
-                className="avatar-btn"
-                onClick={() => setMenuOpen((open) => !open)}
-              >
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt="Profile" />
-                ) : initial ? (
-                  <span>{initial}</span>
-                ) : (
-                  <span>👤</span>
-                )}
-              </button>
-
-              {menuOpen && (
-                <div className="profile-dropdown">
-                  <Link to="/profile" onClick={() => setMenuOpen(false)}>
-                    👤 Profile
-                  </Link>
-                  <button onClick={handleLogout}>🚪 Logout</button>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
+        <UserNavbar />
 
         {/* Header */}
         <div className="profile-header">

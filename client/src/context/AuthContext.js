@@ -75,6 +75,7 @@ export const AuthProvider = ({ children }) => {
 
   // Helper flags
   const isAdmin = user?.role === 'admin';
+  const isSiteEngineer = user?.role === 'site_engineer';
   const isLoggedIn = !!user;
 
   return (
@@ -87,6 +88,7 @@ export const AuthProvider = ({ children }) => {
       resetPassword,
       logout, 
       isAdmin, 
+      isSiteEngineer,
       isLoggedIn 
     }}>
       {children}

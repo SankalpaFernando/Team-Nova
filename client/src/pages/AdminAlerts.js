@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import "./AdminAlerts.css";
+import AdminSidebar from "../components/AdminSidebar";
 
 function AdminAlerts() {
   const { user, logout } = useAuth();
@@ -113,7 +114,6 @@ function AdminAlerts() {
 
   // ── helpers ───────────────────────────────────────────
   const severityClass = (s) => ({ low: "rn", medium: "rs", high: "re", critical: "rw" }[s] || "rn");
-  const statusClass = (s) => ({ unread: "rw", read: "rs", resolved: "rn" }[s] || "rn");
   const formatTime = (d) => d ? new Date(d).toLocaleString() : "—";
   const handleLogout = () => { logout(); navigate("/"); };
 
@@ -145,51 +145,27 @@ function AdminAlerts() {
     { value: "", label: "All" },
     { value: "unread", label: "Unread" },
     { value: "read", label: "Read" },
+    { value: "pending_confirmation", label: "Pending Confirmation" },
     { value: "resolved", label: "Resolved" },
   ];
+
+  const pendingConfirmations = alerts.filter(a => a.status === 'pending_confirmation');
+
+  const statusClass = (s) => ({
+    unread: "rw",
+    read: "rs",
+    pending_confirmation: "re",
+    resolved: "rn"
+  }[s] || "rn");
+
+  const isEngineer = user?.role === 'site_engineer';
 
   // ── render ────────────────────────────────────────────
   return (
     <div className="am-page">
 
       {/* ── Sidebar ── */}
-      <aside className="am-sidebar">
-        <div className="am-brand">
-          <span className="am-brand-icon">🌿</span>
-          <div>
-            <div className="am-brand-name">MangroveGuard</div>
-            <div className="am-brand-role">Admin Panel</div>
-          </div>
-        </div>
-
-        <nav className="am-nav">
-          {[
-            { to: "/admin-dashboard", icon: "⬛", label: "Dashboard" },
-            { to: "/manage-users",    icon: "👥", label: "Users"     },
-            { to: "/manage-devices",  icon: "📡", label: "Devices"   },
-            { to: "/admin-alerts",    icon: "🔔", label: "Alerts", active: true },
-            { to: "/admin-maps",      icon: "📍", label: "Sites"     },
-            { to: "/admin-messages",  icon: "✉️", label: "Messages"  },
-            { to: "/admin-profile",   icon: "👤", label: "Profile"   },
-          ].map(({ to, icon, label, active }) => (
-            <Link key={to} to={to} className={`am-nav-link ${active ? "am-nav-link--active" : ""}`}>
-              <span className="am-nav-icon">{icon}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="am-sidebar-bottom">
-          <div className="am-user-card">
-            <div className="am-user-avatar">{user?.name?.[0]?.toUpperCase() || "A"}</div>
-            <div>
-              <div className="am-user-name">{user?.name || "Admin"}</div>
-              <div className="am-user-email">{user?.email || ""}</div>
-            </div>
-          </div>
-          <button className="am-logout-btn" onClick={handleLogout}>⏻ Logout</button>
-        </div>
-      </aside>
+      <AdminSidebar activePage="alerts" />
 
       {/* ── Main ── */}
       <main className="am-main">
@@ -197,9 +173,13 @@ function AdminAlerts() {
         {/* Header */}
         <div className="am-header">
           <div>
-            <p className="am-breadcrumb">Admin › Alerts</p>
-            <h1 className="am-title">Alert Management</h1>
-            <p className="am-subtitle">Review sensor alerts and update their status.</p>
+            <p className="am-breadcrumb">{isEngineer ? 'Site Engineer' : 'Admin'} › Alerts</p>
+            <h1 className="am-title">Alert Management & Resolution</h1>
+            <p className="am-subtitle">
+              {isEngineer
+                ? 'Review site alerts and submit resolved issues for admin confirmation.'
+                : 'Review site alerts and confirm engineer-submitted resolutions.'}
+            </p>
           </div>
           <button className="am-btn-sec" onClick={markAllRead}>✓ Mark All Read</button>
         </div>
@@ -207,10 +187,10 @@ function AdminAlerts() {
         {/* Stats */}
         <div className="am-stats">
           {[
-            { icon: "🚨", val: byStatus("unread"),        label: "Unread"   },
+            { icon: "🚨", val: byStatus("unread"), label: "Unread" },
+            { icon: "⏳", val: byStatus("pending_confirmation"), label: "Pending Confirmation" },
             { icon: "🔴", val: bySeverity("critical") + bySeverity("high"), label: "High / Critical" },
-            { icon: "🟠", val: bySeverity("medium"),       label: "Medium"   },
-            { icon: "✅", val: byStatus("resolved"),       label: "Resolved" },
+            { icon: "✅", val: byStatus("resolved"), label: "Resolved" },
           ].map((s, i) => (
             <div className="am-stat-card" key={i}>
               <span className="am-stat-icon">{s.icon}</span>
@@ -222,14 +202,51 @@ function AdminAlerts() {
           ))}
         </div>
 
+        {/* Dedicated Section for Admin: Pending Engineer Resolutions */}
+        {!isEngineer && pendingConfirmations.length > 0 && (
+          <div className="am-card" style={{ padding: "20px", marginBottom: "24px", borderLeft: "6px solid #f59e0b", background: "#fffbeb" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <h2 style={{ margin: 0, fontSize: "1.1rem", color: "#92400e", display: "flex", alignItems: "center", gap: "8px" }}>
+                ⏳ Pending Engineer Resolutions ({pendingConfirmations.length})
+              </h2>
+              <span style={{ fontSize: "0.85rem", color: "#b45309" }}>Action required by Admin</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {pendingConfirmations.map((a) => (
+                <div key={a._id} style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "8px", border: "1px solid #fcd34d", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <strong style={{ color: "#1e293b" }}>{a.parameter_name}</strong> at <span>{a.device?.site?.name || 'Site'}</span> ({a.device?.device_id || 'Device'})
+                    <div style={{ fontSize: "0.85rem", color: "#475569", marginTop: "2px" }}>{a.message}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      className="am-btn-primary"
+                      style={{ background: "#16a34a", padding: "6px 14px", fontSize: "0.85rem" }}
+                      onClick={async () => {
+                        setSelected(a);
+                        await updateStatus('resolved');
+                      }}
+                      disabled={saving}
+                    >
+                      ✓ Confirm Resolved
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Site filter — separate bar above the table */}
-        <div className="am-card" style={{ padding: "16px 20px", marginBottom: "20px", display: "flex", gap: "14px", alignItems: "center" }}>
-          <label className="am-lbl" style={{ margin: 0 }}>Filter by Site:</label>
-          <select className="am-inp" style={{ width: "auto" }} value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
-            <option value="">All Sites</option>
-            {sites.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-        </div>
+        {!isEngineer && (
+          <div className="am-card" style={{ padding: "16px 20px", marginBottom: "20px", display: "flex", gap: "14px", alignItems: "center" }}>
+            <label className="am-lbl" style={{ margin: 0 }}>Filter by Site:</label>
+            <select className="am-inp" style={{ width: "auto" }} value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
+              <option value="">All Sites</option>
+              {sites.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+            </select>
+          </div>
+        )}
 
         {/* Error */}
         {error && <div className="am-error">{error}</div>}
@@ -249,8 +266,8 @@ function AdminAlerts() {
                 <col style={{ width: "13%" }} />
                 <col style={{ width: "22%" }} />
                 <col style={{ width: "8%" }} />
-                <col style={{ width: "13%" }} />
-                <col style={{ width: "17%" }} />
+                <col style={{ width: "15%" }} />
+                <col style={{ width: "15%" }} />
                 <col style={{ width: "10%" }} />
               </colgroup>
               <thead>
@@ -293,9 +310,7 @@ function AdminAlerts() {
                       )}
                   </th>
 
-                  {/* Device/Site — display only, no filter */}
                   <th>Device / Site</th>
-
                   <th>Value</th>
 
                   {/* Status header filter */}
@@ -322,7 +337,7 @@ function AdminAlerts() {
                           {statusOptions.map(opt => (
                             <div
                               key={opt.value}
-                              className={`am-th-pop-item ${statusFilter === opt.value ? "am-th-pop-item--active" : ""}`}
+                              className={`am-th-pop-item ${opt.value} ${statusFilter === opt.value ? "am-th-pop-item--active" : ""}`}
                               onClick={() => { setStatusFilter(opt.value); setOpenFilter(null); }}
                             >
                               {opt.label}
@@ -354,7 +369,9 @@ function AdminAlerts() {
                     </td>
                     <td className="am-td-data">{alert.measured_value}</td>
                     <td>
-                      <span className={`am-badge am-badge--${statusClass(alert.status)}`}>{alert.status}</span>
+                      <span className={`am-badge am-badge--${statusClass(alert.status)}`}>
+                        {alert.status === 'pending_confirmation' ? '⏳ Pending Conf.' : alert.status}
+                      </span>
                     </td>
                     <td className="am-td-dim">{formatTime(alert.created_at)}</td>
                     <td>
@@ -388,15 +405,23 @@ function AdminAlerts() {
               <p><strong>Reported:</strong> {formatTime(selected.created_at)}</p>
 
               <div className="am-modal-foot">
-                {selected.status !== "read" && (
+                {selected.status !== "read" && selected.status !== "resolved" && (
                   <button className="am-btn-sec" onClick={() => updateStatus("read")} disabled={saving}>
                     Mark as Read
                   </button>
                 )}
-                {selected.status !== "resolved" && (
-                  <button className="am-btn-primary" onClick={() => updateStatus("resolved")} disabled={saving}>
-                    Mark Resolved
-                  </button>
+                {isEngineer ? (
+                  selected.status !== "pending_confirmation" && selected.status !== "resolved" && (
+                    <button className="am-btn-primary" onClick={() => updateStatus("pending_confirmation")} disabled={saving}>
+                      Mark Resolved (Submit for Admin Confirmation)
+                    </button>
+                  )
+                ) : (
+                  selected.status !== "resolved" && (
+                    <button className="am-btn-primary" style={{ background: "#16a34a" }} onClick={() => updateStatus("resolved")} disabled={saving}>
+                      {selected.status === 'pending_confirmation' ? '✓ Confirm Resolved' : '✓ Mark Resolved Directly'}
+                    </button>
+                  )
                 )}
               </div>
             </div>

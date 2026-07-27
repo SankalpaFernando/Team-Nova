@@ -1,35 +1,18 @@
 import "./SiteDetails.css";
-import { NavLink, Link, useNavigate, useParams } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import api from "../services/api";
-
-const navClass = ({ isActive }) => (isActive ? "active" : "");
+import UserNavbar from "../components/UserNavbar";
 
 function SiteDetails() {
   const { id } = useParams();
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const menuRef = useRef(null);
 
   const [site, setSite] = useState(null);
   const [devices, setDevices] = useState([]);
   const [latestReadings, setLatestReadings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     const loadSite = async () => {
@@ -58,30 +41,29 @@ function SiteDetails() {
     loadSite();
   }, [id]);
 
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchTerm.trim() === "") return;
-    navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
-    setSearchTerm("");
-  };
-
-const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
-
   // This site's devices' latest readings, averaged (same approach as
   // the main dashboard's Sensor Data Overview)
   const siteReadings = latestReadings.filter(
     (r) => r.device?.site?._id === id
   );
 
-  const avg = (param) => {
+  const avg = (pKey) => {
     if (siteReadings.length === 0) return null;
-    const sum = siteReadings.reduce((s, r) => s + (r[param] ?? 0), 0);
-    return sum / siteReadings.length;
+    const extractValue = (r) => {
+      if (!r) return null;
+      if (r[pKey] !== undefined && r[pKey] !== null) return r[pKey];
+      const k = r.sensor?.parameter?.key || "";
+      const lbl = (r.sensor?.parameter?.label || r.parameter_name || "").toLowerCase();
+      if (k === pKey || (pKey === "pH" && (k === "pH" || lbl.includes("ph"))) ||
+        (pKey === "temperature" && (k === "temperature" || k === "temp" || lbl.includes("temp"))) ||
+        (pKey === "salinity" && (k === "salinity" || lbl.includes("salin"))) ||
+        (pKey === "dissolved_o2" && (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen")))) {
+        return r.value;
+      }
+      return null;
+    };
+    const valid = siteReadings.map(extractValue).filter(v => v !== null && v !== undefined);
+    return valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null;
   };
 
   const avgSalinity = avg("salinity");
@@ -93,57 +75,8 @@ const handleLogout = () => {
 
   return (
     <div className="site-page">
-
       {/* Navbar */}
-      <div className="dashboard-navbar">
-
-        <div className="logo">
-          🌿 MangroveGuard
-        </div>
-
-        <div className="nav-links">
-          <NavLink to="/dashboard" className={navClass}>Dashboard</NavLink>
-          <NavLink to="/sites" className={navClass}>Sites</NavLink>
-          <NavLink to="/alerts" className={navClass}>Alerts</NavLink>
-          <NavLink to="/about" className={navClass}>About</NavLink>
-          <NavLink to="/contact" className={navClass}>Contact</NavLink>
-
-          <form className="search-form" onSubmit={handleSearch}>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button type="submit" className="search-icon-btn">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </button>
-          </form>
-
-          <div className="profile-menu" ref={menuRef}>
-            <button
-              className="avatar-btn"
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              {user?.name ? user.name.charAt(0).toUpperCase() : "👤"}
-            </button>
-
-            {menuOpen && (
-              <div className="profile-dropdown">
-                <Link to="/profile" onClick={() => setMenuOpen(false)}>
-                  👤 Profile
-                </Link>
-                <button onClick={handleLogout}>🚪 Logout</button>
-              </div>
-            )}
-          </div>
-        </div>
-
-      </div>
+      <UserNavbar />
 
       {loading ? (
         <p className="site-status-msg">Loading site…</p>
@@ -165,7 +98,6 @@ const handleLogout = () => {
           </p>
 
           <div className="details-container">
-
             <div className="detail-card">
               <h3>pH Level</h3>
               <h2>{avgPH !== null ? avgPH.toFixed(1) : "—"}</h2>
@@ -185,7 +117,6 @@ const handleLogout = () => {
               <h3>Dissolved O₂</h3>
               <h2>{avgDO2 !== null ? `${avgDO2.toFixed(1)} mg/L` : "—"}</h2>
             </div>
-
           </div>
 
           {siteReadings.length === 0 && (
@@ -227,7 +158,6 @@ const handleLogout = () => {
           </div>
         </>
       )}
-
     </div>
   );
 }

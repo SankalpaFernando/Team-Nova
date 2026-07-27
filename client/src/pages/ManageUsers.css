@@ -342,12 +342,13 @@
   font-weight: 600;
   letter-spacing: 0.2px;
 }
-.mu-badge--admin   { background: #fde8e8; color: #b03020; }
-.mu-badge--user    { background: #eef0ff; color: #1a40a8; }
-.mu-badge--visitor { background: #eef8f2; color: #1a6640; }
+.mu-badge--admin    { background: #fde8e8; color: #b03020; }
+.mu-badge--engineer { background: #e6fcf5; color: #0ca678; }
+.mu-badge--user     { background: #eef0ff; color: #1a40a8; }
+.mu-badge--visitor  { background: #eef8f2; color: #1a6640; }
 
 /* ── Action Buttons ──────────────────────────── */
-.mu-actions { display: flex; gap: 6px; flex-wrap: nowrap; }
+.mu-actions { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
 
 .mu-act {
   padding: 6px 11px;
