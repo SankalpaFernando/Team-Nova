@@ -7,35 +7,22 @@ const {
   createSite, 
   updateSite, 
   deleteSite,
-  updateThresholds   
-  
+  assignEngineer,
+  unassignEngineer,
+  updateThresholds
 } = require('../controllers/siteController');
 
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, authorizeSiteAccess } = require('../middleware/auth');
 
 router.get('/', getSites);
 router.get('/:id', getSite);
 
 router.post('/', protect, authorize('admin'), createSite);
-router.put('/:id', protect, authorize('admin'), updateSite);
+router.put('/:id', protect, authorize('admin', 'site_engineer'), updateSite);
 router.delete('/:id', protect, authorize('admin'), deleteSite);
-router.put('/:id/thresholds', protect, authorize('admin'), updateThresholds);
+
+router.put('/:id/assign-engineer', protect, authorize('admin'), assignEngineer);
+router.put('/:id/unassign-engineer', protect, authorize('admin'), unassignEngineer);
+router.put('/:id/thresholds', protect, authorize('admin', 'site_engineer'), updateThresholds);
 
 module.exports = router;
-
-// router.use(protect);
-
-// router.route('/:id/thresholds')
-//   .put(authorize('admin'), updateThresholds); // only admin can update
-
-// router.route('/')
-//   .get(getSites)
-//   .post(authorize('admin'), createSite);
-
-// router.route('/:id')
-//   .get(getSite)
-//   .put(authorize('admin'), updateSite)
-//   .delete(authorize('admin'), deleteSite);
-
-
-// module.exports = router;

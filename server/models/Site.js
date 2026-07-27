@@ -19,12 +19,20 @@ const siteSchema = new mongoose.Schema({
     trim: true,
     enum: ['Northern', 'Southern', 'Eastern', 'Western']
   },
-  thresholds: {
-    pH: { min: { type: Number, default: 6.5 }, max: { type: Number, default: 8.5 } },
-    temperature: { min: { type: Number, default: 20 }, max: { type: Number, default: 35 } },
-    salinity: { min: { type: Number, default: 0 }, max: { type: Number, default: 45 } },
-    dissolved_o2: { min: { type: Number, default: 4 }, max: { type: Number, default: 15 } }
+  assignedEngineer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   },
+  thresholds: [{
+    parameter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Parameter',
+      required: true
+    },
+    min: { type: Number, required: true },
+    max: { type: Number, required: true }
+  }],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
