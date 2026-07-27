@@ -8,6 +8,11 @@ const deviceSchema = new mongoose.Schema({
     trim: true,
     uppercase: true
   },
+  apiKey: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   installation_date: {
     type: Date,
     required: [true, 'Installation date is required']
@@ -21,6 +26,12 @@ const deviceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Site',
     required: [true, 'Site is required']
+  },
+  // Default is 900 seconds (15 min) for field deployment (battery/solar).
+  // For wall-powered prototype/demo devices, can be set lower (e.g. 30s).
+  sampling_interval_seconds: {
+    type: Number,
+    default: 900
   },
   lastSeen: { type: Date, default: null }
 },{ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

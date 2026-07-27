@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import "./ManageDevices.css";
 
@@ -143,10 +144,14 @@ useEffect(() => {
     }
     setSaving(true);
     try {
-      await api.put(`/devices/${selected._id}`, form);
+      const res = await api.put(`/devices/${selected._id}`, form);
       setShowEdit(false);
       load();
-      showToast("Device updated successfully!");
+      if (res.data?.pendingApproval) {
+        showToast("Submitted for admin approval.", "success");
+      } else {
+        showToast("Device updated successfully!");
+      }
     } catch (err) {
       setFormErr(err.response?.data?.message || "Failed to update device.");
     } finally {
@@ -159,10 +164,14 @@ useEffect(() => {
   const doDelete = async () => {
     setSaving(true);
     try {
-      await api.delete(`/devices/${selected._id}`);
+      const res = await api.delete(`/devices/${selected._id}`);
       setShowDelete(false);
       load();
-      showToast("Device deleted successfully.", "delete");
+      if (res.data?.pendingApproval) {
+        showToast("Submitted for admin approval.", "success");
+      } else {
+        showToast("Device deleted successfully.", "delete");
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to delete device.");
@@ -207,43 +216,7 @@ useEffect(() => {
     <div className="am-page">
 
       {/* ── Sidebar ── */}
-      <aside className="am-sidebar">
-        <div className="am-brand">
-          <span className="am-brand-icon">🌿</span>
-          <div>
-            <div className="am-brand-name">MangroveGuard</div>
-            <div className="am-brand-role">Admin Panel</div>
-          </div>
-        </div>
-
-        <nav className="am-nav">
-          {[
-            { to: "/admin-dashboard", icon: "⬛", label: "Dashboard" },
-            { to: "/manage-users",    icon: "👥", label: "Users"     },
-            { to: "/manage-devices",  icon: "📡", label: "Devices", active: true },
-            { to: "/admin-alerts",    icon: "🔔", label: "Alerts"    },
-            { to: "/admin-maps",      icon: "📍", label: "Sites"     },
-            { to: "/admin-messages",  icon: "✉️", label: "Messages"  },
-            { to: "/admin-profile",   icon: "👤", label: "Profile"   },
-          ].map(({ to, icon, label, active }) => (
-            <Link key={to} to={to} className={`am-nav-link ${active ? "am-nav-link--active" : ""}`}>
-              <span className="am-nav-icon">{icon}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="am-sidebar-bottom">
-          <div className="am-user-card">
-            <div className="am-user-avatar">{user?.name?.[0]?.toUpperCase() || "A"}</div>
-            <div>
-              <div className="am-user-name">{user?.name || "Admin"}</div>
-              <div className="am-user-email">{user?.email || ""}</div>
-            </div>
-          </div>
-          <button className="am-logout-btn" onClick={handleLogout}>⏻ Logout</button>
-        </div>
-      </aside>
+      <AdminSidebar activePage="devices" />
 
       {/* ── Main ── */}
       <main className="am-main">
@@ -277,13 +250,15 @@ useEffect(() => {
         </div>
 
         {/* Site filter — separate bar above the table */}
-        <div className="am-card" style={{ padding: "16px 20px", marginBottom: "20px", display: "flex", gap: "14px", alignItems: "center" }}>
-          <label className="am-lbl" style={{ margin: 0 }}>Filter by Site:</label>
-          <select className="am-inp" style={{ width: "auto" }} value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
-            <option value="">All Sites</option>
-            {sites.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-        </div>
+        {user?.role !== "site_engineer" && (
+          <div className="am-card" style={{ padding: "16px 20px", marginBottom: "20px", display: "flex", gap: "14px", alignItems: "center" }}>
+            <label className="am-lbl" style={{ margin: 0 }}>Filter by Site:</label>
+            <select className="am-inp" style={{ width: "auto" }} value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
+              <option value="">All Sites</option>
+              {sites.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+            </select>
+          </div>
+        )}
 
         {/* Error */}
         {error && <div className="am-error">{error}</div>}
