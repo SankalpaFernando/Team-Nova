@@ -1,18 +1,9 @@
 import "./Sites.css";
-import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
 import UserNavbar from "../components/UserNavbar";
-
-const REGION_ICON = {
-  Northern: "⬆️",
-  Southern: "⬇️",
-  Eastern: "➡️",
-  Western: "⬅️",
-};
-
-const navClass = ({ isActive }) => (isActive ? "active" : "");
+import SriLankaMap from "../components/SriLankaMap";
 
 function Sites() {
   const [sites, setSites] = useState([]);
@@ -39,9 +30,7 @@ function Sites() {
     loadSites();
   }, []);
 
-
-  // Group devices by site once, instead of filtering the whole devices
-  // array again for every card on every render
+  // Group devices by site once
   const devicesBySite = useMemo(() => {
     const map = {};
     devices.forEach((d) => {
@@ -55,81 +44,39 @@ function Sites() {
 
   return (
     <div className="sites-page">
-
-      {/* Navbar */}
+      {/* User Navbar */}
       <UserNavbar />
 
-      {/* Background */}
+      {/* Hero Single-Page Section */}
       <div
         className="sites-hero"
         style={{ backgroundImage: `url(${mangrove})` }}
       >
-
         <div className="sites-overlay">
+          <div className="sites-content">
+            <h2 className="sites-title">
+              Mangrove Monitoring Sites
+            </h2>
 
-          <h2 className="sites-title">
-            Mangrove Monitoring Sites
-          </h2>
+            {error && <div className="sites-error">{error}</div>}
 
-          {error && <div className="sites-error">{error}</div>}
-
-          <div className="sites-container">
-
-            {loading ? (
-              <p className="sites-status-msg">Loading sites…</p>
-            ) : sites.length === 0 ? (
-              <p className="sites-status-msg">No sites registered yet</p>
-            ) : (
-              sites.map((site) => {
-                const siteDevices = devicesBySite[site._id] || [];
-                const activeCount = siteDevices.filter((d) => d.status === "active").length;
-
-                let statusLabel = "No Devices";
-                let statusClass = "status-none";
-                if (siteDevices.length > 0) {
-                  if (activeCount === siteDevices.length) {
-                    statusLabel = "Active";
-                    statusClass = "status-active";
-                  } else if (activeCount > 0) {
-                    statusLabel = "Partially Active";
-                    statusClass = "status-partial";
-                  } else {
-                    statusLabel = "Inactive";
-                    statusClass = "status-inactive";
-                  }
-                }
-
-                return (
-                  <Link
-                    to={`/sites/${site._id}`}
-                    className="site-link"
-                    key={site._id}
-                  >
-                    <div className="site-card">
-                      <div className="site-card-header">
-                        <h3>{site.name}</h3>
-                        <span className={`status-pill ${statusClass}`}>{statusLabel}</span>
-                      </div>
-
-                      <p><strong>📍 Location:</strong> {site.location}</p>
-                      <p>
-                        <strong>{REGION_ICON[site.region] || "🧭"} Region:</strong> {site.region}
-                      </p>
-                      <p><strong>🔌 Devices Installed:</strong> {siteDevices.length}</p>
-
-                      <span className="view-details-hint">View Details →</span>
-                    </div>
-                  </Link>
-                );
-              })
-            )}
-
+            {/* Sri Lanka Map Section (Single-Page View) */}
+            <div className="sites-map-section">
+              {loading ? (
+                <div className="sites-loading-box">
+                  <p>Loading Sri Lanka Mangrove Map…</p>
+                </div>
+              ) : (
+                <SriLankaMap
+                  sites={sites}
+                  devicesBySite={devicesBySite}
+                  isUserPage={true}
+                />
+              )}
+            </div>
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }

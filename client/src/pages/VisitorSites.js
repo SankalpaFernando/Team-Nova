@@ -3,13 +3,7 @@ import Navbar from "../components/navbar";
 import mangrove from "../assests/mangrove.png";
 import { useEffect, useState } from "react";
 import api from "../services/api";
-
-const REGION_ICON = {
-  Northern: "⬆️",
-  Southern: "⬇️",
-  Eastern: "➡️",
-  Western: "⬅️",
-};
+import SriLankaMap from "../components/SriLankaMap";
 
 function VisitorSites() {
   const [sites, setSites] = useState([]);
@@ -33,66 +27,38 @@ function VisitorSites() {
 
   return (
     <div className="visitor-sites-page">
-
       {/* Navbar */}
       <Navbar showBackHome={true} />
 
-      {/* Hero Section */}
+      {/* Hero Single-Page Section */}
       <section
         className="visitor-sites-hero"
         style={{ backgroundImage: `url(${mangrove})` }}
       >
-
         <div className="visitor-sites-overlay">
-
           <div className="visitor-sites-content">
-
             <h2 className="visitor-sites-title">
               Mangrove Monitoring Sites
             </h2>
 
             {error && <p className="visitor-sites-error">{error}</p>}
 
-            <div className="visitor-sites-container">
-
+            {/* Sri Lanka Map Container (Single-Page View) */}
+            <div className="visitor-map-section">
               {loading ? (
-                <p className="visitor-sites-status-msg">Loading sites…</p>
-              ) : sites.length === 0 ? (
-                <p className="visitor-sites-status-msg">No sites registered yet</p>
+                <div className="map-loading-box">
+                  <p>Loading Sri Lanka Mangrove Map…</p>
+                </div>
               ) : (
-                sites.map((site) => {
-                  return (
-                    <div
-                      className="visitor-site-card"
-                      key={site._id}
-                    >
-                      <div className="visitor-site-card-header">
-                        <h3>{site.name}</h3>
-                      </div>
-
-                      <p><strong>📍 Location:</strong> {site.location}</p>
-                      <p>
-                        <strong>{REGION_ICON[site.region] || "🧭"} Region:</strong> {site.region}
-                      </p>
-                    </div>
-                  );
-                })
+                <SriLankaMap
+                  sites={sites}
+                  isUserPage={false}
+                />
               )}
-
             </div>
-
-            {!loading && sites.length > 0 && (
-              <p className="visitor-sites-hint">
-                Log in to see live sensor readings for each site
-              </p>
-            )}
-
           </div>
-
         </div>
-
       </section>
-
     </div>
   );
 }
