@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./VisitorContactus.css";
 import Navbar from "../components/navbar";
+import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import axios from "axios";
 
@@ -177,6 +178,8 @@ function VisitorContactus() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

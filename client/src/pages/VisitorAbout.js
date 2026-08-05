@@ -1,5 +1,6 @@
 import "./home.css";
 import Navbar from "../components/navbar";
+import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 
 function VisitorAbout() {
@@ -178,7 +179,7 @@ function VisitorAbout() {
 
       </section>
 
-
+      <Footer />
 
     </div>
   );

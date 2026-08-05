@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import "./home.css";
 import Navbar from "../components/navbar";
+import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 
 function Home() {
@@ -194,6 +195,9 @@ function Home() {
         </div>
 
       </section>
+
+      {/* Footer */}
+      <Footer />
 
     </div>
   );
