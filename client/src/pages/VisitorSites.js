@@ -1,5 +1,6 @@
 import "./VisitorSites.css";
 import Navbar from "../components/navbar";
+import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import { useEffect, useState } from "react";
 import api from "../services/api";
@@ -59,6 +60,8 @@ function VisitorSites() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
 
 // Sensor range (min assumed 0, matching server/models/SensorReading.js
 // validation) and display info for each parameter.
@@ -337,6 +338,8 @@ const handleLogout = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

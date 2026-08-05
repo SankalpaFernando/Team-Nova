@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
 import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
 import SriLankaMap from "../components/SriLankaMap";
 
 function Sites() {
@@ -77,6 +78,8 @@ function Sites() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

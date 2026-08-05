@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
 
 function SiteDetails() {
   const { id } = useParams();
@@ -158,6 +159,7 @@ function SiteDetails() {
           </div>
         </>
       )}
+      <Footer />
     </div>
   );
 }

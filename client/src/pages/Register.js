@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
+import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import "./Register.css";
 
@@ -125,6 +126,7 @@ function Register() {
           </form>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

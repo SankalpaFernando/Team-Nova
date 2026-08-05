@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
 import "./SearchResults.css";
@@ -176,6 +177,8 @@ function SearchResults() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

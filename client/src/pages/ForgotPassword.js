@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/navbar";
+import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import "./ForgotPassword.css";
 
@@ -86,6 +87,7 @@ function ForgotPassword() {
           </p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
