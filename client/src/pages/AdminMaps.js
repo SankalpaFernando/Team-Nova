@@ -27,6 +27,7 @@ function AdminMaps() {
 
   // Data
   const [sites, setSites] = useState([]);
+  const [availableParameters, setAvailableParameters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -62,8 +63,12 @@ function AdminMaps() {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get("/sites");
-      setSites(res.data.data || []);
+      const [sitesRes, paramsRes] = await Promise.all([
+        api.get("/sites"),
+        api.get("/parameters").catch(() => ({ data: { data: [] } }))
+      ]);
+      setSites(sitesRes.data.data || []);
+      setAvailableParameters(paramsRes.data.data || []);
     } catch {
       setError("Could not load sites. Check that the backend is running.");
     } finally {
@@ -112,24 +117,99 @@ function AdminMaps() {
   };
 
   // ── thresholds ────────────────────────────────────────
+  const getExistingVal = (thresholdsArray, paramKey, field, defaultVal) => {
+    if (!Array.isArray(thresholdsArray)) return defaultVal;
+    const targetKey = paramKey.toLowerCase();
+    const entry = thresholdsArray.find(t => {
+      const pKey = (t.parameter?.key || t.parameter?.label || t.parameter || "").toString().toLowerCase();
+      const pLabel = (t.parameter?.label || t.parameter_name || "").toString().toLowerCase();
+      if (pKey === targetKey) return true;
+      if (targetKey === "ph" && (pKey === "ph" || pLabel.includes("ph"))) return true;
+      if ((targetKey === "temperature" || targetKey === "temp") && (pKey === "temperature" || pKey === "temp" || pLabel.includes("temp"))) return true;
+      if (targetKey === "salinity" && (pKey === "salinity" || pLabel.includes("salin"))) return true;
+      if ((targetKey === "dissolved_o2" || targetKey === "dissolved o2") && (pKey === "dissolved_o2" || pLabel.includes("dissolved"))) return true;
+      return false;
+    });
+    return entry?.[field] ?? defaultVal;
+  };
+
   const openThresh = (site) => {
     setSelected(site);
     setThresh({
-      pH:           { min: site.thresholds?.pH?.min ?? 6.5,          max: site.thresholds?.pH?.max ?? 8.5  },
-      temperature:  { min: site.thresholds?.temperature?.min ?? 20,   max: site.thresholds?.temperature?.max ?? 35 },
-      salinity:     { min: site.thresholds?.salinity?.min ?? 0,       max: site.thresholds?.salinity?.max ?? 45   },
-      dissolved_o2: { min: site.thresholds?.dissolved_o2?.min ?? 4,   max: site.thresholds?.dissolved_o2?.max ?? 15 },
+      pH:           { min: getExistingVal(site.thresholds, "ph", "min", 6.5),          max: getExistingVal(site.thresholds, "ph", "max", 8.5)  },
+      temperature:  { min: getExistingVal(site.thresholds, "temperature", "min", 20),   max: getExistingVal(site.thresholds, "temperature", "max", 35) },
+      salinity:     { min: getExistingVal(site.thresholds, "salinity", "min", 0),       max: getExistingVal(site.thresholds, "salinity", "max", 45)   },
+      dissolved_o2: { min: getExistingVal(site.thresholds, "dissolved_o2", "min", 4),   max: getExistingVal(site.thresholds, "dissolved_o2", "max", 15) },
     });
     setFormErr("");
     setShowThresh(true);
   };
+
   const doThresh = async (e) => {
     e.preventDefault();
     setSaving(true);
-    try   { await api.put(`/sites/${selected._id}/thresholds`, thresh); setShowThresh(false); load();
-    showToast("Thresholds updated successfully!"); }
-    catch (err) { setFormErr(err.response?.data?.message || "Failed to update thresholds."); }
-    finally { setSaving(false); }
+    setFormErr("");
+    try {
+      const keysMap = [
+        { formKey: "pH",           paramKey: "ph" },
+        { formKey: "temperature",  paramKey: "temperature" },
+        { formKey: "salinity",     paramKey: "salinity" },
+        { formKey: "dissolved_o2", paramKey: "dissolved_o2" }
+      ];
+
+      const formattedThresholds = [];
+
+      for (const { formKey, paramKey } of keysMap) {
+        // Find matching Parameter document ID from availableParameters or selected.thresholds
+        const paramDoc = availableParameters.find(p => {
+          const k = (p.key || "").toLowerCase();
+          const l = (p.label || "").toLowerCase();
+          if (k === paramKey) return true;
+          if (paramKey === "ph" && (k === "ph" || l.includes("ph"))) return true;
+          if (paramKey === "temperature" && (k === "temperature" || k === "temp" || l.includes("temp"))) return true;
+          if (paramKey === "salinity" && (k === "salinity" || l.includes("salin"))) return true;
+          if (paramKey === "dissolved_o2" && (k === "dissolved_o2" || l.includes("dissolved"))) return true;
+          return false;
+        });
+
+        const paramId = paramDoc?._id || selected?.thresholds?.find(t => {
+          const k = (t.parameter?.key || "").toLowerCase();
+          const l = (t.parameter?.label || "").toLowerCase();
+          return k === paramKey || (paramKey === "ph" && k === "ph") || (paramKey === "temperature" && (k === "temperature" || k === "temp"));
+        })?.parameter?._id;
+
+        if (paramId) {
+          formattedThresholds.push({
+            parameter: paramId,
+            min: Number(thresh[formKey].min),
+            max: Number(thresh[formKey].max)
+          });
+        }
+      }
+
+      // Preserve any existing thresholds for other parameters not in the form (e.g. TDS, Turbidity)
+      if (Array.isArray(selected?.thresholds)) {
+        selected.thresholds.forEach(t => {
+          const pId = t.parameter?._id || (typeof t.parameter === 'string' ? t.parameter : null);
+          if (pId && !formattedThresholds.some(ft => ft.parameter.toString() === pId.toString())) {
+            formattedThresholds.push({
+              parameter: pId,
+              min: Number(t.min),
+              max: Number(t.max)
+            });
+          }
+        });
+      }
+
+      await api.put(`/sites/${selected._id}/thresholds`, { thresholds: formattedThresholds });
+      setShowThresh(false);
+      load();
+      showToast("Thresholds updated successfully!");
+    } catch (err) {
+      setFormErr(err.response?.data?.message || "Failed to update thresholds.");
+    } finally {
+      setSaving(false);
+    }
   };
   const setT = (param, bound, val) =>
     setThresh(p => ({ ...p, [param]: { ...p[param], [bound]: parseFloat(val) || 0 } }));
