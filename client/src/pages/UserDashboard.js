@@ -3,6 +3,7 @@ import "./UserDashboard.css";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
+import socket from "../services/socket";
 import { useAuth } from "../context/AuthContext";
 import UserNavbar from "../components/UserNavbar";
 import Footer from "../components/Footer";
@@ -35,7 +36,7 @@ function arcPath(cx, cy, r, fracStart, fracEnd) {
 }
 
 // One gauge card for a single sensor parameter
-function ParamGauge({ label, value, unit, max, threshold }) {
+function ParamGauge({ label, value, unit, max, threshold, isLive }) {
   const cx = 60, cy = 60, r = 48;
   const clamped = Math.max(0, Math.min(value, max));
   const valueFrac = clamped / max;
@@ -60,7 +61,26 @@ function ParamGauge({ label, value, unit, max, threshold }) {
 
   return (
     <div className="gauge-card">
-      <p className="gauge-label">{label}</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+        <p className="gauge-label" style={{ margin: 0 }}>{label}</p>
+        {isLive && (
+          <span style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            background: "#e6f4ea",
+            color: "#137333",
+            border: "1px solid #ceead6",
+            fontSize: "10px",
+            fontWeight: 700,
+            padding: "2px 6px",
+            borderRadius: "10px"
+          }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1e8e3e" }} />
+            LIVE
+          </span>
+        )}
+      </div>
       <svg viewBox="0 0 120 68" className="gauge-svg">
         {safeMinFrac > 0 && (
           <path d={arcPath(cx, cy, r, 0, safeMinFrac)} className="gauge-arc gauge-arc-danger" />
@@ -104,6 +124,7 @@ function UserDashboard() {
   const [sites, setSites] = useState([]);
   const [devices, setDevices] = useState([]);
   const [latestReadings, setLatestReadings] = useState([]);
+  const [liveSensors, setLiveSensors] = useState({});
   const [alerts, setAlerts] = useState([]);
   const [attentionCount, setAttentionCount] = useState(0);
   const [selectedSiteId, setSelectedSiteId] = useState("");
@@ -168,6 +189,39 @@ const handleLogout = () => {
     };
 
     loadDashboard();
+  }, []);
+
+  useEffect(() => {
+    const handleNewReading = (newReading) => {
+      if (!newReading) return;
+      const getSensorId = (r) => (r.sensor?._id ? r.sensor._id.toString() : r.sensor ? r.sensor.toString() : null);
+      const newSensorId = getSensorId(newReading);
+
+      setLatestReadings((prev) => {
+        const exists = prev.some((r) => getSensorId(r) === newSensorId);
+        if (exists) {
+          return prev.map((r) => (getSensorId(r) === newSensorId ? newReading : r));
+        } else {
+          return [newReading, ...prev];
+        }
+      });
+
+      if (newSensorId) {
+        setLiveSensors((prev) => ({ ...prev, [newSensorId]: true }));
+        setTimeout(() => {
+          setLiveSensors((prev) => {
+            const copy = { ...prev };
+            delete copy[newSensorId];
+            return copy;
+          });
+        }, 4000);
+      }
+    };
+
+    socket.on("new_reading", handleNewReading);
+    return () => {
+      socket.off("new_reading", handleNewReading);
+    };
   }, []);
 
   // "Active Devices" = every device whose status is "active", straight
@@ -279,6 +333,18 @@ const handleLogout = () => {
                     ? validValues.reduce((a, b) => a + b, 0) / validValues.length
                     : 0;
 
+                  const isParamLive = siteReadings.some((r) => {
+                    const sId = r.sensor?._id?.toString() || r.sensor?.toString();
+                    const pKey = r.sensor?.parameter?.key || "";
+                    const pLabel = (r.sensor?.parameter?.label || r.parameter_name || "").toLowerCase();
+                    const matchesParam = pKey === param ||
+                      (param === "pH" && (pKey === "pH" || pLabel.includes("ph"))) ||
+                      (param === "temperature" && (pKey === "temperature" || pKey === "temp" || pLabel.includes("temp"))) ||
+                      (param === "salinity" && (pKey === "salinity" || pLabel.includes("salin"))) ||
+                      (param === "dissolved_o2" && (pKey === "dissolved_o2" || pKey === "do2" || pLabel.includes("o2") || pLabel.includes("oxygen")));
+                    return matchesParam && liveSensors[sId];
+                  });
+
                   return (
                     <ParamGauge
                       key={param}
@@ -287,6 +353,7 @@ const handleLogout = () => {
                       unit={meta.unit}
                       max={meta.max}
                       threshold={selectedSite?.thresholds?.[param]}
+                      isLive={isParamLive}
                     />
                   );
                 })}

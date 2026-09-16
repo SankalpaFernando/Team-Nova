@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import socket from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import AdminSidebar from '../components/AdminSidebar';
 import './AdminAlerts.css';
@@ -12,6 +13,8 @@ function SiteEngineerDashboard() {
   const [sensors, setSensors] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [readings, setReadings] = useState([]);
+  const [liveSensors, setLiveSensors] = useState({});
   const [availableParameters, setAvailableParameters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,7 +31,7 @@ function SiteEngineerDashboard() {
     try {
       setLoading(true);
       setError('');
-      
+
       const siteId = user?.assignedSite?._id || user?.assignedSite;
       if (!siteId) {
         setError('No site assigned to your engineer account yet.');
@@ -36,12 +39,13 @@ function SiteEngineerDashboard() {
         return;
       }
 
-      const [siteRes, deviceRes, alertRes, paramRes, msgRes] = await Promise.all([
+      const [siteRes, deviceRes, alertRes, paramRes, msgRes, readingsRes] = await Promise.all([
         api.get(`/sites/${siteId}`),
         api.get(`/devices?site=${siteId}`),
         api.get(`/alerts?limit=50`),
         api.get(`/parameters?site=${siteId}`),
-        api.get(`/messages`)
+        api.get(`/messages`),
+        api.get(`/readings/latest`).catch(() => ({ data: { data: [] } }))
       ]);
 
       const siteObj = siteRes.data.data.site || siteRes.data.data;
@@ -51,6 +55,7 @@ function SiteEngineerDashboard() {
       setAvailableParameters(paramRes.data.data || []);
       setAlerts(alertRes.data.data || []);
       setMessages(msgRes.data.data || []);
+      setReadings(readingsRes.data.data || []);
 
       const sensorRes = await api.get(`/sensors?site=${siteId}`);
       setSensors(sensorRes.data.data || []);
@@ -61,6 +66,39 @@ function SiteEngineerDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handleNewReading = (newReading) => {
+      if (!newReading) return;
+      const getSensorId = (r) => (r.sensor?._id ? r.sensor._id.toString() : r.sensor ? r.sensor.toString() : null);
+      const newSensorId = getSensorId(newReading);
+
+      setReadings((prev) => {
+        const exists = prev.some((r) => getSensorId(r) === newSensorId);
+        if (exists) {
+          return prev.map((r) => (getSensorId(r) === newSensorId ? newReading : r));
+        } else {
+          return [newReading, ...prev];
+        }
+      });
+
+      if (newSensorId) {
+        setLiveSensors((prev) => ({ ...prev, [newSensorId]: true }));
+        setTimeout(() => {
+          setLiveSensors((prev) => {
+            const copy = { ...prev };
+            delete copy[newSensorId];
+            return copy;
+          });
+        }, 4000);
+      }
+    };
+
+    socket.on('new_reading', handleNewReading);
+    return () => {
+      socket.off('new_reading', handleNewReading);
+    };
+  }, []);
 
   const handleResolveAlert = async (alertId) => {
     try {
@@ -225,15 +263,43 @@ function SiteEngineerDashboard() {
                 </div>
                 {sensors.length === 0 ? (
                   <p style={{ fontSize: '13px', color: '#64748b' }}>No sensors registered for this site.</p>
-                ) : sensors.slice(0, 5).map(sen => (
-                  <div key={sen._id} style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <strong style={{ fontSize: '13px' }}>{sen.parameter?.label || 'Sensor'}</strong>
-                      <div style={{ fontSize: '11px', color: '#64748b' }}>{sen.model_name} (SN: {sen.serial_number})</div>
+                ) : sensors.slice(0, 5).map(sen => {
+                  const senId = sen._id?.toString();
+                  const latestR = readings.find(r => (r.sensor?._id?.toString() || r.sensor?.toString()) === senId);
+                  const isLive = !!liveSensors[senId];
+
+                  return (
+                    <div key={sen._id} style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <strong style={{ fontSize: '13px' }}>{sen.parameter?.label || 'Sensor'}</strong>
+                          {isLive && (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: '#e6f4ea',
+                              color: '#137333',
+                              border: '1px solid #ceead6',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '2px 6px',
+                              borderRadius: '10px'
+                            }}>
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1e8e3e' }} />
+                              LIVE
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                          {sen.model_name} (SN: {sen.serial_number})
+                          {latestR && <span style={{ fontWeight: 600, color: '#0f172a', marginLeft: '6px' }}>· Latest: {latestR.value} {sen.parameter?.unit || ''}</span>}
+                        </div>
+                      </div>
+                      <span className={`am-badge am-badge--${sen.status === 'active' ? 'rn' : 'rs'}`}>{sen.status}</span>
                     </div>
-                    <span className={`am-badge am-badge--${sen.status === 'active' ? 'rn' : 'rs'}`}>{sen.status}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

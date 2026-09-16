@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
+import socket from "../services/socket";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer } from "recharts";
 import "./AdminAlerts.css";
 
@@ -85,6 +86,7 @@ function AdminDashboard() {
   const [recentLogins, setRecentLogins] = useState([]);
   const [userCount, setUserCount] = useState(null);
   const [readings, setReadings] = useState([]);
+  const [liveSensors, setLiveSensors] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -133,6 +135,39 @@ function AdminDashboard() {
       }
     };
     load();
+  }, []);
+
+  useEffect(() => {
+    const handleNewReading = (newReading) => {
+      if (!newReading) return;
+      const getSensorId = (r) => (r.sensor?._id ? r.sensor._id.toString() : r.sensor ? r.sensor.toString() : null);
+      const newSensorId = getSensorId(newReading);
+
+      setReadings((prev) => {
+        const exists = prev.some((r) => getSensorId(r) === newSensorId);
+        if (exists) {
+          return prev.map((r) => (getSensorId(r) === newSensorId ? newReading : r));
+        } else {
+          return [newReading, ...prev];
+        }
+      });
+
+      if (newSensorId) {
+        setLiveSensors((prev) => ({ ...prev, [newSensorId]: true }));
+        setTimeout(() => {
+          setLiveSensors((prev) => {
+            const copy = { ...prev };
+            delete copy[newSensorId];
+            return copy;
+          });
+        }, 4000);
+      }
+    };
+
+    socket.on("new_reading", handleNewReading);
+    return () => {
+      socket.off("new_reading", handleNewReading);
+    };
   }, []);
 
   // ── derived stats ─────────────────────────────────────
@@ -287,6 +322,11 @@ function AdminDashboard() {
                     const isOpen = !!expandedSiteIds[s.siteId];
                     const avgData = getSiteAverages(s.siteId);
                     const thresholds = getSiteThresholds(s.siteId);
+                    const isSiteLive = readings.some((r) => {
+                      const sId = r.sensor?._id?.toString() || r.sensor?.toString();
+                      const rSiteId = r.device?.site?._id || r.device?.site;
+                      return (rSiteId === s.siteId || rSiteId === s.siteId?.toString()) && liveSensors[sId];
+                    });
 
                     return (
                       <div key={s.siteId} style={{ borderTop: i > 0 ? "1px solid #deeae3" : "none" }}>
@@ -300,7 +340,26 @@ function AdminDashboard() {
                           }}
                         >
                           <div>
-                            <div style={{ fontSize: "14px", fontWeight: 600, color: "#1c3a2a" }}>{s.siteName}</div>
+                            <div style={{ fontSize: "14px", fontWeight: 600, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                              {s.siteName}
+                              {isSiteLive && (
+                                <span style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  background: "#e6f4ea",
+                                  color: "#137333",
+                                  border: "1px solid #ceead6",
+                                  fontSize: "10px",
+                                  fontWeight: 700,
+                                  padding: "2px 6px",
+                                  borderRadius: "10px"
+                                }}>
+                                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1e8e3e" }} />
+                                  LIVE
+                                </span>
+                              )}
+                            </div>
                             <div style={{ fontSize: "11px", color: "#64748b" }}>
                               Severity: <strong style={{ color: severityText[s.worst] }}>{s.worst.toUpperCase()}</strong> · {s.count} active breach{s.count > 1 ? "es" : ""}
                             </div>
