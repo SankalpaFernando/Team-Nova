@@ -345,21 +345,6 @@ const handleLogout = () => {
                     return matchesParam && liveSensors[sId];
                   });
 
-                  const getThresholdForParam = (thresholdsArray, pName) => {
-                    if (!Array.isArray(thresholdsArray)) return null;
-                    const targetKey = pName.toLowerCase();
-                    return thresholdsArray.find(t => {
-                      const k = (t.parameter?.key || "").toLowerCase();
-                      const lbl = (t.parameter?.label || t.parameter_name || "").toLowerCase();
-                      if (k === targetKey) return true;
-                      if (targetKey === "ph" && (k === "ph" || lbl.includes("ph"))) return true;
-                      if (targetKey === "temperature" && (k === "temperature" || k === "temp" || lbl.includes("temp"))) return true;
-                      if (targetKey === "salinity" && (k === "salinity" || lbl.includes("salin"))) return true;
-                      if ((targetKey === "dissolved_o2" || targetKey === "dissolved o2") && (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen"))) return true;
-                      return false;
-                    });
-                  };
-
                   return (
                     <ParamGauge
                       key={param}
@@ -367,7 +352,7 @@ const handleLogout = () => {
                       value={avg}
                       unit={meta.unit}
                       max={meta.max}
-                      threshold={getThresholdForParam(selectedSite?.thresholds, param)}
+                      threshold={selectedSite?.thresholds?.[param]}
                       isLive={isParamLive}
                     />
                   );
