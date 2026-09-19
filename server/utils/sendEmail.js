@@ -1,3 +1,4 @@
+console.log('EMAIL ENV CHECK:', process.env.EMAIL_HOST, process.env.EMAIL_USER, !!process.env.EMAIL_PASS);
 const nodemailer = require('nodemailer');
 
 // Sends an email using SMTP credentials from .env.
