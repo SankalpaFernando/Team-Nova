@@ -7,6 +7,7 @@ import socket from "../services/socket";
 import { useAuth } from "../context/AuthContext";
 import UserNavbar from "../components/UserNavbar";
 import Footer from "../components/Footer";
+import { MapPin, Radio, Bell } from "lucide-react";
 
 // Sensor range (min assumed 0, matching server/models/SensorReading.js
 // validation) and display info for each parameter.
@@ -252,7 +253,9 @@ const handleLogout = () => {
         {/* Summary Cards */}
         <div className="card-row">
           <div className="card card-sites">
-            <div className="card-icon">🌍</div>
+            <div className="card-icon">
+              <MapPin size={26} color="#164e3d" />
+            </div>
             <div className="card-body">
               <h3>No. of Sites</h3>
               <h2>{loading ? "…" : sites.length}</h2>
@@ -261,7 +264,9 @@ const handleLogout = () => {
           </div>
 
           <div className="card card-devices">
-            <div className="card-icon">🔌</div>
+            <div className="card-icon">
+              <Radio size={26} color="#1d7068" />
+            </div>
             <div className="card-body">
               <h3>Active Devices</h3>
               <h2>{loading ? "…" : activeDeviceCount}</h2>
@@ -270,7 +275,9 @@ const handleLogout = () => {
           </div>
 
           <div className="card card-alerts">
-            <div className="card-icon">🚨</div>
+            <div className="card-icon">
+              <Bell size={26} color="#d97706" />
+            </div>
             <div className="card-body">
               <h3>Total Alerts</h3>
               <h2>{loading ? "…" : attentionCount}</h2>

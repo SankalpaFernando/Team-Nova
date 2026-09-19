@@ -21,6 +21,7 @@ function Register() {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
+    if (serverError) setServerError("");
     setForm({
       ...form,
       [e.target.name]: e.target.value
@@ -63,7 +64,21 @@ function Register() {
         // Registered users always go to dashboard
         navigate("/dashboard");
       } catch (err) {
-        setServerError(err.response?.data?.message || "Registration failed. Please try again.");
+        if (!err.response) {
+          setServerError("Something went wrong. Please try again later.");
+        } else {
+          const msg = err.response.data?.message || "";
+          if (
+            (err.response.status === 400 || err.response.status === 409) &&
+            (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("already exists"))
+          ) {
+            setServerError("An account with this email already exists. Please sign in or use a different email.");
+          } else if (err.response.status >= 500) {
+            setServerError("Something went wrong. Please try again later.");
+          } else {
+            setServerError(msg || "Registration failed. Please check your information and try again.");
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -82,9 +97,9 @@ function Register() {
           <h2>User Register</h2>
 
           {serverError && (
-            <p style={{ color: "red", fontSize: "14px", marginBottom: "10px" }}>
+            <div className="register-error-alert">
               {serverError}
-            </p>
+            </div>
           )}
 
           <form onSubmit={handleSubmit}>

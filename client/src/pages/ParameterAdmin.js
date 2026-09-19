@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AdminSidebar from '../components/AdminSidebar';
+import { Globe, MapPin, Pencil, Rocket } from 'lucide-react';
 import './ParameterAdmin.css';
 
 function ParameterAdmin() {
@@ -306,8 +307,8 @@ function ParameterAdmin() {
                       </td>
                       <td className="mu-td-dim">{param.unit || '—'}</td>
                       <td>
-                        <span className={`scope-badge scope-${param.scope}`}>
-                          {param.scope === 'global' ? '🌐 Global' : `📍 Site: ${param.site?.name || 'Local Site'}`}
+                        <span className={`scope-badge scope-${param.scope}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {param.scope === 'global' ? <><Globe size={14} /> Global</> : <><MapPin size={14} /> Site: {param.site?.name || 'Local Site'}</>}
                         </span>
                       </td>
                       <td>
@@ -317,13 +318,13 @@ function ParameterAdmin() {
                       </td>
                       <td>
                         <div className="mu-actions">
-                          <button className="mu-act mu-act--edit" onClick={() => handleEdit(param)}>
-                            ✏ Edit
+                          <button className="mu-act mu-act--edit" onClick={() => handleEdit(param)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Pencil size={14} /> Edit
                           </button>
 
                           {user?.role === 'admin' && param.scope === 'site' && (
-                            <button className="mu-act mu-act--edit" style={{ background: '#e6fcf5', color: '#0ca678' }} onClick={() => handlePromote(param._id)} title="Promote to Global Catalog">
-                              🚀 Promote
+                            <button className="mu-act mu-act--edit" style={{ background: '#e6fcf5', color: '#0ca678', display: 'flex', alignItems: 'center', gap: '4px' }} onClick={() => handlePromote(param._id)} title="Promote to Global Catalog">
+                              <Rocket size={14} /> Promote
                             </button>
                           )}
 

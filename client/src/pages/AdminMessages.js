@@ -5,6 +5,7 @@ import api from "../services/api";
 import "./AdminMessages.css";
 
 import AdminSidebar from "../components/AdminSidebar";
+import { Mail, Circle, CircleDot, X, CheckCircle, XCircle, Trash2, Send } from 'lucide-react';
 
 function AdminMessages() {
   const { user } = useAuth();
@@ -91,9 +92,9 @@ function AdminMessages() {
         {/* Stats */}
         <div className="msg-stats">
           {[
-            { icon: "✉️", val: messages.length, label: "Total Messages"  },
-            { icon: "🔴", val: unreadCount,     label: "Unread Messages" },
-            { icon: "🟢", val: readCount,       label: "Read Messages"   },
+            { icon: <Mail size={24} color="#3b82f6" />, val: messages.length, label: "Total Messages"  },
+            { icon: <Circle size={24} color="#ef4444" fill="#ef4444" />, val: unreadCount,     label: "Unread Messages" },
+            { icon: <CircleDot size={24} color="#10b981" />, val: readCount,       label: "Read Messages"   },
           ].map((s, i) => (
             <div className="msg-stat-card" key={i}>
               <span className="msg-stat-icon">{s.icon}</span>
@@ -185,7 +186,7 @@ function AdminMessages() {
                   From <strong>{modalMsg.fullName}</strong> · {modalMsg.email}
                 </p>
               </div>
-              <button className="msg-modal-close" onClick={() => setModalMsg(null)}>✕</button>
+              <button className="msg-modal-close" onClick={() => setModalMsg(null)}><X size={18} /></button>
             </div>
             <div className="msg-modal-body">
               {modalMsg.message}
@@ -202,8 +203,9 @@ function AdminMessages() {
                   });
                   setShowCompose(true);
                 }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                ✉️ Reply via Email
+                <Mail size={16} /> Reply via Email
               </button>
               <button type="button" className="msg-close-btn" onClick={() => setModalMsg(null)}>
                 Close
@@ -218,7 +220,7 @@ function AdminMessages() {
         <div className="compose-box">
           <div className="compose-head">
             <span>New Message</span>
-            <button type="button" className="compose-close" onClick={() => { setShowCompose(false); setSendStatus(""); }}>✕</button>
+            <button type="button" className="compose-close" onClick={() => { setShowCompose(false); setSendStatus(""); }}><X size={18} /></button>
           </div>
           <div className="compose-body">
             <div className="compose-field">
@@ -244,16 +246,16 @@ function AdminMessages() {
               onChange={e => setComposeData({ ...composeData, body: e.target.value })}
             />
             {sendStatus && (
-              <p className={`compose-status ${sendStatus === "sent" ? "compose-status--ok" : "compose-status--err"}`}>
-                {sendStatus === "sent" ? "✅ Reply sent successfully!" : "❌ Failed to send. Try again."}
+              <p className={`compose-status ${sendStatus === "sent" ? "compose-status--ok" : "compose-status--err"}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {sendStatus === "sent" ? <><CheckCircle size={16} /> Reply sent successfully!</> : <><XCircle size={16} /> Failed to send. Try again.</>}
               </p>
             )}
             <div className="compose-foot">
-              <button type="button" className="compose-send-btn" onClick={handleSendReply}>
-                ✉️ Send
+              <button type="button" className="compose-send-btn" onClick={handleSendReply} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Send size={16} /> Send
               </button>
-               <button type="button" className="compose-discard-btn" onClick={() => { setShowCompose(false); setSendStatus(""); }}>
-                🗑 Discard
+               <button type="button" className="compose-discard-btn" onClick={() => { setShowCompose(false); setSendStatus(""); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Trash2 size={16} /> Discard
               </button>
             </div>
           </div>
