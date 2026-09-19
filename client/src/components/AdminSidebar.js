@@ -3,7 +3,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import ProfileModal from './ProfileModal';
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  Radio,
+  Thermometer,
+  Sliders,
+  Bell,
+  MapPin,
+  Mail,
+  User,
+  LogOut,
+  ClipboardList,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
 import './AdminSidebar.css';
+import logoImg from '../assests/logo.png';
 
 function AdminSidebar({ activePage }) {
   const { user, logout } = useAuth();
@@ -50,26 +67,26 @@ function AdminSidebar({ activePage }) {
 
   // Admin Navigation Links
   const adminNavItems = [
-    { key: 'dashboard',        to: '/admin-dashboard', icon: '⬛', label: 'Dashboard' },
-    { key: 'pending-requests', to: '/pending-requests', icon: '📝', label: `Pending Requests${pendingCount > 0 ? ` (${pendingCount})` : ''}`, badge: pendingCount },
-    { key: 'users',            to: '/manage-users',    icon: '👥', label: 'Users' },
-    { key: 'devices',          to: '/manage-devices',  icon: '📡', label: 'Devices' },
-    { key: 'sensors',          to: '/manage-sensors',  icon: '🔬', label: 'Sensors' },
-    { key: 'parameters',       to: '/parameter-admin', icon: '⚙️', label: 'Parameters' },
-    { key: 'alerts',           to: '/admin-alerts',    icon: '🔔', label: 'Alerts' },
-    { key: 'sites',            to: '/admin-maps',      icon: '📍', label: 'Sites' },
-    { key: 'messages',         to: '/admin-messages',  icon: '✉️', label: 'Messages' }
+    { key: 'dashboard',        to: '/admin-dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
+    { key: 'pending-requests', to: '/pending-requests', icon: <FileText size={18} />, label: `Pending Requests${pendingCount > 0 ? ` (${pendingCount})` : ''}`, badge: pendingCount },
+    { key: 'users',            to: '/manage-users',    icon: <Users size={18} />, label: 'Users' },
+    { key: 'devices',          to: '/manage-devices',  icon: <Radio size={18} />, label: 'Devices' },
+    { key: 'sensors',          to: '/manage-sensors',  icon: <Thermometer size={18} />, label: 'Sensors' },
+    { key: 'parameters',       to: '/parameter-admin', icon: <Sliders size={18} />, label: 'Parameters' },
+    { key: 'alerts',           to: '/admin-alerts',    icon: <Bell size={18} />, label: 'Alerts' },
+    { key: 'sites',            to: '/admin-maps',      icon: <MapPin size={18} />, label: 'Sites' },
+    { key: 'messages',         to: '/admin-messages',  icon: <Mail size={18} />, label: 'Messages' }
   ];
 
   // Site Engineer Navigation Links
   const engineerNavItems = [
-    { key: 'dashboard',   to: '/site-engineer-dashboard', icon: '📊', label: 'Dashboard' },
-    { key: 'my-requests', to: '/my-requests',             icon: '📋', label: 'My Requests' },
-    { key: 'devices',     to: '/manage-devices',          icon: '📡', label: 'Devices' },
-    { key: 'sensors',     to: '/manage-sensors',          icon: '🔬', label: 'Sensors' },
-    { key: 'parameters',  to: '/parameter-admin',         icon: '⚙️', label: 'Parameters' },
-    { key: 'alerts',      to: '/admin-alerts',           icon: '🔔', label: 'Alerts' },
-    { key: 'messages',    to: '/admin-messages',         icon: '✉️', label: 'Messages' }
+    { key: 'dashboard',   to: '/site-engineer-dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
+    { key: 'my-requests', to: '/my-requests',             icon: <ClipboardList size={18} />, label: 'My Requests' },
+    { key: 'devices',     to: '/manage-devices',          icon: <Radio size={18} />, label: 'Devices' },
+    { key: 'sensors',     to: '/manage-sensors',          icon: <Thermometer size={18} />, label: 'Sensors' },
+    { key: 'parameters',  to: '/parameter-admin',         icon: <Sliders size={18} />, label: 'Parameters' },
+    { key: 'alerts',      to: '/admin-alerts',           icon: <Bell size={18} />, label: 'Alerts' },
+    { key: 'messages',    to: '/admin-messages',         icon: <Mail size={18} />, label: 'Messages' }
   ];
 
   const navItems = isEngineer ? engineerNavItems : adminNavItems;
@@ -78,12 +95,9 @@ function AdminSidebar({ activePage }) {
     <>
       <aside className="mu-sidebar">
         <div className="mu-brand">
-          <span className="mu-brand-icon">🌿</span>
+          <img src={logoImg} alt="MangroveGuard Logo" className="mu-brand-icon" style={{ height: "58px", width: "auto" }} />
           <div>
             <div className="mu-brand-name">MangroveGuard</div>
-            <div className="mu-brand-role">
-              {isEngineer ? 'Site Engineer' : 'Admin Panel'}
-            </div>
           </div>
         </div>
 
@@ -117,7 +131,9 @@ function AdminSidebar({ activePage }) {
               <div className="mu-user-name">{user?.name || 'User'}</div>
               <div className="mu-user-email">{user?.email || ''}</div>
             </div>
-            <span className="mu-dropdown-arrow">{accountMenuOpen ? '▲' : '▼'}</span>
+            <span className="mu-dropdown-arrow">
+              {accountMenuOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </span>
           </div>
 
           {accountMenuOpen && (
@@ -129,13 +145,15 @@ function AdminSidebar({ activePage }) {
                   setIsProfileOpen(true);
                 }}
               >
-                👤 Profile / Settings
+                <User size={15} />
+                <span>Profile / Settings</span>
               </button>
               <button
                 className="mu-account-item mu-account-item--logout"
                 onClick={handleLogout}
               >
-                🚪 Logout
+                <LogOut size={15} />
+                <span>Logout</span>
               </button>
             </div>
           )}
