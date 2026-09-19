@@ -1,23 +1,35 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import logoImg from "../assests/logo.png";
 import "./navbar.css";
 
 function Navbar() {
 
   const [showLogin, setShowLogin] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState("");
-
   const [loginData, setLoginData] = useState({
     email: "",
     password: ""
   });
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
-  const { login } = useAuth();      // ← add this
-  const navigate = useNavigate();   // ← add this
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleOpenLogin = () => {
+    setLoginError("");
+    setShowLogin(true);
+  };
+
+  const handleCloseLogin = () => {
+    setLoginError("");
+    setShowLogin(false);
+  };
 
   const handleChange = (e) => {
+    if (loginError) setLoginError("");
     setLoginData({
       ...loginData,
       [e.target.name]: e.target.value
@@ -26,10 +38,27 @@ function Navbar() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const user = await login(loginData.email, loginData.password);
-    if (user.role === "admin") navigate("/admin-dashboard");
-    else if (user.role === "site_engineer") navigate("/site-engineer-dashboard");
-    else navigate("/dashboard");
+    setLoginError("");
+    setLoginLoading(true);
+
+    try {
+      const user = await login(loginData.email, loginData.password);
+      setShowLogin(false);
+      setLoginData({ email: "", password: "" });
+      if (user?.role === "admin") navigate("/admin-dashboard");
+      else if (user?.role === "site_engineer") navigate("/site-engineer-dashboard");
+      else navigate("/dashboard");
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setLoginError("Invalid email or password. Please check your credentials and try again.");
+      } else if (err.response?.data?.message) {
+        setLoginError(err.response.data.message);
+      } else {
+        setLoginError("Something went wrong. Please try again later.");
+      }
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const handleSearch = (e) => {
@@ -51,9 +80,10 @@ function Navbar() {
 
       <nav className="navbar">
 
-        <div className="logo">
-          🌿 MangroveGuard
-        </div>
+        <Link to="/" className="logo">
+          <img src={logoImg} alt="MangroveGuard Logo" className="logo-icon" style={{ height: "58px", width: "auto" }} />
+          <span>MangroveGuard</span>
+        </Link>
 
         {/* Navigation Links */}
 
@@ -127,7 +157,7 @@ function Navbar() {
 
           <button
             className="login-nav-btn"
-            onClick={() => setShowLogin(true)}
+            onClick={handleOpenLogin}
           >
             Login
           </button>
@@ -142,7 +172,7 @@ function Navbar() {
 
         <div
           className="popup-overlay"
-          onClick={() => setShowLogin(false)}
+          onClick={handleCloseLogin}
         >
 
           <div
@@ -152,12 +182,18 @@ function Navbar() {
 
             <button
               className="close-btn"
-              onClick={() => setShowLogin(false)}
+              onClick={handleCloseLogin}
             >
               ×
             </button>
 
             <h2>Login</h2>
+
+            {loginError && (
+              <div className="login-error-alert">
+                {loginError}
+              </div>
+            )}
 
             <form onSubmit={handleLogin}>
 
@@ -186,8 +222,9 @@ function Navbar() {
               <button
                 type="submit"
                 className="popup-login-btn"
+                disabled={loginLoading}
               >
-                Login
+                {loginLoading ? "Signing In..." : "Login"}
               </button>
 
             </form>
