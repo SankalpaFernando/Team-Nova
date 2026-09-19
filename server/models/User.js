@@ -47,6 +47,15 @@ const userSchema = new mongoose.Schema({
       type: String,
       default: '',
       trim: true
+    },
+    email_alerts_enabled: {
+      type: Boolean,
+      default: false
+    },
+    email_min_severity: {
+      type: String,
+      enum: ['low', 'medium', 'high', 'critical'],
+      default: 'critical'
     }
   },
   lastLogin: {

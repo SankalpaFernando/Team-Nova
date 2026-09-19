@@ -55,6 +55,14 @@ const alertSchema = new mongoose.Schema({
   sms_sent_at: {
     type: Date,
     default: null
+  },
+  email_sent: {
+    type: Boolean,
+    default: false
+  },
+  email_sent_at: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
@@ -62,6 +70,8 @@ const alertSchema = new mongoose.Schema({
 
 alertSchema.index({ device: 1, created_at: -1 });
 alertSchema.index({ device: 1, parameter: 1, sms_sent: 1, sms_sent_at: -1 });
+alertSchema.index({ device: 1, parameter: 1, email_sent: 1, email_sent_at: -1 });
 alertSchema.index({ status: 1 });
+
 
 module.exports = mongoose.model('Alert', alertSchema);
