@@ -4,6 +4,7 @@ import UserNavbar from "../components/UserNavbar";
 import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
+import { MapPin, Radio, Settings, AlertTriangle, FileText } from 'lucide-react';
 import "./SearchResults.css";
 
 function SearchResults() {
@@ -94,7 +95,7 @@ function SearchResults() {
                 {/* 1. Sites */}
                 {dbResults.sites?.length > 0 && (
                   <div>
-                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px" }}>📍 Sites ({dbResults.sites.length})</h2>
+                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px", display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={18} /> Sites ({dbResults.sites.length})</h2>
                     <div className="results-grid">
                       {dbResults.sites.map(s => (
                         <Link key={s._id} to={`/sites/${s._id}`} className="result-card">
@@ -109,7 +110,7 @@ function SearchResults() {
                 {/* 2. Devices */}
                 {dbResults.devices?.length > 0 && (
                   <div>
-                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px" }}>📡 Devices ({dbResults.devices.length})</h2>
+                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px", display: 'flex', alignItems: 'center', gap: '6px' }}><Radio size={18} /> Devices ({dbResults.devices.length})</h2>
                     <div className="results-grid">
                       {dbResults.devices.map(d => (
                         <Link key={d._id} to="/manage-devices" className="result-card">
@@ -124,7 +125,7 @@ function SearchResults() {
                 {/* 3. Parameters */}
                 {dbResults.parameters?.length > 0 && (
                   <div>
-                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px" }}>⚙️ Parameters ({dbResults.parameters.length})</h2>
+                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px", display: 'flex', alignItems: 'center', gap: '6px' }}><Settings size={18} /> Parameters ({dbResults.parameters.length})</h2>
                     <div className="results-grid">
                       {dbResults.parameters.map(p => (
                         <Link key={p._id} to="/parameter-admin" className="result-card">
@@ -139,7 +140,7 @@ function SearchResults() {
                 {/* 4. Alerts */}
                 {dbResults.alerts?.length > 0 && (
                   <div>
-                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px" }}>🚨 Alerts ({dbResults.alerts.length})</h2>
+                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px", display: 'flex', alignItems: 'center', gap: '6px' }}><AlertTriangle size={18} /> Alerts ({dbResults.alerts.length})</h2>
                     <div className="results-grid">
                       {dbResults.alerts.map(a => (
                         <Link key={a._id} to="/admin-alerts" className="result-card">
@@ -154,7 +155,7 @@ function SearchResults() {
                 {/* 5. App Pages */}
                 {matchedStaticPages.length > 0 && (
                   <div>
-                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px" }}>📄 App Pages ({matchedStaticPages.length})</h2>
+                    <h2 style={{ fontSize: "18px", color: "#ffd166", marginBottom: "12px", display: 'flex', alignItems: 'center', gap: '6px' }}><FileText size={18} /> App Pages ({matchedStaticPages.length})</h2>
                     <div className="results-grid">
                       {matchedStaticPages.map((item, idx) => (
                         <Link key={idx} to={item.path} className="result-card">

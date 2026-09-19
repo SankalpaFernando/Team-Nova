@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import api from '../services/api';
+import { AlertTriangle, ArrowRight, Radio, Microscope, Settings, CheckCircle2, Check, X } from 'lucide-react';
 import './PendingRequests.css';
 
 function PendingRequests() {
@@ -78,8 +79,8 @@ function PendingRequests() {
 
     if (req.action === 'delete') {
       return (
-        <div className="pr-diff-delete-notice">
-          ⚠️ <strong>Deletion Request</strong> for {targetSummary || 'target entity'}
+        <div className="pr-diff-delete-notice" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <AlertTriangle size={16} /> <strong>Deletion Request</strong> for {targetSummary || 'target entity'}
         </div>
       );
     }
@@ -95,7 +96,7 @@ function PendingRequests() {
               <div key={field} className="pr-diff-row">
                 <span className="pr-diff-fieldname">{field}:</span>
                 <span className="pr-diff-old">{String(values.old ?? 'empty')}</span>
-                <span className="pr-diff-arrow">➔</span>
+                <span className="pr-diff-arrow"><ArrowRight size={14} /></span>
                 <span className="pr-diff-new">{String(values.new ?? 'empty')}</span>
               </div>
             ))}
@@ -145,9 +146,9 @@ function PendingRequests() {
           <div className="pr-category-tabs">
             {[
               { id: 'all', label: 'All Requests' },
-              { id: 'device', label: 'Devices 📡' },
-              { id: 'sensor', label: 'Sensors 🔬' },
-              { id: 'parameter', label: 'Parameters ⚙️' }
+              { id: 'device', label: <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Devices <Radio size={14} /></span> },
+              { id: 'sensor', label: <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Sensors <Microscope size={14} /></span> },
+              { id: 'parameter', label: <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Parameters <Settings size={14} /></span> }
             ].map((tab) => {
               const count = getCountByEntity(tab.id);
               return (
@@ -166,7 +167,7 @@ function PendingRequests() {
             <div className="pr-loading">Loading pending requests...</div>
           ) : filteredRequests.length === 0 ? (
             <div className="pr-empty-card">
-              <span className="pr-empty-icon">✅</span>
+              <span className="pr-empty-icon"><CheckCircle2 size={32} color="#10b981" /></span>
               <h3>No Pending Requests</h3>
               <p>No operational change requests found in this category.</p>
             </div>
@@ -228,14 +229,14 @@ function PendingRequests() {
                           disabled={processingId === req._id}
                           onClick={() => handleApprove(req._id)}
                         >
-                          {processingId === req._id ? 'Approving...' : '✓ Approve Change'}
+                          {processingId === req._id ? 'Approving...' : <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> Approve Change</span>}
                         </button>
                         <button
                           className="pr-btn pr-btn--reject"
                           disabled={processingId === req._id}
                           onClick={() => setRejectingId(req._id)}
                         >
-                          ✕ Reject
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><X size={14} /> Reject</span>
                         </button>
                       </div>
                     )}

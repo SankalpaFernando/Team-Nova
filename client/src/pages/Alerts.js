@@ -3,6 +3,7 @@ import "./Alerts.css";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
 import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
 
 const STATUS_LABEL = {
   unread: "Pending",
@@ -17,11 +18,10 @@ const SEVERITY_LABEL = {
   critical: "Critical",
 };
 
-const navClass = ({ isActive }) => (isActive ? "active" : "");
 
 function formatDate(isoString) {
   const d = new Date(isoString);
-  return d.toLocaleDateString("en-GB"); // dd/mm/yyyy, matches the old placeholder format
+  return d.toLocaleDateString("en-GB");
 }
 
 function formatTime(isoString) {
@@ -32,35 +32,42 @@ function formatTime(isoString) {
 function Alerts() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
     const loadAlerts = async () => {
+      if (page === 1) setLoading(true);
+      else setLoadingMore(true);
+
       try {
-        const res = await api.get("/alerts", { params: { limit: 100 } });
-        setAlerts(res.data.data || []);
+        const res = await api.get("/alerts", { params: { limit: 15, page } });
+        const newAlerts = res.data.data || [];
+        setAlerts(prev => page === 1 ? newAlerts : [...prev, ...newAlerts]);
+        setHasMore(page < (res.data.pages || 1));
       } catch (err) {
         setError("Couldn't load alerts from the server.");
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
     };
 
     loadAlerts();
-  }, []);
+  }, [page]);
 
   return (
-    <div>
-
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Navbar */}
       <UserNavbar />
 
       {/* Background */}
       <div
         className="alerts-hero"
-        style={{ backgroundImage: `url(${mangrove})` }}
+        style={{ backgroundImage: `url(${mangrove})`, flex: 1 }}
       >
-
         <h2 className="alerts-title">
           Alerts & Notifications
         </h2>
@@ -68,13 +75,9 @@ function Alerts() {
         {error && <div className="alerts-error">{error}</div>}
 
         {/* Alerts Table */}
-
         <div className="alerts-table-container">
-
           <table className="alerts-table">
-
             <thead>
-
               <tr>
                 <th>Site Name</th>
                 <th>Alert</th>
@@ -83,11 +86,8 @@ function Alerts() {
                 <th>Time</th>
                 <th>Status</th>
               </tr>
-
             </thead>
-
             <tbody>
-
               {loading ? (
                 <tr>
                   <td colSpan="6" className="table-empty-msg">Loading alerts…</td>
@@ -116,15 +116,32 @@ function Alerts() {
                   </tr>
                 ))
               )}
-
             </tbody>
-
           </table>
-
+          {hasMore && (
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+              <button 
+                onClick={() => setPage(p => p + 1)} 
+                disabled={loadingMore}
+                style={{
+                  padding: '10px 20px',
+                  background: '#1d7068',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: loadingMore ? 'not-allowed' : 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                {loadingMore ? 'Loading...' : 'Load More'}
+              </button>
+            </div>
+          )}
         </div>
-
       </div>
 
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
