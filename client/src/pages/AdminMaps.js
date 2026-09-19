@@ -336,7 +336,11 @@ function AdminMaps() {
                 ) : filteredSites.map((site, i) => (
                   <tr key={site._id} className="am-tr">
                     <td className="am-td-num">{i + 1}</td>
-                    <td className="am-td-name">{site.name}</td>
+                    <td className="am-td-name">
+                      <Link to={`/sites/${site._id}`} state={{ fromAdmin: true }} style={{ color: "#007bff", textDecoration: "underline", cursor: "pointer" }}>
+                        {site.name}
+                      </Link>
+                    </td>
                     <td className="am-td-loc">{site.location}</td>
                     <td>
                       <span className={`am-badge am-badge--${regionClass(site.region)}`}>{site.region}</span>
