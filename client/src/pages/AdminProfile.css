@@ -10,7 +10,7 @@
   display: flex;
   min-height: 100vh;
   background: #eef3f0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
   color: #1a2e24;
 }
 
@@ -18,7 +18,7 @@
 .mu-sidebar {
   width: 248px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #152b1f 0%, #1c3a2a 100%);
+  background: rgb(10, 89, 63);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -157,9 +157,9 @@
   margin-bottom: 26px;
 }
 
-.mu-breadcrumb { font-size: 12px; color: #8aaa98; margin-bottom: 5px; letter-spacing: 0.3px; }
+.mu-breadcrumb { font-size: 12px; color: #3d6052; margin-bottom: 5px; letter-spacing: 0.3px; }
 .mu-title      { font-size: 26px; font-weight: 700; color: #152b1f; letter-spacing: -0.4px; }
-.mu-subtitle   { font-size: 13px; color: #6a8878; margin-top: 4px; }
+.mu-subtitle   { font-size: 13px; color: #2d5a45; margin-top: 4px; }
 
 /* ══════════════════════════════════════════════
    PROFILE CARD (ap- = Admin Profile)
@@ -253,7 +253,7 @@
 .ap-row:last-child { border-bottom: none; }
 
 .ap-row span {
-  color: #6a8878;
+  color: #2d5a45;
   font-size: 13px;
   font-weight: 600;
 }
@@ -285,7 +285,7 @@
   border: none;
   cursor: pointer;
   font-size: 13px;
-  color: #8aaa98;
+  color: #3d6052;
   padding: 2px 5px;
   border-radius: 5px;
   transition: 0.15s;

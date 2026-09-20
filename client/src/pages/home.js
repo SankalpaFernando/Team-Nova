@@ -1,15 +1,24 @@
 import { Link } from "react-router-dom";
+import {
+  Trees,
+  Waves,
+  Fish,
+  Globe2,
+  ShieldCheck,
+  Activity,
+  ArrowRight,
+  Compass,
+  HelpCircle,
+  BarChart3
+} from "lucide-react";
 import "./home.css";
 import Navbar from "../components/navbar";
 import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 
 function Home() {
-
-  // Scroll to "Why Mangroves Matter" section
   const scrollToAboutSection = () => {
     const section = document.getElementById("about-section");
-
     if (section) {
       section.scrollIntoView({
         behavior: "smooth",
@@ -20,7 +29,6 @@ function Home() {
 
   return (
     <div className="home">
-
       {/* Navigation Bar */}
       <Navbar />
 
@@ -30,175 +38,179 @@ function Home() {
         style={{ backgroundImage: `url(${mangrove})` }}
       >
         <div className="hero-overlay">
-
           <div className="hero-content">
+            <div className="hero-badge">
+              <span className="live-indicator">
+                <span className="live-dot"></span>
+                <Activity size={14} />
+              </span>
+              <span>Live Sensor Monitoring</span>
+            </div>
 
             <h1>Mangrove Guard</h1>
 
             <h3>
-              Monitoring Mangrove Ecosystem & Water Quality
+              Real-Time Mangrove Ecosystem & Water Quality Telemetry
             </h3>
 
             <p className="hero-description">
-              Our mission is to ensure the health and preservation of vital
-              mangrove forests through advanced monitoring and data analysis.
+              Safeguarding vital coastal mangrove forests through automated IoT sensor arrays,
+              continuous water chemistry analytics, and actionable environmental data.
             </p>
 
             <div className="hero-buttons">
-
-              {/* Learn More Button */}
               <button
                 className="learn-btn"
                 onClick={scrollToAboutSection}
               >
-                Learn More
+                <Compass size={18} />
+                <span>Explore Impact</span>
               </button>
 
-              {/* Sites Button */}
               <Link to="/visitor-sites">
                 <button className="sites-btn">
-                  View Monitoring Sites
+                  <span>View Monitoring Sites</span>
+                  <ArrowRight size={18} />
                 </button>
               </Link>
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
       {/* ================= About Mangroves Section ================= */}
-
-      <section
-        id="about-section"
-        className="about-section"
-      >
-
-        <h2>Why Mangroves Matter</h2>
-
-        <p className="section-intro">
-          Mangroves are among the world's most valuable coastal ecosystems.
-          They protect shorelines, improve water quality, support biodiversity,
-          and help combat climate change by storing large amounts of carbon.
-        </p>
-
-        <div className="about-grid">
-
-          <div className="about-card">
-            <h3>🌿 What are Mangroves?</h3>
-
-            <p>
-              Mangroves are salt-tolerant trees and shrubs that grow along
-              tropical and subtropical coastlines. Their complex root systems
-              stabilize coastal soils and provide habitats for many species.
-            </p>
-          </div>
-
-          <div className="about-card">
-            <h3>🌊 Why Monitor Water Quality?</h3>
-
-            <p>
-              Water salinity, temperature and water level directly affect
-              mangrove health. Continuous monitoring helps detect changes early
-              and supports effective conservation efforts.
-            </p>
-          </div>
-
-          <div className="about-card">
-            <h3>🐟 Rich Biodiversity</h3>
-
-            <p>
-              Mangrove forests provide breeding and nursery habitats for fish,
-              crabs, shrimp, birds and many endangered wildlife species.
-            </p>
-          </div>
-
-          <div className="about-card">
-            <h3>🌎 Climate Protection</h3>
-
-            <p>
-              Mangroves capture and store significantly more carbon than most
-              terrestrial forests, making them an important natural solution
-              for reducing climate change.
-            </p>
-          </div>
-
-          <div className="about-card">
-            <h3>🛡 Coastal Protection</h3>
-
-            <p>
-              Dense mangrove roots reduce coastal erosion and protect nearby
-              communities from storms, floods and tidal waves.
-            </p>
-          </div>
-
-          <div className="about-card">
-            <h3>📊 Smart Monitoring</h3>
-
-            <p>
-              Mangrove Guard provides real-time monitoring of water level,
-              salinity, temperature and battery status to assist researchers
-              and environmental authorities.
-            </p>
-          </div>
-
+      <section id="about-section" className="about-section">
+        <div className="section-header">
+          <span className="section-tag">CONSERVATION SCIENCE</span>
+          <h2>Why Mangroves Matter</h2>
+          <p className="section-intro">
+            Mangroves are among the world's most valuable coastal ecosystems.
+            They shield shorelines from erosion, filter runoff water, support marine biodiversity,
+            and store up to four times more carbon than tropical rainforests.
+          </p>
         </div>
 
+        <div className="about-grid">
+          <div className="about-card">
+            <div className="card-icon-wrapper">
+              <Trees className="card-icon" size={24} />
+            </div>
+            <h3>What are Mangroves?</h3>
+            <p>
+              Salt-tolerant trees and shrubs thriving along tropical shorelines. Their complex stilt roots
+              stabilize coastal sediments and serve as vital marine nurseries.
+            </p>
+          </div>
+
+          <div className="about-card">
+            <div className="card-icon-wrapper">
+              <Waves className="card-icon" size={24} />
+            </div>
+            <h3>Why Monitor Water Quality?</h3>
+            <p>
+              Salinity variations, temperature spikes, and water level changes directly impact forest health.
+              Continuous telemetry enables early intervention before degradation occurs.
+            </p>
+          </div>
+
+          <div className="about-card">
+            <div className="card-icon-wrapper">
+              <Fish className="card-icon" size={24} />
+            </div>
+            <h3>Rich Biodiversity Hubs</h3>
+            <p>
+              Mangrove canopies and submerged roots nourish fish, crabs, shrimp, migratory birds, and endangered
+              wildlife throughout critical lifecycle stages.
+            </p>
+          </div>
+
+          <div className="about-card">
+            <div className="card-icon-wrapper">
+              <Globe2 className="card-icon" size={24} />
+            </div>
+            <h3>Blue Carbon Sequestration</h3>
+            <p>
+              Mangroves capture atmospheric carbon and bury it in anaerobic soil for centuries, serving as a powerful
+              natural shield against climate change.
+            </p>
+          </div>
+
+          <div className="about-card">
+            <div className="card-icon-wrapper">
+              <ShieldCheck className="card-icon" size={24} />
+            </div>
+            <h3>Natural Shoreline Protection</h3>
+            <p>
+              Dense mangrove root networks dissipate wave energy, reduce coastal erosion, and buffer seaside communities
+              against severe storm surges.
+            </p>
+          </div>
+
+          <div className="about-card">
+            <div className="card-icon-wrapper">
+              <BarChart3 className="card-icon" size={24} />
+            </div>
+            <h3>Smart IoT Monitoring</h3>
+            <p>
+              MangroveGuard collects real-time water level, salinity, pH, and sensor health data to empower environmental
+              researchers and authorities.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* ================= FAQ Section ================= */}
-
       <section className="faq-section">
-
-        <h2>Frequently Asked Questions</h2>
-
-        <div className="faq-container">
-
-          <div className="faq-item">
-            <h3>Why are mangroves important?</h3>
-
-            <p>
-              Mangroves protect coastlines, support fisheries, improve water
-              quality and absorb large amounts of carbon dioxide.
-            </p>
-          </div>
-
-          <div className="faq-item">
-            <h3>What parameters are monitored?</h3>
-
-            <p>
-              Water level, salinity, water temperature and device battery
-              status are monitored in real time.
-            </p>
-          </div>
-
-          <div className="faq-item">
-            <h3>Who can use this system?</h3>
-
-            <p>
-              Researchers, environmental organizations, government agencies
-              and conservation volunteers can use the monitoring platform.
-            </p>
-          </div>
-
-          <div className="faq-item">
-            <h3>How does real-time monitoring help?</h3>
-
-            <p>
-              It helps detect environmental changes early, enabling faster
-              conservation decisions and better ecosystem management.
-            </p>
-          </div>
-
+        <div className="section-header">
+          <span className="section-tag">KNOWLEDGE BASE</span>
+          <h2>Frequently Asked Questions</h2>
         </div>
 
+        <div className="faq-container">
+          <div className="faq-item">
+            <div className="faq-question">
+              <HelpCircle className="faq-icon" size={20} />
+              <h3>Why are mangroves important to coastal ecosystems?</h3>
+            </div>
+            <p>
+              They buffer coastlines against extreme weather, filter agricultural and urban runoff, support commercial fisheries, and absorb massive amounts of carbon dioxide.
+            </p>
+          </div>
+
+          <div className="faq-item">
+            <div className="faq-question">
+              <HelpCircle className="faq-icon" size={20} />
+              <h3>What environmental parameters are monitored?</h3>
+            </div>
+            <p>
+              Water level, salinity concentration, water temperature, dissolved oxygen levels, and remote sensor device health are monitored continuously in real time.
+            </p>
+          </div>
+
+          <div className="faq-item">
+            <div className="faq-question">
+              <HelpCircle className="faq-icon" size={20} />
+              <h3>Who can access the MangroveGuard data?</h3>
+            </div>
+            <p>
+              Environmental researchers, site engineers, conservation agencies, and local community stakeholders can view real-time metrics and historical reports.
+            </p>
+          </div>
+
+          <div className="faq-item">
+            <div className="faq-question">
+              <HelpCircle className="faq-icon" size={20} />
+              <h3>How does real-time monitoring help conservation?</h3>
+            </div>
+            <p>
+              Automated threshold alerts immediately flag chemical pollution, rapid salinity shifts, or tidal anomalies, allowing teams to respond before irreversible ecological damage.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Footer */}
       <Footer />
-
     </div>
   );
 }

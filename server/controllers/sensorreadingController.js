@@ -4,6 +4,7 @@ const Sensor = require('../models/Sensor');
 const Alert = require('../models/Alert');
 const Parameter = require('../models/Parameter');
 const { processAlertSms } = require('../services/smsService');
+const { processAlertEmail } = require('../services/emailAlertService');
 
 // Helper: check reading against site thresholds and generate alerts
 const generateAlertForReading = async (readingDoc, sensorDoc, deviceDoc, siteDoc, io) => {
@@ -73,6 +74,7 @@ const generateAlertForReading = async (readingDoc, sensorDoc, deviceDoc, siteDoc
 
   // Process targeted SMS notifications (with DB-persisted cooldown check)
   await processAlertSms(alert, siteDoc, parameter);
+  await processAlertEmail(alert, siteDoc, parameter);
 
   // Emit real-time alert via Socket.io if available
   if (io) {

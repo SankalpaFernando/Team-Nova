@@ -3,6 +3,8 @@ import "./Contact.css";
 import mangrove from "../assests/mangrove.png";
 import axios from "axios";
 import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
+import { Phone, Mail, MapPin, CheckCircle2 } from "lucide-react";
 
 const navClass = ({ isActive }) => (isActive ? "active" : "");
 
@@ -30,7 +32,6 @@ function Contact() {
     fetchSites();
   }, []);
 
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -53,22 +54,24 @@ function Contact() {
   };
 
   return (
-    <div className="contact-page">
+    <div className="contact-page" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Navbar */}
       <UserNavbar />
 
       {/* Background Section */}
       <div
         className="contact-hero"
-        style={{ backgroundImage: `url(${mangrove})` }}
+        style={{ backgroundImage: `url(${mangrove})`, flex: 1 }}
       >
         <div className="contact-container">
-
           <div className="contact-info">
-            <h2>📞 Contact Information</h2>
-            <p><strong>Email:</strong> mangroveguard@gmail.com</p>
-            <p><strong>Phone:</strong> +94 77 123 4567</p>
-            <p><strong>Address:</strong> University of Jaffna, Sri Lanka</p>
+            <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Phone size={20} color="#34d399" />
+              <span>Contact Information</span>
+            </h2>
+            <p><Mail size={14} style={{ marginRight: "6px" }} /><strong>Email:</strong> mangroveguard@gmail.com</p>
+            <p><Phone size={14} style={{ marginRight: "6px" }} /><strong>Phone:</strong> +94 77 123 4567</p>
+            <p><MapPin size={14} style={{ marginRight: "6px" }} /><strong>Address:</strong> University of Jaffna, Sri Lanka</p>
           </div>
 
           <h1>Contact Us</h1>
@@ -79,8 +82,9 @@ function Contact() {
           </p>
 
           {sent && (
-            <p className="contact-sent-msg">
-              ✅ Thanks! Your message has been noted — we'll get back to you soon.
+            <p className="contact-sent-msg" style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+              <CheckCircle2 size={18} color="#166534" />
+              <span>Thanks! Your message has been noted — we'll get back to you soon.</span>
             </p>
           )}
 
@@ -89,7 +93,6 @@ function Contact() {
           )}
 
           <form className="contact-form" onSubmit={handleSubmit}>
-
             <div className="input-row">
               <input
                 type="text"
@@ -144,9 +147,11 @@ function Contact() {
             ></textarea>
             <button type="submit">Send Message</button>
           </form>
-
         </div>
       </div>
+
+      {/* Shared Footer */}
+      <Footer />
     </div>
   );
 }

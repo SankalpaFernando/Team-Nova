@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
+import { Users, ShieldCheck, HardHat, User, MapPin, Pencil, Trash2, X, CheckCircle2, UserPlus } from "lucide-react";
 import "./ManageUsers.css";
 
 function ManageUsers() {
@@ -210,13 +211,13 @@ function ManageUsers() {
         {/* Stats */}
         <div className="mu-stats">
           {[
-            { icon: "👥", val: users.length,                    label: "Total Users"       },
-            { icon: "🛡️", val: countByRole("admin"),             label: "Admins"            },
-            { icon: "👷", val: countByRole("site_engineer"),    label: "Site Engineers"    },
-            { icon: "👤", val: countByRole("registered_user"),     label: "Registered Users" },
+            { icon: <Users size={22} color="#2b9388" />, val: users.length,                    label: "Total Users"       },
+            { icon: <ShieldCheck size={22} color="#164e3d" />, val: countByRole("admin"),             label: "Admins"            },
+            { icon: <HardHat size={22} color="#d97706" />, val: countByRole("site_engineer"),    label: "Site Engineers"    },
+            { icon: <User size={22} color="#1d7068" />, val: countByRole("registered_user"),     label: "Registered Users" },
           ].map((s, i) => (
             <div className="mu-stat-card" key={i}>
-              <span className="mu-stat-icon">{s.icon}</span>
+              <span className="mu-stat-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</span>
               <div>
                 <div className="mu-stat-val">{s.val}</div>
                 <div className="mu-stat-lbl">{s.label}</div>
@@ -273,8 +274,9 @@ function ManageUsers() {
                         {roleLabel(u.role)}
                       </span>
                       {u.role === 'site_engineer' && (
-                        <div style={{ fontSize: '0.78rem', color: '#2b8a3e', marginTop: '4px' }}>
-                          📍 {u.assignedSite?.name || 'Unassigned Site'}
+                        <div style={{ fontSize: '0.78rem', color: '#2b8a3e', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <MapPin size={13} color="#2b8a3e" />
+                          <span>{u.assignedSite?.name || 'Unassigned Site'}</span>
                         </div>
                       )}
                     </td>
@@ -284,14 +286,16 @@ function ManageUsers() {
                         <button
                           className="mu-act mu-act--edit"
                           onClick={() => openEdit(u)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
                         >
-                          ✏ Edit
+                          <Pencil size={13} /> Edit
                         </button>
                         <button
                           className="mu-act mu-act--del"
                           onClick={() => openDelete(u)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
                         >
-                          🗑 Delete
+                          <Trash2 size={13} /> Delete
                         </button>
                       </div>
                     </td>
@@ -462,7 +466,7 @@ function ManageUsers() {
               <button className="mu-close" onClick={() => setShowDelete(false)}>✕</button>
             </div>
             <div className="mu-del-body">
-              <div className="mu-del-icon">🗑️</div>
+              <div className="mu-del-icon" style={{ display: "flex", justifyContent: "center" }}><Trash2 size={36} color="#e24b4a" /></div>
               <p>
                 Are you sure you want to delete <strong>{selected?.name}</strong>?
               </p>
@@ -494,8 +498,8 @@ function ManageUsers() {
       {/* Toast */}
       {toast.show && (
         <div className={`mu-toast mu-toast--${toast.type}`}>
-          <span className="mu-toast-icon">
-            {toast.type === "delete" ? "🗑️" : "✅"}
+          <span className="mu-toast-icon" style={{ display: "inline-flex", alignItems: "center" }}>
+            {toast.type === "delete" ? <Trash2 size={16} color="#e24b4a" /> : <CheckCircle2 size={16} color="#166534" />}
           </span>
           {toast.message}
         </div>

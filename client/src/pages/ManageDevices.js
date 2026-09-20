@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
+import { Radio, CheckCircle2, Wrench, AlertCircle, Pencil, Trash2, X } from "lucide-react";
 import "./ManageDevices.css";
 
 function ManageDevices() {
@@ -234,13 +235,13 @@ useEffect(() => {
         {/* Stats */}
         <div className="am-stats">
           {[
-            { icon: "📡", val: devices.length,          label: "Total Devices" },
-            { icon: "🟢", val: byStatus("active"),      label: "Active"        },
-            { icon: "🛠️", val: byStatus("maintenance"), label: "Maintenance"   },
-            { icon: "🔴", val: byStatus("faulty") + byStatus("inactive"), label: "Faulty / Inactive" },
+            { icon: <Radio size={22} color="#1d7068" />, val: devices.length,          label: "Total Devices" },
+            { icon: <CheckCircle2 size={22} color="#166534" />, val: byStatus("active"),      label: "Active"        },
+            { icon: <Wrench size={22} color="#d97706" />, val: byStatus("maintenance"), label: "Maintenance"   },
+            { icon: <AlertCircle size={22} color="#e24b4a" />, val: byStatus("faulty") + byStatus("inactive"), label: "Faulty / Inactive" },
           ].map((s, i) => (
             <div className="am-stat-card" key={i}>
-              <span className="am-stat-icon">{s.icon}</span>
+              <span className="am-stat-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</span>
               <div>
                 <div className="am-stat-val">{s.val}</div>
                 <div className="am-stat-lbl">{s.label}</div>
@@ -345,8 +346,8 @@ useEffect(() => {
                     <td className="am-td-dim">{device.lastSeen ? formatDate(device.lastSeen) : "Never"}</td>
                     <td>
                       <div className="am-actions">
-                        <button className="am-act am-act--edit" onClick={() => openEdit(device)}>✏ Edit</button>
-                        <button className="am-act am-act--del"  onClick={() => openDelete(device)}>🗑 Delete</button>
+                        <button className="am-act am-act--edit" onClick={() => openEdit(device)} style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><Pencil size={13} /> Edit</button>
+                        <button className="am-act am-act--del"  onClick={() => openDelete(device)} style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><Trash2 size={13} /> Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -450,7 +451,7 @@ useEffect(() => {
 
       {toast.show && (
         <div className={`am-toast am-toast--${toast.type}`}>
-          <span className="am-toast-icon">{toast.type === "delete" ? "🗑️" : "✅"}</span>
+          <span className="am-toast-icon" style={{ display: "inline-flex", alignItems: "center" }}>{toast.type === "delete" ? <Trash2 size={16} color="#e24b4a" /> : <CheckCircle2 size={16} color="#166534" />}</span>
           {toast.message}
         </div>
       )}

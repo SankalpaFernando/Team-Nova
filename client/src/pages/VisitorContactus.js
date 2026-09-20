@@ -4,6 +4,7 @@ import Navbar from "../components/navbar";
 import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import axios from "axios";
+import { Phone, CheckCircle } from 'lucide-react';
 
 function VisitorContactus() {
 
@@ -75,7 +76,7 @@ function VisitorContactus() {
           <div className="visitor-contact-container">
 
             <div className="visitor-contact-info">
-              <h2>📞 Contact Information</h2>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Phone size={24} /> Contact Information</h2>
               <p><strong>Email:</strong> mangroveguard@gmail.com</p>
               <p><strong>Phone:</strong> +94 77 123 4567</p>
               <p><strong>Address:</strong> University of Jaffna, Sri Lanka</p>
@@ -156,7 +157,7 @@ function VisitorContactus() {
             ) : (
               <div className="thank-you-box">
                 <div className="thank-you-icon">
-                  ✅
+                  <CheckCircle size={48} color="#10b981" />
                 </div>
                 <h2>
                   Thank You for Contacting Us!

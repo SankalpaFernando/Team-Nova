@@ -12,12 +12,16 @@ function ProfileModal({ isOpen, onClose }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // SMS Notification Preferences for non-admins
+  // SMS Notification Preferences
   const [smsEnabled, setSmsEnabled] = useState(user?.notificationPrefs?.sms_enabled || false);
   const [smsMinSeverity, setSmsMinSeverity] = useState(user?.notificationPrefs?.sms_min_severity || "critical");
   const [phone, setPhone] = useState(user?.notificationPrefs?.phone || "");
 
-  const [editingField, setEditingField] = useState(null); // "name_email" | "password" | "sms" | null
+  // Email Notification Preferences
+  const [emailEnabled, setEmailEnabled] = useState(user?.notificationPrefs?.email_alerts_enabled ?? true);
+  const [emailMinSeverity, setEmailMinSeverity] = useState(user?.notificationPrefs?.email_min_severity || "critical");
+
+  const [editingField, setEditingField] = useState(null); // "name_email" | "password" | "sms" | "email" | null
   const [saving, setSaving] = useState(false);
   const [fieldError, setFieldError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -29,6 +33,8 @@ function ProfileModal({ isOpen, onClose }) {
       setSmsEnabled(user.notificationPrefs?.sms_enabled || false);
       setSmsMinSeverity(user.notificationPrefs?.sms_min_severity || "critical");
       setPhone(user.notificationPrefs?.phone || "");
+      setEmailEnabled(user.notificationPrefs?.email_alerts_enabled ?? true);
+      setEmailMinSeverity(user.notificationPrefs?.email_min_severity || "critical");
     }
   }, [user, isOpen]);
 
@@ -64,6 +70,8 @@ function ProfileModal({ isOpen, onClose }) {
     setSmsEnabled(user?.notificationPrefs?.sms_enabled || false);
     setSmsMinSeverity(user?.notificationPrefs?.sms_min_severity || "critical");
     setPhone(user?.notificationPrefs?.phone || "");
+    setEmailEnabled(user?.notificationPrefs?.email_alerts_enabled ?? true);
+    setEmailMinSeverity(user?.notificationPrefs?.email_min_severity || "critical");
   };
 
   const saveNameOrEmail = async () => {
@@ -131,13 +139,15 @@ function ProfileModal({ isOpen, onClose }) {
 
     setSaving(true);
     try {
-      const res = await api.put("/users/notification-prefs", {
-        sms_enabled: smsEnabled,
-        sms_min_severity: smsMinSeverity,
-        phone,
+      // Uses the confirmed-working PUT /users/profile endpoint with notificationPrefs payload
+      const res = await api.put("/users/profile", {
+        notificationPrefs: {
+          sms_enabled: smsEnabled,
+          sms_min_severity: smsMinSeverity,
+          phone,
+        },
       });
-      const updatedPrefs = res.data.data;
-      const updatedUser = { ...user, notificationPrefs: updatedPrefs };
+      const updatedUser = res.data.data;
       localStorage.setItem("mg_user", JSON.stringify(updatedUser));
       setSuccessMessage("SMS notification preferences saved.");
       setEditingField(null);
@@ -148,7 +158,30 @@ function ProfileModal({ isOpen, onClose }) {
     }
   };
 
-  const showSmsPrefs = user?.role === "admin" || user?.role === "site_engineer";
+  const saveEmailPrefs = async () => {
+    setFieldError("");
+    setSuccessMessage("");
+    setSaving(true);
+    try {
+      const res = await api.put("/users/profile", {
+        notificationPrefs: {
+          email_alerts_enabled: emailEnabled,
+          email_min_severity: emailMinSeverity,
+        },
+      });
+      const updatedUser = res.data.data;
+      localStorage.setItem("mg_user", JSON.stringify(updatedUser));
+      setSuccessMessage("Email notification preferences saved.");
+      setEditingField(null);
+    } catch (err) {
+      setFieldError(err.response?.data?.message || "Couldn't save notification preferences.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Show notification sections for admin and site_engineer only
+  const showNotificationPrefs = user?.role === "admin" || user?.role === "site_engineer";
 
   return (
     <div className="pm-overlay" onClick={onClose}>
@@ -292,7 +325,7 @@ function ProfileModal({ isOpen, onClose }) {
           </div>
 
           {/* Section 4: SMS Notifications (for Admin & Site Engineer) */}
-          {showSmsPrefs && (
+          {showNotificationPrefs && (
             <div className="pm-card">
               <div className="pm-card-header">
                 <h3>SMS Notifications</h3>
@@ -360,6 +393,69 @@ function ProfileModal({ isOpen, onClose }) {
                     <div className="pm-field-label">Trigger Severity</div>
                     <div className="pm-field-val" style={{ textTransform: "capitalize" }}>
                       {smsMinSeverity}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section 5: Email Notifications (for Admin & Site Engineer) */}
+          {showNotificationPrefs && (
+            <div className="pm-card">
+              <div className="pm-card-header">
+                <h3>Email Notifications</h3>
+                {editingField !== "email" && (
+                  <button className="pm-edit-btn" onClick={() => startEdit("email")}>
+                    Edit Preferences
+                  </button>
+                )}
+              </div>
+
+              {editingField === "email" ? (
+                <div className="pm-edit-form">
+                  <label className="pm-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={emailEnabled}
+                      onChange={(e) => setEmailEnabled(e.target.checked)}
+                    />
+                    Enable Email Alert Notifications
+                  </label>
+
+                  <label className="pm-label">Minimum Severity Trigger</label>
+                  <select
+                    className="pm-input"
+                    value={emailMinSeverity}
+                    onChange={(e) => setEmailMinSeverity(e.target.value)}
+                  >
+                    <option value="low">Low &amp; Above</option>
+                    <option value="medium">Medium &amp; Above</option>
+                    <option value="high">High &amp; Above</option>
+                    <option value="critical">Critical Only</option>
+                  </select>
+
+                  <div className="pm-form-actions">
+                    <button className="pm-btn pm-btn--primary" onClick={saveEmailPrefs} disabled={saving}>
+                      {saving ? "Saving..." : "Save Preferences"}
+                    </button>
+                    <button className="pm-btn pm-btn--secondary" onClick={cancelEdit} disabled={saving}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="pm-info-grid">
+                  <div>
+                    <div className="pm-field-label">Status</div>
+                    <div className="pm-field-val">
+                      {emailEnabled ? "🟢 Enabled" : "⚪ Disabled"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="pm-field-label">Trigger Severity</div>
+                    <div className="pm-field-val" style={{ textTransform: "capitalize" }}>
+                      {emailMinSeverity}
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ProfileModal from "./ProfileModal";
+import { User, LogOut } from "lucide-react";
+import logoImg from "../assests/logo.png";
 import "./navbar.css";
 
 const navClass = ({ isActive }) => (isActive ? "active" : "");
@@ -37,13 +39,14 @@ function UserNavbar() {
     navigate("/");
   };
 
-  const initial = user?.name ? user.name.charAt(0).toUpperCase() : "👤";
+  const initial = user?.name ? user.name.charAt(0).toUpperCase() : <User size={18} />;
 
   return (
     <>
       <div className="dashboard-navbar">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => navigate("/dashboard")}>
-          🌿 MangroveGuard
+        <div className="logo" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }} onClick={() => navigate("/dashboard")}>
+          <img src={logoImg} alt="MangroveGuard Logo" style={{ height: "58px", width: "auto" }} />
+          <span>MangroveGuard</span>
         </div>
 
         <div className="nav-links">
@@ -82,15 +85,18 @@ function UserNavbar() {
               <div className="profile-dropdown">
                 <button
                   type="button"
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
                   onClick={() => {
                     setMenuOpen(false);
                     setIsProfileOpen(true);
                   }}
                 >
-                  👤 Profile / Settings
+                  <User size={15} />
+                  <span>Profile / Settings</span>
                 </button>
-                <button type="button" onClick={handleLogout}>
-                  🚪 Logout
+                <button type="button" style={{ display: "flex", alignItems: "center", gap: "8px" }} onClick={handleLogout}>
+                  <LogOut size={15} />
+                  <span>Logout</span>
                 </button>
               </div>
             )}

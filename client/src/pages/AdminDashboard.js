@@ -354,12 +354,19 @@ function AdminDashboard() {
     const site = a.device?.site;
     if (!site?._id) return;
     if (!siteAttentionMap[site._id]) {
-      siteAttentionMap[site._id] = { siteId: site._id, siteName: site.name, count: 0, worst: a.severity_level, alerts: [] };
+      siteAttentionMap[site._id] = { siteId: site._id, siteName: site.name, count: 0, worst: 'low', alertsMap: {} };
     }
     const entry = siteAttentionMap[site._id];
-    entry.count++;
-    entry.alerts.push(a);
-    if (severityRank[a.severity_level] > severityRank[entry.worst]) entry.worst = a.severity_level;
+    // Alerts from API are newest-first, so the first one we see is the latest
+    if (!entry.alertsMap[a.parameter_name]) {
+      entry.alertsMap[a.parameter_name] = a;
+    }
+  });
+
+  Object.values(siteAttentionMap).forEach(entry => {
+    entry.alerts = Object.values(entry.alertsMap);
+    entry.count = entry.alerts.length;
+    entry.worst = entry.alerts.reduce((w, a) => severityRank[a.severity_level] > severityRank[w] ? a.severity_level : w, 'low');
   });
 
   const rankedSites = Object.values(siteAttentionMap)
@@ -419,13 +426,13 @@ function AdminDashboard() {
             {/* Stats */}
             <div className="am-stats">
               {[
-                { icon: "🚨", val: unreadAlerts,          label: "Unread alerts"     },
-                { icon: "📡", val: `${activeDevices}/${devices.length}`, label: "Devices active" },
-                { icon: "📍", val: sites.length,          label: "Sites monitored"   },
-                { icon: "👥", val: userCount ?? "—",       label: "Total users"       },
+                { icon: <Bell size={22} color="#d97706" />, val: unreadAlerts,          label: "Unread alerts"     },
+                { icon: <Radio size={22} color="#1d7068" />, val: `${activeDevices}/${devices.length}`, label: "Devices active" },
+                { icon: <MapPin size={22} color="#164e3d" />, val: sites.length,          label: "Sites monitored"   },
+                { icon: <Users size={22} color="#2b9388" />, val: userCount ?? "—",       label: "Total users"       },
               ].map((s, i) => (
                 <div className="am-stat-card" key={i}>
-                  <span className="am-stat-icon">{s.icon}</span>
+                  <span className="am-stat-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</span>
                   <div>
                     <div className="am-stat-val">{s.val}</div>
                     <div className="am-stat-lbl">{s.label}</div>
@@ -437,13 +444,17 @@ function AdminDashboard() {
             {/* Sites needing attention — ranked accordion showing ONLY breaching sites sorted by severity */}
             <div className="am-card" style={{ padding: "18px 20px", marginBottom: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>📍 Sites needing attention</h2>
+                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <MapPin size={18} color="#164e3d" />
+                  <span>Sites needing attention</span>
+                </h2>
                 <Link to="/admin-alerts" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
               </div>
 
               {rankedSites.length === 0 ? (
-                <div style={{ padding: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", color: "#166534", fontSize: "13px" }}>
-                  🟢 All sites operating normally — no active parameter breaches.
+                <div style={{ padding: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", color: "#166534", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircle2 size={16} color="#166534" />
+                  <span>All sites operating normally — no active parameter breaches.</span>
                 </div>
               ) : (
                 <div style={{ border: "1px solid #deeae3", borderRadius: "10px", overflow: "hidden" }}>
@@ -487,14 +498,14 @@ function AdminDashboard() {
                                 </span>
                               )}
                             </div>
-                            <div style={{ fontSize: "11px", color: "#64748b" }}>
+                            <div style={{ fontSize: "11px", color: "#475569", fontWeight: 500 }}>
                               Severity: <strong style={{ color: severityText[s.worst] }}>{s.worst.toUpperCase()}</strong> · {s.count} active breach{s.count > 1 ? "es" : ""}
                             </div>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                             <span className={`am-badge am-badge--${severityClass(s.worst)}`}>{s.worst}</span>
                             <span style={{
-                              fontSize: "16px", color: "#8aaa98",
+                              fontSize: "16px", color: "#5c7c6a", fontWeight: 600,
                               display: "inline-block", transform: isOpen ? "rotate(90deg)" : "none",
                               transition: "transform 0.15s",
                             }}>›</span>
@@ -511,7 +522,7 @@ function AdminDashboard() {
                               <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: severityBg[a.severity_level] || "#fff", borderRadius: "6px", marginBottom: "6px", border: `1px solid ${severityBorder[a.severity_level] || "#ccc"}` }}>
                                 <div>
                                   <strong style={{ fontSize: "13px", color: severityText[a.severity_level] }}>{a.parameter_name}: {a.measured_value} {a.unit}</strong>
-                                  <div style={{ fontSize: "11px", color: "#475569" }}>Device: {a.device?.device_id || "—"} · {a.message}</div>
+                                  <div style={{ fontSize: "11px", color: "#334155", fontWeight: 500 }}>Device: {a.device?.device_id || "—"} · {a.message}</div>
                                 </div>
                                 <span className={`am-badge am-badge--${severityClass(a.severity_level)}`}>{a.severity_level}</span>
                               </div>
@@ -535,14 +546,17 @@ function AdminDashboard() {
 
               <div className="am-card" style={{ padding: "18px 20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>📡 Devices needing attention</h2>
+                  <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Radio size={18} color="#1d7068" />
+                    <span>Devices needing attention</span>
+                  </h2>
                   <Link to="/manage-devices" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
                 </div>
                 {attentionDevices.length === 0 ? (
                   <p style={{ fontSize: "13px", color: "#3b6d11" }}>All devices online.</p>
                 ) : attentionDevices.slice(0, 5).map(d => (
                   <div key={d._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid #edf4ef" }}>
-                    <span style={{ fontSize: "13px", color: "#2d4a3e" }}>{d.device_id} <span style={{ color: "#8aaa98" }}>· {d.site?.name || "—"}</span></span>
+                    <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{d.device_id} <span style={{ color: "#5c7c6a" }}>· {d.site?.name || "—"}</span></span>
                     <span className={`am-badge am-badge--${statusClass(d.status)}`}>{d.status}</span>
                   </div>
                 ))}
@@ -550,14 +564,17 @@ function AdminDashboard() {
 
               <div className="am-card" style={{ padding: "18px 20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>🚨 Recent alerts</h2>
+                  <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Bell size={18} color="#d97706" />
+                    <span>Recent alerts</span>
+                  </h2>
                   <Link to="/admin-alerts" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
                 </div>
                 {recentAlerts.length === 0 ? (
-                  <p style={{ fontSize: "13px", color: "#8aaa98" }}>No alerts found.</p>
+                  <p style={{ fontSize: "13px", color: "#5c7c6a", fontWeight: 500 }}>No alerts found.</p>
                 ) : recentAlerts.map(a => (
                   <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid #edf4ef" }}>
-                    <span style={{ fontSize: "13px", color: "#2d4a3e" }}>{a.parameter_name} <span style={{ color: "#8aaa98" }}>· {a.device?.device_id || "—"}</span></span>
+                    <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{a.parameter_name} <span style={{ color: "#5c7c6a" }}>· {a.device?.device_id || "—"}</span></span>
                     <span className={`am-badge am-badge--${severityClass(a.severity_level)}`}>{a.severity_level}</span>
                   </div>
                 ))}
@@ -567,15 +584,18 @@ function AdminDashboard() {
 
             <div className="am-card" style={{ padding: "18px 20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>🕒 Recently logged in</h2>
+                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Clock size={18} color="#164e3d" />
+                  <span>Recently logged in</span>
+                </h2>
                 <Link to="/recent-logins" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
               </div>
               {recentLogins.length === 0 ? (
-                <p style={{ fontSize: "13px", color: "#8aaa98" }}>No login activity recorded yet.</p>
+                <p style={{ fontSize: "13px", color: "#5c7c6a", fontWeight: 500 }}>No login activity recorded yet.</p>
               ) : recentLogins.map(u => (
                 <div key={u._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid #edf4ef" }}>
-                  <span style={{ fontSize: "13px", color: "#2d4a3e" }}>{u.name} <span style={{ color: "#8aaa98" }}>· {u.email}</span></span>
-                  <span style={{ fontSize: "12px", color: "#8aaa98" }}>{timeAgo(u.lastLogin)}</span>
+                  <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{u.name} <span style={{ color: "#5c7c6a" }}>· {u.email}</span></span>
+                  <span style={{ fontSize: "12px", color: "#5c7c6a", fontWeight: 500 }}>{timeAgo(u.lastLogin)}</span>
                 </div>
               ))}
             </div>

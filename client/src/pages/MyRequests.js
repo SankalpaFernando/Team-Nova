@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import api from '../services/api';
+import { AlertTriangle, ArrowRight, ClipboardList, Clock, Check, X } from 'lucide-react';
 import './MyRequests.css';
 
 function MyRequests() {
@@ -40,8 +41,8 @@ function MyRequests() {
 
     if (req.action === 'delete') {
       return (
-        <div className="mr-diff-delete-notice">
-          ⚠️ <strong>Deletion Request</strong> for {targetSummary || 'target entity'}
+        <div className="mr-diff-delete-notice" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <AlertTriangle size={16} /> <strong>Deletion Request</strong> for {targetSummary || 'target entity'}
         </div>
       );
     }
@@ -57,7 +58,7 @@ function MyRequests() {
               <div key={field} className="mr-diff-row">
                 <span className="mr-diff-fieldname">{field}:</span>
                 <span className="mr-diff-old">{String(values.old ?? 'empty')}</span>
-                <span className="mr-diff-arrow">➔</span>
+                <span className="mr-diff-arrow"><ArrowRight size={14} /></span>
                 <span className="mr-diff-new">{String(values.new ?? 'empty')}</span>
               </div>
             ))}
@@ -130,7 +131,7 @@ function MyRequests() {
             <div className="mr-loading">Loading your requests...</div>
           ) : filteredRequests.length === 0 ? (
             <div className="mr-empty-card">
-              <span className="mr-empty-icon">📋</span>
+              <span className="mr-empty-icon"><ClipboardList size={32} /></span>
               <h3>No Requests Found</h3>
               <p>You have no operational change requests matching the selected filters.</p>
             </div>
@@ -144,10 +145,10 @@ function MyRequests() {
                       <span className={`mr-badge mr-badge--${req.action}`}>{req.action.toUpperCase()}</span>
                     </div>
                     <div className="mr-status-pill-wrap">
-                      <span className={`mr-status-pill mr-status-pill--${req.status}`}>
-                        {req.status === 'pending' && '⏳ Pending Approval'}
-                        {req.status === 'approved' && '✓ Approved'}
-                        {req.status === 'rejected' && '✕ Rejected'}
+                      <span className={`mr-status-pill mr-status-pill--${req.status}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {req.status === 'pending' && <><Clock size={14} /> Pending Approval</>}
+                        {req.status === 'approved' && <><Check size={14} /> Approved</>}
+                        {req.status === 'rejected' && <><X size={14} /> Rejected</>}
                       </span>
                     </div>
                   </div>
