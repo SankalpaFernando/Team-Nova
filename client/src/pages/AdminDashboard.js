@@ -4,74 +4,237 @@ import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import socket from "../services/socket";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer } from "recharts";
-import { Bell, Radio, MapPin, Users, Clock, CheckCircle2 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import "./AdminAlerts.css";
 
 
-function getStatus(min, max, value) {
-  if (value === null || value === undefined) return "unknown";
-  if (min === undefined && max === undefined) return "unknown"; 
-  if (min !== undefined && min !== null && value < min) return "breach";
-  if (max !== undefined && max !== null && value > max) return "breach";
-  return "normal";
+const PARAM_COLORS = {
+  pH: "#2a78d6",
+  temperature: "#eb6834",
+  salinity: "#1baf7a",
+  dissolved_o2: "#eda100",
+};
+
+const PARAM_LABELS = {
+  pH: "pH",
+  temperature: "Temperature (°C)",
+  salinity: "Salinity (ppt)",
+  dissolved_o2: "Dissolved O₂ (mg/L)",
+};
+
+const TIME_RANGES = [
+  { label: "1h", hours: 1 },
+  { label: "24h", hours: 24 },
+  { label: "7d", hours: 168 },
+];
+
+function classifyParam(key, label) {
+  const k = (key || "").toLowerCase();
+  const lbl = (label || "").toLowerCase();
+  if (k === "ph" || lbl.includes("ph")) return "pH";
+  if (k === "temperature" || k === "temp" || lbl.includes("temp")) return "temperature";
+  if (k === "salinity" || lbl.includes("salin")) return "salinity";
+  if (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen")) return "dissolved_o2";
+  return null;
 }
 
-const PARAM_KEY_MAP = { pH: "pH", Temp: "temperature", Salinity: "salinity", "DO₂": "dissolved_o2" };
+const getStatusFor = (val, paramKey, siteThresholds) => {
+  if (val === null || val === undefined) return "unknown";
+  if (!siteThresholds || !Array.isArray(siteThresholds)) return "unknown";
 
-function SiteAverageChart({ avgData, siteThresholds }) {
-  if (!avgData) return null;
+  const targetKey = paramKey.toLowerCase();
+  const entry = siteThresholds.find(t => {
+    const k = (t.parameter?.key || "").toLowerCase();
+    const lbl = (t.parameter?.label || t.parameter_name || "").toLowerCase();
+    if (k === targetKey) return true;
+    if (targetKey === "ph" && (k === "ph" || lbl.includes("ph"))) return true;
+    if (targetKey === "temperature" && (k === "temperature" || k === "temp" || lbl.includes("temp"))) return true;
+    if (targetKey === "salinity" && (k === "salinity" || lbl.includes("salin"))) return true;
+    if (targetKey === "dissolved_o2" && (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen"))) return true;
+    return false;
+  });
 
-  const data = [
-    { name: "pH", value: avgData.pH },
-    { name: "Temp", value: avgData.temperature },
-    { name: "Salinity", value: avgData.salinity },
-    { name: "DO₂", value: avgData.dissolved_o2 },
-  ];
+  if (!entry || (entry.min === undefined && entry.max === undefined)) return "unknown";
+  if (entry.min !== null && entry.min !== undefined && val < entry.min) return "breach";
+  if (entry.max !== null && entry.max !== undefined && val > entry.max) return "breach";
+  return "normal";
+};
 
-  const colorFor = (name, value) => {
-    if (value === null || value === undefined) return "#c9c9c9";
-    const targetKey = (PARAM_KEY_MAP[name] || "").toLowerCase();
-    let t = null;
-    if (Array.isArray(siteThresholds)) {
-      t = siteThresholds.find(entry => {
-        const k = (entry.parameter?.key || "").toLowerCase();
-        const lbl = (entry.parameter?.label || entry.parameter_name || "").toLowerCase();
-        if (k === targetKey) return true;
-        if ((targetKey === "ph") && (k === "ph" || lbl.includes("ph"))) return true;
-        if ((targetKey === "temperature") && (k === "temperature" || k === "temp" || lbl.includes("temp"))) return true;
-        if ((targetKey === "salinity") && (k === "salinity" || lbl.includes("salin"))) return true;
-        if ((targetKey === "dissolved_o2") && (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen"))) return true;
-        return false;
-      });
-    } else if (siteThresholds && typeof siteThresholds === "object") {
-      t = siteThresholds[targetKey] || siteThresholds[name];
+function SiteHistoryChart({ siteId, devices, sites }) {
+  const site = sites?.find(s => s._id === siteId);
+  const [selectedParam, setSelectedParam] = useState("pH");
+  const [rangeHours, setRangeHours] = useState(24);
+  const [historyData, setHistoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const siteDevices = devices.filter(d => (d.site?._id || d.site) === siteId);
+      if (siteDevices.length === 0) {
+        setHistoryData([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(false);
+      try {
+        const fromDate = new Date(Date.now() - rangeHours * 60 * 60 * 1000).toISOString();
+        const responses = await Promise.all(
+          siteDevices.map(d => api.get(`/readings?device=${d._id}&limit=2000&from=${fromDate}`))
+        );
+
+        let allReadings = [];
+        responses.forEach(res => {
+          if (res.data?.data) allReadings = allReadings.concat(res.data.data);
+        });
+        allReadings.sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+
+        const labelOptions = rangeHours > 24
+          ? { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }
+          : { hour: "2-digit", minute: "2-digit" };
+
+        const dataMap = {};
+        allReadings.forEach(r => {
+          const paramKey = classifyParam(r.sensor?.parameter?.key, r.sensor?.parameter?.label || r.parameter_name);
+          if (!paramKey) return;
+
+          const timeKey = new Date(r.recorded_at).setSeconds(0, 0);
+          if (!dataMap[timeKey]) {
+            dataMap[timeKey] = {
+              timeKey,
+              timeLabel: new Date(timeKey).toLocaleString([], labelOptions),
+            };
+          }
+          dataMap[timeKey][paramKey] = r.value;
+        });
+
+        if (!cancelled) setHistoryData(Object.values(dataMap).sort((a, b) => a.timeKey - b.timeKey));
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, [siteId, devices, rangeHours]);
+
+  const controls = (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
+      <div style={{ display: "flex", gap: "6px" }}>
+        {Object.keys(PARAM_COLORS).map(key => (
+          <button
+            key={key}
+            onClick={() => setSelectedParam(key)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: "6px",
+              border: `1px solid ${selectedParam === key ? PARAM_COLORS[key] : "#deeae3"}`,
+              cursor: "pointer",
+              fontSize: "11px",
+              fontWeight: selectedParam === key ? 700 : 500,
+              background: selectedParam === key ? PARAM_COLORS[key] : "#fff",
+              color: selectedParam === key ? "#fff" : "#3a4a42",
+            }}
+          >
+            {key === "pH" ? "pH" : key === "temperature" ? "Temp" : key === "salinity" ? "Salinity" : "DO₂"}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: "6px" }}>
+        {TIME_RANGES.map(opt => (
+          <button
+            key={opt.hours}
+            onClick={() => setRangeHours(opt.hours)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: "12px",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "11px",
+              fontWeight: rangeHours === opt.hours ? 700 : 500,
+              background: rangeHours === opt.hours ? "#1f4d3a" : "#e6ede9",
+              color: rangeHours === opt.hours ? "#fff" : "#3a4a42",
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <div>{controls}<p style={{ textAlign: "center", color: "#5c7c6a", fontSize: "13px", margin: "24px 0" }}>Loading history…</p></div>;
+  }
+  if (error) {
+    return <div>{controls}<p style={{ textAlign: "center", color: "#5c7c6a", fontSize: "13px", margin: "24px 0" }}>Couldn't load history for this site.</p></div>;
+  }
+  if (historyData.length === 0) {
+    return <div>{controls}<p style={{ textAlign: "center", color: "#5c7c6a", fontSize: "13px", margin: "24px 0" }}>No historical data for this range.</p></div>;
+  }
+
+  const renderCustomDot = (props, paramKey) => {
+    const { cx, cy, value } = props;
+    if (value === null || value === undefined) return null;
+    const status = getStatusFor(value, paramKey, site?.thresholds);
+    const fill = status === "breach" ? "#e24b4a" : status === "normal" ? "#5a9c5a" : PARAM_COLORS[paramKey] || "#c9c9c9";
+    return <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={4} stroke="none" fill={fill} />;
+  };
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const val = payload[0].value;
+      const paramKey = selectedParam;
+      const status = getStatusFor(val, paramKey, site?.thresholds);
+      const isBreach = status === "breach";
+
+      return (
+        <div style={{
+          backgroundColor: isBreach ? "#fdecea" : "#fff",
+          border: `1px solid ${isBreach ? "#e24b4a" : "#ccc"}`,
+          padding: "10px",
+          borderRadius: "8px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          color: isBreach ? "#a32d2d" : "#333"
+        }}>
+          <p style={{ margin: "0 0 5px 0", fontWeight: "bold" }}>{label}</p>
+          <p style={{ margin: 0 }}>
+            {payload[0].name}: {val ?? "—"}
+          </p>
+        </div>
+      );
     }
-
-    const status = getStatus(t?.min, t?.max, value);
-    if (status === "breach") return "#e24b4a";
-    if (status === "normal") return "#5a9c5a";
-    return "#c9c9c9";
+    return null;
   };
 
   return (
     <div>
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip formatter={(v) => (v !== null && v !== undefined ? v : "—")} />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-            {data.map((d, i) => (
-              <Cell key={i} fill={colorFor(d.name, d.value)} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-      <div style={{ display: "flex", gap: "14px", fontSize: "11px", color: "#5a7a6c", marginTop: "6px" }}>
-        <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#5a9c5a", borderRadius: 2, marginRight: 4 }} />Normal</span>
-        <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#e24b4a", borderRadius: 2, marginRight: 4 }} />Breaching threshold</span>
-        <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#c9c9c9", borderRadius: 2, marginRight: 4 }} />No data</span>
+      {controls}
+      <div style={{ height: "220px", width: "100%" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={historyData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e1e0d9" />
+            <XAxis dataKey="timeLabel" tick={{ fontSize: 11, fill: "#898781" }} />
+            <YAxis tick={{ fontSize: 11, fill: "#898781" }} />
+            <Tooltip content={<CustomTooltip />} />
+            <Line
+              type="monotone"
+              name={PARAM_LABELS[selectedParam]}
+              dataKey={selectedParam}
+              stroke={PARAM_COLORS[selectedParam]}
+              strokeWidth={2}
+              dot={(p) => renderCustomDot(p, selectedParam)}
+              activeDot={{ r: 6 }}
+              connectNulls
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
@@ -214,41 +377,6 @@ function AdminDashboard() {
     setExpandedSiteIds(prev => ({ ...prev, [siteId]: !prev[siteId] }));
   };
 
-  // ── average latest readings across every device at a site ──
-  const round1 = (n) => Math.round(n * 10) / 10;
-  const getSiteAverages = (siteId) => {
-    const siteReadings = readings.filter(r => r.device?.site?._id === siteId || r.device?.site === siteId);
-    if (siteReadings.length === 0) return null;
-
-    const extractVal = (r, paramKey) => {
-      if (!r) return null;
-      if (r[paramKey] !== undefined && r[paramKey] !== null) return r[paramKey];
-      const pKey = r.sensor?.parameter?.key || "";
-      const pLabel = (r.sensor?.parameter?.label || r.parameter_name || "").toLowerCase();
-      if (pKey === paramKey) return r.value;
-      if (paramKey === "pH" && (pKey === "pH" || pLabel.includes("ph"))) return r.value;
-      if (paramKey === "temperature" && (pKey === "temperature" || pKey === "temp" || pLabel.includes("temp"))) return r.value;
-      if (paramKey === "salinity" && (pKey === "salinity" || pLabel.includes("salin"))) return r.value;
-      if ((paramKey === "dissolved_o2" || paramKey === "do2") && (pKey === "dissolved_o2" || pKey === "do2" || pLabel.includes("o2") || pLabel.includes("oxygen"))) return r.value;
-      return null;
-    };
-
-    const avgVal = (paramKey) => {
-      const validVals = siteReadings.map(r => extractVal(r, paramKey)).filter(v => v !== null && v !== undefined);
-      return validVals.length ? round1(validVals.reduce((a, b) => a + b, 0) / validVals.length) : null;
-    };
-
-    return {
-      deviceCount: siteReadings.length,
-      pH: avgVal("pH"),
-      temperature: avgVal("temperature"),
-      salinity: avgVal("salinity"),
-      dissolved_o2: avgVal("dissolved_o2"),
-    };
-  };
-
-  const getSiteThresholds = (siteId) => sites.find(s => s._id === siteId)?.thresholds || null;
-
   // ── relative time, e.g. "5m ago", "3h ago", "2d ago" ──
   const timeAgo = (d) => {
     if (!d) return "never";
@@ -332,8 +460,6 @@ function AdminDashboard() {
                 <div style={{ border: "1px solid #deeae3", borderRadius: "10px", overflow: "hidden" }}>
                   {rankedSites.map((s, i) => {
                     const isOpen = !!expandedSiteIds[s.siteId];
-                    const avgData = getSiteAverages(s.siteId);
-                    const thresholds = getSiteThresholds(s.siteId);
                     const isSiteLive = readings.some((r) => {
                       const sId = r.sensor?._id?.toString() || r.sensor?.toString();
                       const rSiteId = r.device?.site?._id || r.device?.site;
@@ -403,9 +529,9 @@ function AdminDashboard() {
                             ))}
 
                             <div style={{ fontSize: "12px", fontWeight: 600, color: "#1c3a2a", margin: "14px 0 6px" }}>
-                              Parameter Trend Chart ({s.siteName}):
+                              Parameter History ({s.siteName}):
                             </div>
-                            <SiteAverageChart avgData={avgData} siteThresholds={thresholds} />
+                            <SiteHistoryChart siteId={s.siteId} devices={devices} sites={sites} />
                           </div>
                         )}
                       </div>
