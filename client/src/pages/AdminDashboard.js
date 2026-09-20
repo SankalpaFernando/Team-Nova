@@ -5,6 +5,7 @@ import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import socket from "../services/socket";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Bell, Radio, MapPin, Users, CheckCircle2, Clock } from "lucide-react";
 import "./AdminAlerts.css";
 
 
@@ -426,10 +427,10 @@ function AdminDashboard() {
             {/* Stats */}
             <div className="am-stats">
               {[
-                { icon: <Bell size={22} color="#d97706" />, val: unreadAlerts,          label: "Unread alerts"     },
+                { icon: <Bell size={22} color="#d97706" />, val: unreadAlerts, label: "Unread alerts" },
                 { icon: <Radio size={22} color="#1d7068" />, val: `${activeDevices}/${devices.length}`, label: "Devices active" },
-                { icon: <MapPin size={22} color="#164e3d" />, val: sites.length,          label: "Sites monitored"   },
-                { icon: <Users size={22} color="#2b9388" />, val: userCount ?? "—",       label: "Total users"       },
+                { icon: <MapPin size={22} color="#164e3d" />, val: sites.length, label: "Sites monitored" },
+                { icon: <Users size={22} color="#2b9388" />, val: userCount ?? "—", label: "Total users" },
               ].map((s, i) => (
                 <div className="am-stat-card" key={i}>
                   <span className="am-stat-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</span>
