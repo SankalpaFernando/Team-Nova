@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
+import socket from "../services/socket";
 import { MapPin, Compass, Waves, ArrowRight, ArrowLeft, Pencil, Sliders, Trash2, X, Plus } from 'lucide-react';
 import "./AdminMaps.css";
 
@@ -78,6 +79,22 @@ function AdminMaps() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const handleSiteCreated = () => load();
+    const handleSiteUpdated = () => load();
+    const handleSiteDeleted = () => load();
+
+    socket.on("site_created", handleSiteCreated);
+    socket.on("site_updated", handleSiteUpdated);
+    socket.on("site_deleted", handleSiteDeleted);
+
+    return () => {
+      socket.off("site_created", handleSiteCreated);
+      socket.off("site_updated", handleSiteUpdated);
+      socket.off("site_deleted", handleSiteDeleted);
+    };
+  }, []);
 
   // ── counts ────────────────────────────────────────────
   const byRegion = (r) => sites.filter(s => s.region === r).length;

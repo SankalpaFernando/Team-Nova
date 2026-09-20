@@ -12,25 +12,58 @@ export const parseCoordinates = (locationStr, regionStr) => {
   // Clean location string (remove "📍 Location:" if present)
   const cleanStr = locationStr.replace(/^📍\s*Location:\s*/i, "").trim();
 
-  // Regex pattern for degrees: e.g. "8.0362° N, 79.8428° E" or "8.0362 N, 79.8428 E"
-  const degMatch = cleanStr.match(
-    /(\d+\.?\d*)\s*°?\s*([NS])[\s,]+(\d+\.?\d*)\s*°?\s*([EW])/i
-  );
-  if (degMatch) {
-    let lat = parseFloat(degMatch[1]);
-    let lng = parseFloat(degMatch[3]);
-    if (degMatch[2].toUpperCase() === "S") lat = -lat;
-    if (degMatch[4].toUpperCase() === "W") lng = -lng;
+  // Regex pattern for DMS (Degrees, Minutes, Seconds): e.g. "9°41′05″N 80°01′19″E" or "9°41'05"N 80°01'19"E"
+  const dmsMatch1 = cleanStr.match(/(\d+)\s*°\s*(\d+)\s*[′']\s*(\d+\.?\d*)?\s*[″"]?\s*([NS])[\s,]+(\d+)\s*°\s*(\d+)\s*[′']\s*(\d+\.?\d*)?\s*[″"]?\s*([EW])/i);
+  if (dmsMatch1) {
+    let lat = parseInt(dmsMatch1[1], 10) + parseInt(dmsMatch1[2], 10) / 60 + (parseFloat(dmsMatch1[3] || 0) / 3600);
+    let lng = parseInt(dmsMatch1[5], 10) + parseInt(dmsMatch1[6], 10) / 60 + (parseFloat(dmsMatch1[7] || 0) / 3600);
+    if (dmsMatch1[4].toUpperCase() === "S") lat = -lat;
+    if (dmsMatch1[8].toUpperCase() === "W") lng = -lng;
     return { lat, lng };
   }
 
-  // Regex pattern for plain numbers: e.g. "8.0362, 79.8428"
+  // Inverse DMS: e.g. "80°01′19″E 9°41′05″N"
+  const dmsMatch2 = cleanStr.match(/(\d+)\s*°\s*(\d+)\s*[′']\s*(\d+\.?\d*)?\s*[″"]?\s*([EW])[\s,]+(\d+)\s*°\s*(\d+)\s*[′']\s*(\d+\.?\d*)?\s*[″"]?\s*([NS])/i);
+  if (dmsMatch2) {
+    let lng = parseInt(dmsMatch2[1], 10) + parseInt(dmsMatch2[2], 10) / 60 + (parseFloat(dmsMatch2[3] || 0) / 3600);
+    let lat = parseInt(dmsMatch2[5], 10) + parseInt(dmsMatch2[6], 10) / 60 + (parseFloat(dmsMatch2[7] || 0) / 3600);
+    if (dmsMatch2[4].toUpperCase() === "W") lng = -lng;
+    if (dmsMatch2[8].toUpperCase() === "S") lat = -lat;
+    return { lat, lng };
+  }
+
+  // Regex pattern for decimal degrees: e.g. "8.0362° N, 79.8428° E" or "8.0362 N, 79.8428 E"
+  const degMatch1 = cleanStr.match(/(\d+\.?\d*)\s*°?\s*([NS])[\s,]+(\d+\.?\d*)\s*°?\s*([EW])/i);
+  if (degMatch1) {
+    let lat = parseFloat(degMatch1[1]);
+    let lng = parseFloat(degMatch1[3]);
+    if (degMatch1[2].toUpperCase() === "S") lat = -lat;
+    if (degMatch1[4].toUpperCase() === "W") lng = -lng;
+    return { lat, lng };
+  }
+
+  // Inverse decimal degrees: e.g. "79.8428° E, 8.0362° N"
+  const degMatch2 = cleanStr.match(/(\d+\.?\d*)\s*°?\s*([EW])[\s,]+(\d+\.?\d*)\s*°?\s*([NS])/i);
+  if (degMatch2) {
+    let lng = parseFloat(degMatch2[1]);
+    let lat = parseFloat(degMatch2[3]);
+    if (degMatch2[2].toUpperCase() === "W") lng = -lng;
+    if (degMatch2[4].toUpperCase() === "S") lat = -lat;
+    return { lat, lng };
+  }
+
+  // Regex pattern for plain numbers in string
   const numbers = cleanStr.match(/-?\d+\.?\d*/g);
   if (numbers && numbers.length >= 2) {
-    const lat = parseFloat(numbers[0]);
-    const lng = parseFloat(numbers[1]);
-    if (!isNaN(lat) && !isNaN(lng) && lat >= 5 && lat <= 10 && lng >= 79 && lng <= 82) {
-      return { lat, lng };
+    const n1 = parseFloat(numbers[0]);
+    const n2 = parseFloat(numbers[1]);
+    if (!isNaN(n1) && !isNaN(n2)) {
+      if (n1 >= 5 && n1 <= 10 && n2 >= 78 && n2 <= 83) {
+        return { lat: n1, lng: n2 };
+      }
+      if (n2 >= 5 && n2 <= 10 && n1 >= 78 && n1 <= 83) {
+        return { lat: n2, lng: n1 };
+      }
     }
   }
 

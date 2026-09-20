@@ -46,7 +46,7 @@ exports.getSite = async (req, res, next) => {
 
 // @desc    Create site
 // @route   POST /api/sites
-// @access  Private/Admin
+// @access  Private/Admin, Site Engineer
 exports.createSite = async (req, res, next) => {
   try {
     req.body.createdBy = req.user.id;
@@ -55,6 +55,11 @@ exports.createSite = async (req, res, next) => {
     const populatedSite = await Site.findById(site._id)
       .populate('createdBy', 'name email')
       .populate('thresholds.parameter', 'key label unit');
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('site_created', populatedSite);
+    }
 
     res.status(201).json({ success: true, data: populatedSite });
   } catch (error) {
@@ -94,6 +99,11 @@ exports.updateSite = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Site not found' });
     }
 
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('site_updated', site);
+    }
+
     res.status(200).json({ success: true, data: site });
   } catch (error) {
     next(error);
@@ -102,7 +112,7 @@ exports.updateSite = async (req, res, next) => {
 
 // @desc    Delete site
 // @route   DELETE /api/sites/:id
-// @access  Private/Admin
+// @access  Private/Admin, Site Engineer
 exports.deleteSite = async (req, res, next) => {
   try {
     const site = await Site.findById(req.params.id);
@@ -115,6 +125,12 @@ exports.deleteSite = async (req, res, next) => {
 
     await Device.deleteMany({ site: req.params.id });
     await site.deleteOne();
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('site_deleted', req.params.id);
+    }
+
     res.status(200).json({ success: true, message: 'Site and associated devices removed' });
   } catch (error) {
     next(error);
