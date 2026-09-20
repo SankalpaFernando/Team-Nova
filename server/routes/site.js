@@ -17,9 +17,9 @@ const { protect, authorize, authorizeSiteAccess } = require('../middleware/auth'
 router.get('/', getSites);
 router.get('/:id', getSite);
 
-router.post('/', protect, authorize('admin'), createSite);
+router.post('/', protect, authorize('admin', 'site_engineer'), createSite);
 router.put('/:id', protect, authorize('admin', 'site_engineer'), updateSite);
-router.delete('/:id', protect, authorize('admin'), deleteSite);
+router.delete('/:id', protect, authorize('admin', 'site_engineer'), deleteSite);
 
 router.put('/:id/assign-engineer', protect, authorize('admin'), assignEngineer);
 router.put('/:id/unassign-engineer', protect, authorize('admin'), unassignEngineer);

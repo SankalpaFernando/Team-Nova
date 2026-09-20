@@ -82,6 +82,7 @@ function AdminSidebar({ activePage }) {
   const engineerNavItems = [
     { key: 'dashboard',   to: '/site-engineer-dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
     { key: 'my-requests', to: '/my-requests',             icon: <ClipboardList size={18} />, label: 'My Requests' },
+    { key: 'sites',       to: '/admin-maps',              icon: <MapPin size={18} />, label: 'Sites' },
     { key: 'devices',     to: '/manage-devices',          icon: <Radio size={18} />, label: 'Devices' },
     { key: 'sensors',     to: '/manage-sensors',          icon: <Thermometer size={18} />, label: 'Sensors' },
     { key: 'parameters',  to: '/parameter-admin',         icon: <Sliders size={18} />, label: 'Parameters' },

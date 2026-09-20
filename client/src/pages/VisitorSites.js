@@ -4,6 +4,7 @@ import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import socket from "../services/socket";
 import SriLankaMap from "../components/SriLankaMap";
 
 function VisitorSites() {
@@ -24,6 +25,39 @@ function VisitorSites() {
     };
 
     loadSites();
+  }, []);
+
+  useEffect(() => {
+    const handleSiteCreated = (newSite) => {
+      if (!newSite) return;
+      setSites((prev) => {
+        const exists = prev.some((s) => s._id === newSite._id);
+        if (exists) return prev;
+        return [newSite, ...prev];
+      });
+    };
+
+    const handleSiteUpdated = (updatedSite) => {
+      if (!updatedSite) return;
+      setSites((prev) =>
+        prev.map((s) => (s._id === updatedSite._id ? updatedSite : s))
+      );
+    };
+
+    const handleSiteDeleted = (deletedId) => {
+      if (!deletedId) return;
+      setSites((prev) => prev.filter((s) => s._id !== deletedId));
+    };
+
+    socket.on("site_created", handleSiteCreated);
+    socket.on("site_updated", handleSiteUpdated);
+    socket.on("site_deleted", handleSiteDeleted);
+
+    return () => {
+      socket.off("site_created", handleSiteCreated);
+      socket.off("site_updated", handleSiteUpdated);
+      socket.off("site_deleted", handleSiteDeleted);
+    };
   }, []);
 
   return (
