@@ -1,5 +1,6 @@
 import "./Sites.css";
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
 import socket from "../services/socket";
@@ -8,6 +9,10 @@ import Footer from "../components/Footer";
 import SriLankaMap from "../components/SriLankaMap";
 
 function Sites() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const selectedSiteId = searchParams.get("site");
+
   const [sites, setSites] = useState([]);
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +111,7 @@ function Sites() {
                   sites={sites}
                   devicesBySite={devicesBySite}
                   isUserPage={true}
+                  selectedSiteId={selectedSiteId}
                 />
               )}
             </div>

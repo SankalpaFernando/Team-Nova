@@ -3,11 +3,16 @@ import Navbar from "../components/navbar";
 import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../services/api";
 import socket from "../services/socket";
 import SriLankaMap from "../components/SriLankaMap";
 
 function VisitorSites() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const selectedSiteId = searchParams.get("site");
+
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -88,6 +93,7 @@ function VisitorSites() {
                 <SriLankaMap
                   sites={sites}
                   isUserPage={false}
+                  selectedSiteId={selectedSiteId}
                 />
               )}
             </div>

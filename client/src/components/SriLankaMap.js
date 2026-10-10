@@ -190,7 +190,7 @@ function SriLankaMap({
       markersRef.current[site._id] = marker;
     });
 
-    if (bounds.length > 0) {
+    if (bounds.length > 0 && !selectedSiteId) {
       if (bounds.length === 1) {
         map.setView(bounds[0], 9);
       } else {
@@ -198,6 +198,23 @@ function SriLankaMap({
       }
     }
   }, [sites, activeSite, selectedSiteId, onSelectSite]);
+
+  // Auto-activate and fly to site when selectedSiteId is provided
+  useEffect(() => {
+    if (!selectedSiteId || !sites || sites.length === 0) return;
+    const match = sites.find((s) => s._id === selectedSiteId);
+    if (match) {
+      setActiveSite(match);
+      const map = mapInstanceRef.current;
+      if (map) {
+        const { lat, lng } = parseCoordinates(match.location, match.region);
+        map.flyTo([lat, lng], 10, { animate: true, duration: 1 });
+      }
+      if (onSelectSite) {
+        onSelectSite(match);
+      }
+    }
+  }, [selectedSiteId, sites, onSelectSite]);
 
   // Helper for status badge
   const getStatusPill = (siteId) => {
