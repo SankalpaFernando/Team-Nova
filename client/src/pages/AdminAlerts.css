@@ -579,3 +579,7 @@
   .am-card    { overflow-x: auto; }
   .am-table   { min-width: 700px; }
 }
+/*Alert table*/
+.am-table.am-table--alerts th:nth-child(n) { width: auto; }
+.am-table.am-table--alerts th:nth-child(8) { text-align: left; }
+.am-table.am-table--alerts td.am-td-num   { padding: 13px 16px !important; text-align: left; }
