@@ -5,6 +5,8 @@ import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import socket from "../services/socket";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { buildSeriesWithGaps } from "../utils/chartGaps";
+import { getDayTicks, makeDayAwareTick, formatTooltipTime } from "../utils/timeAxis";
 import { Bell, Radio, MapPin, Users, CheckCircle2, Clock } from "lucide-react";
 import "./AdminAlerts.css";
 
@@ -180,6 +182,9 @@ function SiteHistoryChart({ siteId, devices, sites }) {
     return <div>{controls}<p style={{ textAlign: "center", color: "#5c7c6a", fontSize: "13px", margin: "24px 0" }}>No historical data for this range.</p></div>;
   }
 
+  const chartData = buildSeriesWithGaps(historyData, selectedParam);
+  const xTicks = getDayTicks(chartData);
+
   const renderCustomDot = (props, paramKey) => {
     const { cx, cy, value } = props;
     if (value === null || value === undefined) return null;
@@ -188,8 +193,8 @@ function SiteHistoryChart({ siteId, devices, sites }) {
     return <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={4} stroke="none" fill={fill} />;
   };
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length && !payload[0].payload?.isGap) {
       const val = payload[0].value;
       const paramKey = selectedParam;
       const status = getStatusFor(val, paramKey, site?.thresholds);
@@ -204,7 +209,7 @@ function SiteHistoryChart({ siteId, devices, sites }) {
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           color: isBreach ? "#a32d2d" : "#333"
         }}>
-          <p style={{ margin: "0 0 5px 0", fontWeight: "bold" }}>{label}</p>
+          <p style={{ margin: "0 0 5px 0", fontWeight: "bold" }}>{formatTooltipTime(payload[0].payload.timeKey)}</p>
           <p style={{ margin: 0 }}>
             {payload[0].name}: {val ?? "—"}
           </p>
@@ -219,9 +224,9 @@ function SiteHistoryChart({ siteId, devices, sites }) {
       {controls}
       <div style={{ height: "220px", width: "100%" }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={historyData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+          <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e1e0d9" />
-            <XAxis dataKey="timeLabel" tick={{ fontSize: 11, fill: "#898781" }} />
+            <XAxis dataKey="timeKey" height={40} ticks={xTicks} interval={0} tick={makeDayAwareTick(xTicks, { fontSize: 11, fill: "#898781" })} />
             <YAxis tick={{ fontSize: 11, fill: "#898781" }} />
             <Tooltip content={<CustomTooltip />} />
             <Line
@@ -232,7 +237,7 @@ function SiteHistoryChart({ siteId, devices, sites }) {
               strokeWidth={2}
               dot={(p) => renderCustomDot(p, selectedParam)}
               activeDot={{ r: 6 }}
-              connectNulls
+              connectNulls={false}
             />
           </LineChart>
         </ResponsiveContainer>
