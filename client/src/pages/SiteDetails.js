@@ -6,6 +6,8 @@ import api from "../services/api";
 import socket from "../services/socket";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useAuth } from "../context/AuthContext";
+import { buildSeriesWithGaps } from "../utils/chartGaps";
+import { getDayTicks, makeDayAwareTick, formatTooltipTime } from "../utils/timeAxis";
 import UserNavbar from "../components/UserNavbar";
 import AdminSidebar from "../components/AdminSidebar";
 import Footer from "../components/Footer";
@@ -235,6 +237,9 @@ function SiteDetails() {
   const activeCount = devices.filter((d) => d.status === "active").length;
 
   // Custom Dot renderer for Recharts to show green/red threshold status
+  const chartData = buildSeriesWithGaps(historyData, selectedParam);
+  const xTicks = getDayTicks(chartData);
+
   const renderCustomDot = (props, paramKey) => {
     const { cx, cy, value } = props;
     if (value === null || value === undefined) return null;
@@ -244,8 +249,8 @@ function SiteDetails() {
   };
 
   // Custom Tooltip renderer for Recharts
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length && !payload[0].payload?.isGap) {
       const val = payload[0].value;
       const paramKey = selectedParam;
       const status = getStatusFor(val, paramKey, site?.thresholds);
@@ -261,7 +266,7 @@ function SiteDetails() {
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           color: isBreach ? "#a32d2d" : "#333"
         }}>
-          <p style={{ margin: "0 0 5px 0", fontWeight: "bold" }}>{label}</p>
+          <p style={{ margin: "0 0 5px 0", fontWeight: "bold" }}>{formatTooltipTime(payload[0].payload.timeKey)}</p>
           <p style={{ margin: 0 }}>
             {payload[0].name}: {val}
           </p>
@@ -366,16 +371,16 @@ function SiteDetails() {
         ) : (
           <div style={{ height: "400px", width: "100%" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={historyData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-                <XAxis dataKey="timeLabel" tick={{ fontSize: 12, fill: "#666" }} />
+                <XAxis dataKey="timeKey" height={40} ticks={xTicks} interval={0} tick={makeDayAwareTick(xTicks, { fontSize: 12, fill: "#666" })} />
                 <YAxis tick={{ fontSize: 12, fill: "#666" }} />
                 <Tooltip content={<CustomTooltip />} />
 
-                {selectedParam === "pH" && <Line type="monotone" name="pH" dataKey="pH" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "pH")} activeDot={{ r: 6 }} connectNulls />}
-                {selectedParam === "temperature" && <Line type="monotone" name="Temperature (°C)" dataKey="temperature" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "temperature")} activeDot={{ r: 6 }} connectNulls />}
-                {selectedParam === "salinity" && <Line type="monotone" name="Salinity (ppt)" dataKey="salinity" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "salinity")} activeDot={{ r: 6 }} connectNulls />}
-                {selectedParam === "dissolved_o2" && <Line type="monotone" name="Dissolved O₂ (mg/L)" dataKey="dissolved_o2" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "dissolved_o2")} activeDot={{ r: 6 }} connectNulls />}
+                {selectedParam === "pH" && <Line type="monotone" name="pH" dataKey="pH" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "pH")} activeDot={{ r: 6 }} connectNulls={false} />}
+                {selectedParam === "temperature" && <Line type="monotone" name="Temperature (°C)" dataKey="temperature" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "temperature")} activeDot={{ r: 6 }} connectNulls={false} />}
+                {selectedParam === "salinity" && <Line type="monotone" name="Salinity (ppt)" dataKey="salinity" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "salinity")} activeDot={{ r: 6 }} connectNulls={false} />}
+                {selectedParam === "dissolved_o2" && <Line type="monotone" name="Dissolved O₂ (mg/L)" dataKey="dissolved_o2" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "dissolved_o2")} activeDot={{ r: 6 }} connectNulls={false} />}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -508,4 +513,4 @@ function SiteDetails() {
   );
 }
 
-export default SiteDetails;
+export default SiteDetails;
