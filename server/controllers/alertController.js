@@ -132,3 +132,24 @@ exports.getUnreadCount = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Get total alert count
+// @route   GET /api/alerts/total-count
+// @access  Private
+exports.getTotalCount = async (req, res, next) => {
+  try {
+    const query = {};
+    if (req.user && req.user.role === 'site_engineer') {
+      const assignedSite = req.user.assignedSite;
+      if (!assignedSite) {
+        return res.status(200).json({ success: true, count: 0 });
+      }
+      const siteDevices = await Device.find({ site: assignedSite }).select('_id');
+      query.device = { $in: siteDevices.map(d => d._id) };
+    }
+    const count = await Alert.countDocuments(query);
+    res.status(200).json({ success: true, count });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -30,14 +30,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Register function
+  // Register function - submits registration for admin approval
   const register = async (name, email, password) => {
     const res = await api.post('/auth/register', { name, email, password });
-    const { token, user: userData } = res.data;
-    localStorage.setItem('mg_token', token);
-    localStorage.setItem('mg_user', JSON.stringify(userData));
-    setUser(userData);
-    return userData;
+    return res.data;
   };
 
   // Login function

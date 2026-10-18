@@ -255,6 +255,7 @@ function AdminDashboard() {
   const [sites, setSites] = useState([]);
   const [recentLogins, setRecentLogins] = useState([]);
   const [userCount, setUserCount] = useState(null);
+  const [pendingUsersCount, setPendingUsersCount] = useState(0);
   const [readings, setReadings] = useState([]);
   const [liveSensors, setLiveSensors] = useState({});
   const [loading, setLoading] = useState(true);
@@ -291,6 +292,12 @@ function AdminDashboard() {
           setUserCount((usersRes.data.data || []).length);
         } catch {
           setUserCount(null);
+        }
+        try {
+          const pendingRes = await api.get("/users/pending-count");
+          setPendingUsersCount(pendingRes.data.count || 0);
+        } catch {
+          setPendingUsersCount(0);
         }
         try {
           const loginsRes = await api.get("/users/recent-logins");
@@ -429,6 +436,60 @@ function AdminDashboard() {
           </div>
         ) : (
           <>
+            {/* Pending User Registrations Banner */}
+            {pendingUsersCount > 0 && (
+              <div style={{
+                background: "#fffbeb",
+                border: "1px solid #fde68a",
+                borderRadius: "10px",
+                padding: "14px 18px",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "12px",
+                boxShadow: "0 2px 6px rgba(217, 119, 6, 0.08)"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    background: "#fef3c7",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}>
+                    <Clock size={19} color="#b45309" />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: "14px", color: "#92400e" }}>
+                      {pendingUsersCount} User Registration{pendingUsersCount > 1 ? "s" : ""} Awaiting Review
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#b45309" }}>
+                      Unapproved users cannot log in or view dashboard/site details.
+                    </div>
+                  </div>
+                </div>
+                <Link
+                  to="/manage-users"
+                  style={{
+                    background: "#d97706",
+                    color: "#fff",
+                    padding: "7px 14px",
+                    borderRadius: "6px",
+                    fontSize: "12.5px",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  Review Users →
+                </Link>
+              </div>
+            )}
+
             {/* Stats */}
             <div className="am-stats">
               {[

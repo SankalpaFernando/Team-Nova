@@ -25,6 +25,24 @@ exports.protect = async (req, res, next) => {
         message: 'User not found.' 
       });
     }
+
+    // Block pending or rejected accounts from accessing protected API endpoints
+    if (req.user.role !== 'admin') {
+      if (req.user.status === 'pending') {
+        return res.status(403).json({
+          success: false,
+          status: 'pending',
+          message: 'Your account is pending administrator approval.'
+        });
+      }
+      if (req.user.status === 'rejected') {
+        return res.status(403).json({
+          success: false,
+          status: 'rejected',
+          message: 'Your registration request has been rejected.'
+        });
+      }
+    }
     next();
   } catch (error) {
     return res.status(401).json({ 
@@ -88,7 +106,12 @@ exports.optionalAuth = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.id).select('-password');
+    if (user && (user.role === 'admin' || (user.status !== 'pending' && user.status !== 'rejected'))) {
+      req.user = user;
+    } else {
+      req.user = null;
+    }
   } catch (error) {
     req.user = null;
   }
