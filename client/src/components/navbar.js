@@ -1,5 +1,5 @@
-import { NavLink, Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import logoImg from "../assests/logo.png";
 import "./navbar.css";
@@ -17,6 +17,18 @@ function Navbar() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("login") === "true" || location.pathname === "/login") {
+      setShowLogin(true);
+      const emailParam = params.get("email");
+      if (emailParam) {
+        setLoginData(prev => ({ ...prev, email: emailParam }));
+      }
+    }
+  }, [location]);
 
   const handleOpenLogin = () => {
     setLoginError("");
@@ -49,7 +61,9 @@ function Navbar() {
       else if (user?.role === "site_engineer") navigate("/site-engineer-dashboard");
       else navigate("/dashboard");
     } catch (err) {
-      if (err.response?.status === 401) {
+      if (err.response?.status === 403) {
+        setLoginError(err.response.data?.message || "Your account is pending administrator approval.");
+      } else if (err.response?.status === 401) {
         setLoginError("Invalid email or password. Please check your credentials and try again.");
       } else if (err.response?.data?.message) {
         setLoginError(err.response.data.message);

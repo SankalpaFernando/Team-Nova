@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema({
     enum: ['registered_user', 'admin', 'site_engineer'],
     default: 'registered_user'
   },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
   assignedSite: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Site',

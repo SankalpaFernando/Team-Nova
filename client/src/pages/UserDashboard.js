@@ -127,6 +127,7 @@ function UserDashboard() {
   const [latestReadings, setLatestReadings] = useState([]);
   const [liveSensors, setLiveSensors] = useState({});
   const [alerts, setAlerts] = useState([]);
+  const [totalAlerts, setTotalAlerts] = useState(0);
   const [attentionCount, setAttentionCount] = useState(0);
   const [selectedSiteId, setSelectedSiteId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -162,34 +163,88 @@ const handleLogout = () => {
 
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadDashboard = async () => {
+      setLoading(true);
+      setError("");
+
       try {
-        const [sitesRes, devicesRes, readingsRes, alertsRes, unreadRes] = await Promise.all([
+        const [sitesRes, devicesRes, alertsRes, readingsRes, unreadRes, totalAlertsRes] = await Promise.allSettled([
           api.get("/sites"),
           api.get("/devices"),
-          api.get("/readings/latest"),
           api.get("/alerts", { params: { limit: 5 } }),
+          api.get("/readings/latest"),
           api.get("/alerts/unread-count"),
+          api.get("/alerts/total-count"),
         ]);
 
-        const siteList = sitesRes.data.data || [];
-        setSites(siteList);
-        setDevices(devicesRes.data.data || []);
-        setLatestReadings(readingsRes.data.data || []);
-        setAlerts(alertsRes.data.data || []);
-        setAttentionCount(unreadRes.data.count || 0);
+        if (cancelled) return;
 
-        if (siteList.length > 0) {
-          setSelectedSiteId(siteList[0]._id);
+        let hasData = false;
+
+        // 1. Real No. of Sites from backend
+        if (sitesRes.status === "fulfilled") {
+          const siteList = sitesRes.value.data?.data || [];
+          setSites(siteList);
+          if (siteList.length > 0) {
+            setSelectedSiteId((prev) => prev || siteList[0]._id);
+          }
+          hasData = true;
+        }
+
+        // 2. Active Devices across all sites (sum of all sites)
+        if (devicesRes.status === "fulfilled") {
+          setDevices(devicesRes.value.data?.data || []);
+          hasData = true;
+        }
+
+        // 3. Total Alerts and recent alerts from backend
+        let alertsTotalCount = null;
+        if (totalAlertsRes.status === "fulfilled" && typeof totalAlertsRes.value.data?.count === "number") {
+          alertsTotalCount = totalAlertsRes.value.data.count;
+        }
+
+        if (alertsRes.status === "fulfilled") {
+          const alertsPayload = alertsRes.value.data;
+          setAlerts(alertsPayload?.data || []);
+          if (alertsTotalCount === null) {
+            alertsTotalCount = typeof alertsPayload?.total === "number"
+              ? alertsPayload.total
+              : (alertsPayload?.data || []).length;
+          }
+          hasData = true;
+        }
+
+        setTotalAlerts(alertsTotalCount !== null ? alertsTotalCount : 0);
+
+        if (readingsRes.status === "fulfilled") {
+          setLatestReadings(readingsRes.value.data?.data || []);
+        }
+
+        if (unreadRes.status === "fulfilled") {
+          setAttentionCount(unreadRes.value.data?.count || 0);
+        }
+
+        if (!hasData) {
+          setError("Couldn't load live data from the server. Showing an empty dashboard.");
         }
       } catch (err) {
-        setError("Couldn't load live data from the server. Showing an empty dashboard.");
+        if (!cancelled) {
+          setError("Couldn't load live data from the server. Showing an empty dashboard.");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -219,16 +274,53 @@ const handleLogout = () => {
       }
     };
 
+    const handleSiteCreated = (newSite) => {
+      if (!newSite) return;
+      setSites((prev) => {
+        const exists = prev.some((s) => s._id === newSite._id);
+        if (exists) return prev;
+        return [newSite, ...prev];
+      });
+    };
+
+    const handleSiteUpdated = (updatedSite) => {
+      if (!updatedSite) return;
+      setSites((prev) =>
+        prev.map((s) => (s._id === updatedSite._id ? updatedSite : s))
+      );
+    };
+
+    const handleSiteDeleted = (deletedId) => {
+      if (!deletedId) return;
+      setSites((prev) => prev.filter((s) => s._id !== deletedId));
+    };
+
+    const handleNewAlert = (newAlert) => {
+      if (!newAlert) return;
+      setTotalAlerts((prev) => prev + 1);
+      setAttentionCount((prev) => prev + 1);
+      setAlerts((prev) => [newAlert, ...prev.slice(0, 4)]);
+    };
+
     socket.on("new_reading", handleNewReading);
+    socket.on("site_created", handleSiteCreated);
+    socket.on("site_updated", handleSiteUpdated);
+    socket.on("site_deleted", handleSiteDeleted);
+    socket.on("new_alert", handleNewAlert);
+
     return () => {
       socket.off("new_reading", handleNewReading);
+      socket.off("site_created", handleSiteCreated);
+      socket.off("site_updated", handleSiteUpdated);
+      socket.off("site_deleted", handleSiteDeleted);
+      socket.off("new_alert", handleNewAlert);
     };
   }, []);
 
-  // "Active Devices" = every device whose status is "active", straight
-  // from the devices collection — not just the ones that happen to have
-  // a reading yet, so newly-installed devices still count correctly.
-  const activeDeviceCount = devices.filter((d) => d.status === "active").length;
+  // "Active Devices" = sum of all devices whose status is "active" across all sites
+  const activeDeviceCount = devices.filter(
+    (d) => (d.status || "").toLowerCase().trim() === "active"
+  ).length;
 
   // Readings that belong to whichever site is selected in the dropdown
   const siteReadings = latestReadings.filter(
@@ -280,8 +372,8 @@ const handleLogout = () => {
             </div>
             <div className="card-body">
               <h3>Total Alerts</h3>
-              <h2>{loading ? "…" : attentionCount}</h2>
-              <p>Alerts requiring attention</p>
+              <h2>{loading ? "…" : totalAlerts}</h2>
+              <p>Total alerts recorded</p>
             </div>
           </div>
         </div>

@@ -14,9 +14,10 @@ const sendTokenResponse = (user, statusCode, res) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    status: user.status || 'approved',
     assignedSite: user.assignedSite,
     notificationPrefs: user.notificationPrefs,
-    created_at: user.created_at
+    created_at: user.created_at || user.createdAt
   };
   res.status(statusCode).json({ success: true, token, user: userObj });
 };
@@ -28,13 +29,28 @@ exports.register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide name, email, and password' });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    const user = await User.create({ name, email, password, role: 'registered_user' });
-    sendTokenResponse(user, 201, res);
+    await User.create({
+      name,
+      email,
+      password,
+      role: 'registered_user',
+      status: 'pending'
+    });
+
+    res.status(201).json({
+      success: true,
+      status: 'pending',
+      message: 'Registration submitted successfully! Your account is pending administrator approval. You will be able to log in once an admin approves your request.'
+    });
   } catch (error) {
     next(error);
   }
@@ -56,6 +72,24 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
+    // Check account approval status for non-admin accounts
+    if (user.role !== 'admin') {
+      if (user.status === 'pending') {
+        return res.status(403).json({
+          success: false,
+          status: 'pending',
+          message: 'Your registration is pending approval by an administrator. Please wait until your account is approved before logging in.'
+        });
+      }
+      if (user.status === 'rejected') {
+        return res.status(403).json({
+          success: false,
+          status: 'rejected',
+          message: 'Your registration request has been rejected by an administrator. Please contact support if you have questions.'
+        });
+      }
+    }
+
     user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
 
@@ -71,6 +105,15 @@ exports.login = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).populate('assignedSite', 'name location region');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    if (user.role !== 'admin' && (user.status === 'pending' || user.status === 'rejected')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is pending administrator approval or has been rejected.'
+      });
+    }
     res.status(200).json({ success: true, user });
   } catch (error) {
     next(error);

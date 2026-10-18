@@ -28,6 +28,7 @@ function AdminSidebar({ activePage }) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingUsersCount, setPendingUsersCount] = useState(0);
   const accountMenuRef = useRef(null);
 
   const isEngineer = user?.role === 'site_engineer';
@@ -44,18 +45,24 @@ function AdminSidebar({ activePage }) {
 
   useEffect(() => {
     if (user?.role === 'admin') {
-      const fetchPendingCount = async () => {
+      const fetchCounts = async () => {
         try {
-          const res = await api.get('/change-requests/pending-count');
-          if (res.data?.success) {
-            setPendingCount(res.data.count || 0);
+          const [crRes, userRes] = await Promise.all([
+            api.get('/change-requests/pending-count'),
+            api.get('/users/pending-count')
+          ]);
+          if (crRes.data?.success) {
+            setPendingCount(crRes.data.count || 0);
+          }
+          if (userRes.data?.success) {
+            setPendingUsersCount(userRes.data.count || 0);
           }
         } catch (err) {
-          console.error('Failed to fetch pending requests count', err);
+          console.error('Failed to fetch pending counts', err);
         }
       };
-      fetchPendingCount();
-      const interval = setInterval(fetchPendingCount, 15000);
+      fetchCounts();
+      const interval = setInterval(fetchCounts, 15000);
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -68,8 +75,8 @@ function AdminSidebar({ activePage }) {
   // Admin Navigation Links
   const adminNavItems = [
     { key: 'dashboard',        to: '/admin-dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
-    { key: 'pending-requests', to: '/pending-requests', icon: <FileText size={18} />, label: `Pending Requests${pendingCount > 0 ? ` (${pendingCount})` : ''}`, badge: pendingCount },
-    { key: 'users',            to: '/manage-users',    icon: <Users size={18} />, label: 'Users' },
+    { key: 'pending-requests', to: '/pending-requests', icon: <FileText size={18} />, label: 'Pending Requests', badge: pendingCount },
+    { key: 'users',            to: '/manage-users',    icon: <Users size={18} />, label: 'Users', badge: pendingUsersCount },
     { key: 'devices',          to: '/manage-devices',  icon: <Radio size={18} />, label: 'Devices' },
     { key: 'sensors',          to: '/manage-sensors',  icon: <Thermometer size={18} />, label: 'Sensors' },
     { key: 'parameters',       to: '/parameter-admin', icon: <Sliders size={18} />, label: 'Parameters' },
@@ -103,7 +110,7 @@ function AdminSidebar({ activePage }) {
         </div>
 
         <nav className="mu-nav">
-          {navItems.map(({ key, to, icon, label }) => {
+          {navItems.map(({ key, to, icon, label, badge }) => {
             const isActive = activePage === key;
             return (
               <Link
@@ -112,7 +119,12 @@ function AdminSidebar({ activePage }) {
                 className={`mu-nav-link ${isActive ? 'mu-nav-link--active' : ''}`}
               >
                 <span className="mu-nav-icon">{icon}</span>
-                <span>{label}</span>
+                <span style={{ flex: 1 }}>{label}</span>
+                {badge > 0 && (
+                  <span className="mu-sidebar-badge">
+                    {badge}
+                  </span>
+                )}
               </Link>
             );
           })}

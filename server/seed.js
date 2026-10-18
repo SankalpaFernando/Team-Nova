@@ -29,29 +29,33 @@ const seed = async () => {
     name: 'Admin One',
     email: 'admin1@mangrovewatch.com',
     password: 'admin123',
-    role: 'admin'
-    });
+    role: 'admin',
+    status: 'approved'
+  });
 
   const admin2 = await User.create({
     name: 'Admin Two',
     email: 'admin2@mangrovewatch.com',
     password: 'admin123',
-    role: 'admin'
-    });
+    role: 'admin',
+    status: 'approved'
+  });
 
   const user1 = await User.create({
     name: 'User One',
     email: 'user1@mangrovewatch.com',
     password: 'user123',
-    role: 'registered_user'
-    });
+    role: 'registered_user',
+    status: 'approved'
+  });
 
   const user2 = await User.create({
     name: 'User Two',
     email: 'user2@mangrovewatch.com',
     password: 'user123',
-    role: 'registered_user'
-    });
+    role: 'registered_user',
+    status: 'approved'
+  });
 
   console.log(' Users created');
 
