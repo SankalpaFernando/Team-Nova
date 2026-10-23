@@ -2,24 +2,22 @@ const User = require('../models/User');
 const Site = require('../models/Site');
 const sendEmail = require('../utils/sendEmail');
 
-// Helper to send approval email with login link from the approving admin
-const sendApprovalNotification = async (user, adminUser = null) => {
+// Helper to send approval email with login link from the official admin email
+const sendApprovalNotification = async (user) => {
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
   const loginUrl = `${clientUrl}/login`;
 
-  const senderEmail = (process.env.EMAIL_FROM && process.env.EMAIL_FROM.includes('@'))
-    ? (process.env.EMAIL_FROM.match(/<([^>]+)>/)?.[1] || process.env.EMAIL_FROM.trim())
-    : (process.env.EMAIL_USER || 'mangroveguard.team@gmail.com');
+  // The only official admin email permitted to send registration approval emails
+  const officialAdminEmail = 'mangroveguard.team@gmail.com';
+  const adminEmail = (process.env.EMAIL_USER && process.env.EMAIL_USER.includes('@'))
+    ? process.env.EMAIL_USER.trim()
+    : officialAdminEmail;
 
   const adminName = 'Mangrove Admin';
-  const adminEmail = (adminUser?.email && adminUser.email.includes('@'))
-    ? adminUser.email
-    : (process.env.EMAIL_USER || senderEmail);
-
-  const fromSender = `"Mangrove Admin" <${senderEmail}>`;
+  const fromSender = `"Mangrove Admin" <${adminEmail}>`;
 
   const subject = 'Your MangroveGuard Account Has Been Approved - You Can Log In Now';
-  const textMessage = `Hello ${user.name},\n\nGreat news! Your registration request has been reviewed and approved by Mangrove Admin.\n\nYour account is now active and you can log in now to access your dashboard and environmental site monitoring details.\n\nRegistered Email: ${user.email}\nApproved By: ${adminName} (${adminEmail})\n\nRegistered User Login Link: ${loginUrl}\n\nThank you,\nMangrove Admin\nMangroveGuard Administration Team`;
+  const textMessage = `Hello ${user.name},\n\nGreat news! Your registration request has been reviewed and approved by Mangrove Admin.\n\nYour account is now active and you can log in now to access your dashboard and environmental site monitoring details.\n\nRegistered Email: ${user.email}\nApproved By: ${adminName} (${adminEmail})\n\nRegistered User Login Link: ${loginUrl}\n\nThank you,\nMangrove Admin\nMangroveGuard Administration Team\nContact: ${adminEmail}`;
 
   const htmlMessage = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
@@ -146,8 +144,8 @@ exports.approveUser = async (req, res, next) => {
       .select('-password')
       .populate('assignedSite', 'name location region');
 
-    // Send email notification to the approved user from the admin
-    const emailResult = await sendApprovalNotification(user, req.user);
+    // Send email notification to the approved user from the official admin email (mangroveguard.team@gmail.com)
+    const emailResult = await sendApprovalNotification(user);
 
     res.status(200).json({
       success: true,
@@ -250,7 +248,7 @@ exports.updateUser = async (req, res, next) => {
     ).select('-password').populate('assignedSite', 'name location region');
 
     if (wasNotApproved && isNowApproved) {
-      await sendApprovalNotification(user, req.user);
+      await sendApprovalNotification(user);
     }
 
     res.status(200).json({ success: true, data: user });

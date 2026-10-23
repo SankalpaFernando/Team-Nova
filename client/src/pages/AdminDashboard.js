@@ -472,21 +472,38 @@ function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-                <Link
-                  to="/manage-users"
-                  style={{
-                    background: "#d97706",
-                    color: "#fff",
-                    padding: "7px 14px",
-                    borderRadius: "6px",
-                    fontSize: "12.5px",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    whiteSpace: "nowrap"
-                  }}
-                >
-                  Review Users →
-                </Link>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Link
+                    to="/pending-requests"
+                    style={{
+                      background: "#164e3d",
+                      color: "#fff",
+                      padding: "7px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12.5px",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Pending Requests →
+                  </Link>
+                  <Link
+                    to="/manage-users"
+                    style={{
+                      background: "#d97706",
+                      color: "#fff",
+                      padding: "7px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12.5px",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Users →
+                  </Link>
+                </div>
               </div>
             )}
 
