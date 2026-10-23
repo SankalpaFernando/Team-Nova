@@ -75,7 +75,7 @@ function AdminSidebar({ activePage }) {
   // Admin Navigation Links
   const adminNavItems = [
     { key: 'dashboard',        to: '/admin-dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
-    { key: 'pending-requests', to: '/pending-requests', icon: <FileText size={18} />, label: 'Pending Requests', badge: pendingCount },
+    { key: 'pending-requests', to: '/pending-requests', icon: <FileText size={18} />, label: 'Pending Requests', badge: pendingCount + pendingUsersCount },
     { key: 'users',            to: '/manage-users',    icon: <Users size={18} />, label: 'Users', badge: pendingUsersCount },
     { key: 'devices',          to: '/manage-devices',  icon: <Radio size={18} />, label: 'Devices' },
     { key: 'sensors',          to: '/manage-sensors',  icon: <Thermometer size={18} />, label: 'Sensors' },

@@ -14,7 +14,7 @@ const sendEmail = async (options) => {
     ? process.env.EMAIL_USER
     : ((process.env.EMAIL_FROM && process.env.EMAIL_FROM.includes('@'))
         ? (process.env.EMAIL_FROM.match(/<([^>]+)>/)?.[1] || process.env.EMAIL_FROM.trim())
-        : 'admin@mangrovewatch.com');
+        : 'mangroveguard.team@gmail.com');
 
   const defaultFrom = (process.env.EMAIL_FROM && process.env.EMAIL_FROM.includes('@') && process.env.EMAIL_FROM.includes('<'))
     ? process.env.EMAIL_FROM
