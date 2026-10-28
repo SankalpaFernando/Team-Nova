@@ -1,14 +1,14 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <SoftwareSerial.h>
-#include "config.h"
+#include <LittleFS.h>
+#include <time.h>
 
 // ───────── WiFi ─────────
+const char* ssid     = "UOJ Student";
+const char* password = "uojusu2018";
 
 // ───────── Backend ─────────
-const char* serverUrl = SERVER_URL;
-const char* deviceApiKey = DEVICE_API_KEY;
-const char* sensorId = SENSOR_ID;
 const char* serverUrl = "http://192.168.143.172:5000/api/readings";
 
 struct SiteNode {
@@ -40,16 +40,11 @@ const float TEMP_MIN = -55.0, TEMP_MAX = 125.0;
 const float PH_MIN   = 0.0,   PH_MAX   = 14.0;
 
 // ───────── HC-12 ─────────
-// HC-12 TX → ESP8266 D3
-// HC-12 RX → ESP8266 D4
 SoftwareSerial HC12(D4, D3);
 String rxBuffer = "";
 bool rxCorrupt = false;
 unsigned long lastRadioByteMillis = 0;
 
-void setup() {
-  Serial.begin(9600);
-  HC12.begin(9600);
 // ───────── Buffer ─────────
 const char* BUFFER_FILE = "/buffer.txt";
 const char* TEMP_FILE   = "/buffer.tmp";
@@ -57,22 +52,16 @@ const float NO_READING  = -999;
 const unsigned long MIN_VALID_EPOCH = 1700000000UL;
 bool fsOk = false;
 
-  Serial.println("Temperature Receiver Started");
 // ───────── Upload state ─────────
 unsigned long lastBufferFlushMillis = 0;
 unsigned long flushInterval = BUFFER_FLUSH_INTERVAL;
 bool nodeBlocked[NODE_COUNT];
 unsigned long nodeBlockedSince[NODE_COUNT];
 
-  Serial.println("Connecting to WiFi...");
-  WiFi.begin(ssid, password);
 const int SEND_OK          = 0;   // accepted
 const int SEND_RETRY_LATER = 1;   // network/server problem → stop flushing
 const int SEND_REJECTED    = 2;   // 4xx → pause this node only
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
 // ───────── ACK + duplicate filter ─────────
 const unsigned long ACK_DELAY_MS = 100;           // let the node's HC-12 switch to receive
 const long MAX_TS_FUTURE_S = 300;                 // reject timestamps more than 5 min ahead
@@ -107,11 +96,6 @@ int findNode(const String& id) {
   return -1;
 }
 
-  Serial.println("");
-  Serial.println("WiFi connected!");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println("Waiting for temperature...");
 // true only for text like "-12.34" (digits, one dot, optional leading minus)
 bool isNumeric(const String& s) {
   if (s.length() == 0 || s.length() > 10) return false;
@@ -126,10 +110,6 @@ bool isNumeric(const String& s) {
   return digit;
 }
 
-void loop() {
-  if (HC12.available()) {
-    String received = HC12.readStringUntil('\n');
-    received.trim();
 bool isDigits(const String& s) {
   if (s.length() == 0 || s.length() > 10) return false;
   for (unsigned int i = 0; i < s.length(); i++) {
@@ -138,8 +118,6 @@ bool isDigits(const String& s) {
   return true;
 }
 
-    Serial.print("Received: ");
-    Serial.println(received);
 // Reads "KEY:number". Returns false (value untouched) if missing or not a number.
 bool getField(const String& packet, const char* key, float& value) {
   String needle = String(",") + key + ":";
@@ -153,9 +131,6 @@ bool getField(const String& packet, const char* key, float& value) {
   return true;
 }
 
-    if (received.startsWith("TEMP:")) {
-      String value = received.substring(5);
-      float temperature = value.toFloat();
 bool getTimestamp(const String& packet, unsigned long& ts) {
   int start = packet.indexOf(",TS:");
   if (start == -1) return false;
@@ -167,9 +142,6 @@ bool getTimestamp(const String& packet, unsigned long& ts) {
   return true;
 }
 
-      Serial.print("Temperature received: ");
-      Serial.print(temperature, 2);
-      Serial.println(" °C");
 bool nodeIsBlocked(int i) {
   if (!nodeBlocked[i]) return false;
   if (millis() - nodeBlockedSince[i] >= NODE_BLOCK_MS) {
@@ -179,8 +151,6 @@ bool nodeIsBlocked(int i) {
   return true;
 }
 
-      sendToBackend(temperature);
-    }
 bool isDuplicate(int nodeIndex, unsigned long ts) {
   for (int i = 0; i < RECENT_SIZE; i++) {
     if (recentTs[i] == ts && recentNode[i] == nodeIndex) return true;
@@ -188,10 +158,6 @@ bool isDuplicate(int nodeIndex, unsigned long ts) {
   return false;
 }
 
-void sendToBackend(float temperature) {
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi not connected, skipping send.");
-    return;
 void rememberTs(int nodeIndex, unsigned long ts) {
   recentTs[recentPos]   = ts;
   recentNode[recentPos] = nodeIndex;
@@ -233,22 +199,16 @@ bool saveToBuffer(int nodeIndex, unsigned long ts, float temperature, float ph) 
 int sendToBackend(int nodeIndex, unsigned long ts, float temperature, float ph) {
   if (WiFi.status() != WL_CONNECTED) return SEND_RETRY_LATER;
 
-  WiFiClient client;
-  HTTPClient http;
   const SiteNode& node = NODES[nodeIndex];
   bool sendTemp = (temperature != NO_READING);
   bool sendPh   = (ph != NO_READING);
 
-  http.begin(client, serverUrl);
-  http.addHeader("Content-Type", "application/json");
-  http.addHeader("x-device-key", deviceApiKey);
   if (sendPh && strlen(node.phSensorId) == 0) {
     Serial.println("No pH sensor ID for " + String(node.siteName) + " - pH skipped");
     sendPh = false;
   }
   if (!sendTemp && !sendPh) return SEND_OK;
 
-  String jsonBody = "{\"sensor\":\"" + String(sensorId) + "\",\"value\":" + String(temperature, 2) + "}";
   String stamp = (ts > 0) ? ",\"recorded_at\":\"" + isoTime(ts) + "\"" : "";
   String body = "{\"readings\":[";
   bool first = true;
@@ -262,7 +222,6 @@ int sendToBackend(int nodeIndex, unsigned long ts, float temperature, float ph) 
   }
   body += "]}";
 
-  Serial.println("Sending: " + jsonBody);
   WiFiClient client;
   HTTPClient http;
   client.setTimeout(HTTP_TIMEOUT_MS);
@@ -271,16 +230,12 @@ int sendToBackend(int nodeIndex, unsigned long ts, float temperature, float ph) 
   http.addHeader("Content-Type", "application/json");
   http.addHeader("x-device-key", node.deviceApiKey);
 
-  int httpCode = http.POST(jsonBody);
   Serial.println("POST (" + String(node.siteName) + "): " + body);
   int code = http.POST(body);
   int result;
 
-  if (httpCode > 0) {
   if (code >= 200 && code < 300) {
     String response = http.getString();
-    Serial.println("Response code: " + String(httpCode));
-    Serial.println("Response: " + response);
     Serial.println("✅ Accepted. Code: " + String(code));
     if (response.indexOf("\"count\":0") != -1) {
       Serial.println("⚠️ Backend saved 0 readings! Check sensor IDs.");
@@ -293,13 +248,12 @@ int sendToBackend(int nodeIndex, unsigned long ts, float temperature, float ph) 
     Serial.println("Pausing " + String(node.siteName) + " uploads for 5 min");
     result = SEND_REJECTED;
   } else {
-    Serial.println("POST failed, error: " + http.errorToString(httpCode));
     Serial.println("❌ Failed. Code: " + String(code) + " " + http.errorToString(code));
     result = SEND_RETRY_LATER;
   }
 
   http.end();
-}  return result;
+  return result;
 }
 
 // ─────────────────────────────────────────────
