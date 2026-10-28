@@ -10,7 +10,7 @@
   display: flex;
   min-height: 100vh;
   background: #eef3f0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
   color: #1a2e24;
 }
 
@@ -18,7 +18,7 @@
 .am-sidebar {
   width: 248px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #152b1f 0%, #1c3a2a 100%);
+  background: rgb(10, 89, 63);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -152,9 +152,9 @@
   margin-bottom: 26px;
 }
 
-.am-breadcrumb { font-size: 12px; color: #8aaa98; margin-bottom: 5px; letter-spacing: 0.3px; }
+.am-breadcrumb { font-size: 12px; color: #3d6052; margin-bottom: 5px; letter-spacing: 0.3px; }
 .am-title      { font-size: 26px; font-weight: 700; color: #152b1f; letter-spacing: -0.4px; }
-.am-subtitle   { font-size: 13px; color: #6a8878; margin-top: 4px; }
+.am-subtitle   { font-size: 13px; color: #2d5a45; margin-top: 4px; }
 
 /* ── Primary Button ──────────────────────────── */
 .am-btn-primary {
@@ -222,7 +222,7 @@
 
 .am-stat-icon { font-size: 28px; }
 .am-stat-val  { font-size: 26px; font-weight: 700; color: #1c3a2a; line-height: 1; }
-.am-stat-lbl  { font-size: 12px; color: #8aaa98; margin-top: 3px; }
+.am-stat-lbl  { font-size: 12px; color: #3d6052; margin-top: 3px; }
 
 /* ── Error ───────────────────────────────────── */
 .am-error {
@@ -242,7 +242,7 @@
   align-items: center;
   justify-content: center;
   padding: 80px 0;
-  color: #6a8878;
+  color: #2d5a45;
   gap: 14px;
   font-size: 15px;
 }
@@ -315,16 +315,16 @@
 
 .am-table td { padding: 13px 16px; vertical-align: middle; color: #2d4a3e; }
 
-.am-td-num  { color: #8aaa98 !important; font-weight: 700; width: 10px; text-align: center; padding: 13px 6px !important; }
+.am-td-num  { color: #4a6b5d !important; font-weight: 700; width: 10px; text-align: center; padding: 13px 6px !important; }
 .am-td-name { font-weight: 600; color: #1c3a2a !important; }
 .am-td-loc  { font-size: 13px; color: #5a7a6c !important; }
 .am-td-data { font-size: 13px; font-variant-numeric: tabular-nums; }
-.am-td-dim  { font-size: 13px; color: #8aaa98 !important; }
+.am-td-dim  { font-size: 13px; color: #4a6b5d !important; }
 
 .am-empty {
   text-align: center;
   padding: 64px 20px !important;
-  color: #8aaa98;
+  color: #3d6052;
   font-size: 15px;
 }
 
@@ -411,7 +411,7 @@
   background: none;
   border: none;
   font-size: 17px;
-  color: #8aaa98;
+  color: #3d6052;
   cursor: pointer;
   width: 32px;
   height: 32px;
@@ -426,7 +426,7 @@
 .am-modal-hint {
   padding: 8px 24px 0;
   font-size: 13px;
-  color: #6a8878;
+  color: #2d5a45;
 }
 
 .am-modal-body { padding: 16px 24px 8px; }
@@ -487,20 +487,20 @@
 .am-trow:last-of-type { border-bottom: none; }
 
 .am-tlbl { font-size: 14px; font-weight: 600; color: #2d4a3e; min-width: 140px; }
-.am-tlbl small { color: #8aaa98; font-weight: 400; }
+.am-tlbl small { color: #3d6052; font-weight: 400; }
 
 .am-tinputs { display: flex; align-items: center; gap: 8px; }
 
 .am-tfield { display: flex; flex-direction: column; gap: 4px; }
-.am-tfield label { font-size: 10px; color: #8aaa98; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+.am-tfield label { font-size: 10px; color: #3d6052; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
 
-.am-tdash { color: #8aaa98; font-size: 16px; padding-top: 20px; }
+.am-tdash { color: #3d6052; font-size: 16px; padding-top: 20px; }
 
 /* ── Delete Confirm ──────────────────────────── */
 .am-del-body  { text-align: center; padding: 24px 24px 8px; }
 .am-del-icon  { font-size: 44px; margin-bottom: 14px; }
 .am-del-body p { font-size: 15px; color: #2d4a3e; margin-bottom: 8px; }
-.am-del-warn   { font-size: 13px !important; color: #8aaa98 !important; line-height: 1.55; }
+.am-del-warn   { font-size: 13px !important; color: #4a6b5d !important; line-height: 1.55; }
 
 /* ── Toast Notification ──────────────────────── */
 .am-toast {

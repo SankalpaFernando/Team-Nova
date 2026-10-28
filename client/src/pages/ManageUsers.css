@@ -10,7 +10,7 @@
   display: flex;
   min-height: 100vh;
   background: #eef3f0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
   color: #1a2e24;
 }
 
@@ -18,7 +18,7 @@
 .mu-sidebar {
   width: 248px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #152b1f 0%, #1c3a2a 100%);
+  background: rgb(10, 89, 63);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -70,22 +70,24 @@
   gap: 10px;
   padding: 11px 14px;
   border-radius: 9px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.65);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.2s ease;
 }
 
 .mu-nav-link:hover {
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.09);
+  color: #ffffff;
+  transform: translateX(3px);
 }
 
 .mu-nav-link--active {
-  background: rgba(111,207,151,0.15) !important;
+  background: rgba(111,207,151,0.18) !important;
   color: #6fcf97 !important;
   font-weight: 600;
+  transform: none !important;
 }
 
 .mu-nav-icon { font-size: 16px; width: 20px; text-align: center; }
@@ -160,9 +162,9 @@
   margin-bottom: 26px;
 }
 
-.mu-breadcrumb { font-size: 12px; color: #8aaa98; margin-bottom: 5px; letter-spacing: 0.3px; }
+.mu-breadcrumb { font-size: 12px; color: #5a7a6c; margin-bottom: 5px; letter-spacing: 0.3px; font-weight: 600; }
 .mu-title      { font-size: 26px; font-weight: 700; color: #152b1f; letter-spacing: -0.4px; }
-.mu-subtitle   { font-size: 13px; color: #6a8878; margin-top: 4px; }
+.mu-subtitle   { font-size: 13px; color: #3d6052; margin-top: 4px; font-weight: 500; }
 
 /* ── Buttons ─────────────────────────────────── */
 .mu-btn-primary {
@@ -211,7 +213,7 @@
 /* ── Stats Row ───────────────────────────────── */
 .mu-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 26px;
 }
@@ -225,11 +227,134 @@
   gap: 14px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   border: 1px solid #deeae3;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mu-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(15, 56, 44, 0.09);
+  border-color: #c5ded5;
+}
+
+.mu-stat-card--highlight {
+  border-color: #f59e0b;
+  background: #fffdfa;
+}
+
+.mu-stat-card--highlight:hover {
+  border-color: #d97706;
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.12);
 }
 
 .mu-stat-icon { font-size: 28px; }
 .mu-stat-val  { font-size: 26px; font-weight: 700; color: #1c3a2a; line-height: 1; }
-.mu-stat-lbl  { font-size: 12px; color: #8aaa98; margin-top: 3px; }
+.mu-stat-lbl  { font-size: 12px; color: #3d6052; margin-top: 3px; font-weight: 600; }
+
+/* ── Pending Banner Alert ───────────────────── */
+.mu-pending-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08);
+}
+
+.mu-pending-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mu-pending-banner-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mu-pending-banner-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 3px;
+}
+
+.mu-pending-banner-sub {
+  font-size: 13px;
+  color: #b45309;
+  margin: 0;
+}
+
+.mu-pending-banner-btn {
+  background: #d97706;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.mu-pending-banner-btn:hover {
+  background: #b45309;
+}
+
+/* ── Filter Tabs ────────────────────────────── */
+.mu-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.mu-filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fff;
+  border: 1px solid #deeae3;
+  border-radius: 8px;
+  color: #4a6b5d;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mu-filter-tab:hover {
+  background: #f0f7f3;
+  border-color: #b8dfc8;
+  color: #1c3a2a;
+}
+
+.mu-filter-tab--active {
+  background: #1c3a2a !important;
+  color: #fff !important;
+  border-color: #1c3a2a !important;
+}
+
+.mu-tab-badge {
+  background: #d97706;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
 
 /* ── Error / Loading ─────────────────────────── */
 .mu-error {
@@ -301,10 +426,10 @@
 
 .mu-table td { padding: 13px 16px; vertical-align: middle; color: #2d4a3e; }
 
-.mu-td-num   { color: #8aaa98 !important; font-weight: 700; width: 40px; }
+.mu-td-num   { color: #5a7a6c !important; font-weight: 700; width: 40px; }
 .mu-td-name  { font-weight: 600; color: #1c3a2a !important; }
-.mu-td-email { font-size: 13px; color: #5a7a6c !important; }
-.mu-td-dim   { font-size: 13px; color: #8aaa98 !important; }
+.mu-td-email { font-size: 13px; color: #2d4a3e !important; font-weight: 500; }
+.mu-td-dim   { font-size: 13px; color: #4a6b5d !important; font-weight: 500; }
 
 .mu-name-row {
   display: flex;
@@ -329,8 +454,9 @@
 .mu-empty {
   text-align: center;
   padding: 64px 20px !important;
-  color: #8aaa98;
+  color: #4a6b5d;
   font-size: 15px;
+  font-weight: 500;
 }
 
 /* ── Badges ──────────────────────────────────── */
@@ -346,6 +472,9 @@
 .mu-badge--engineer { background: #e6fcf5; color: #0ca678; }
 .mu-badge--user     { background: #eef0ff; color: #1a40a8; }
 .mu-badge--visitor  { background: #eef8f2; color: #1a6640; }
+.mu-badge--pending  { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; display: inline-flex; align-items: center; gap: 4px; }
+.mu-badge--approved { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; display: inline-flex; align-items: center; gap: 4px; }
+.mu-badge--rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 4px; }
 
 /* ── Action Buttons ──────────────────────────── */
 .mu-actions { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
@@ -363,6 +492,14 @@
 
 .mu-act--edit { background: #eef8f2; color: #1a6640; border-color: #b8dfc8; }
 .mu-act--edit:hover { background: #d4eede; }
+
+.mu-act--approve { background: #dcfce7; color: #15803d; border: 1.5px solid #86efac; display: inline-flex; align-items: center; gap: 4px; }
+.mu-act--approve:hover { background: #bbf7d0; }
+.mu-act--approve:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.mu-act--reject  { background: #fee2e2; color: #b91c1c; border: 1.5px solid #fca5a5; display: inline-flex; align-items: center; gap: 4px; }
+.mu-act--reject:hover  { background: #fecaca; }
+.mu-act--reject:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .mu-act--del  { background: #fff0f0; color: #b03020; border-color: #f0b8b0; }
 .mu-act--del:hover  { background: #fdd8d4; }

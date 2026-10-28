@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema({
     enum: ['registered_user', 'admin', 'site_engineer'],
     default: 'registered_user'
   },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
   assignedSite: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Site',
@@ -47,6 +52,15 @@ const userSchema = new mongoose.Schema({
       type: String,
       default: '',
       trim: true
+    },
+    email_alerts_enabled: {
+      type: Boolean,
+      default: false
+    },
+    email_min_severity: {
+      type: String,
+      enum: ['low', 'medium', 'high', 'critical'],
+      default: 'critical'
     }
   },
   lastLogin: {

@@ -4,73 +4,243 @@ import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import socket from "../services/socket";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { buildSeriesWithGaps } from "../utils/chartGaps";
+import { getDayTicks, makeDayAwareTick, formatTooltipTime } from "../utils/timeAxis";
+import { Bell, Radio, MapPin, Users, CheckCircle2, Clock } from "lucide-react";
 import "./AdminAlerts.css";
 
 
-function getStatus(min, max, value) {
-  if (value === null || value === undefined) return "unknown";
-  if (min === undefined && max === undefined) return "unknown"; 
-  if (min !== undefined && min !== null && value < min) return "breach";
-  if (max !== undefined && max !== null && value > max) return "breach";
-  return "normal";
+const PARAM_COLORS = {
+  pH: "#2a78d6",
+  temperature: "#eb6834",
+  salinity: "#1baf7a",
+  dissolved_o2: "#eda100",
+};
+
+const PARAM_LABELS = {
+  pH: "pH",
+  temperature: "Temperature (°C)",
+  salinity: "Salinity (ppt)",
+  dissolved_o2: "Dissolved O₂ (mg/L)",
+};
+
+const TIME_RANGES = [
+  { label: "1h", hours: 1 },
+  { label: "24h", hours: 24 },
+  { label: "7d", hours: 168 },
+];
+
+function classifyParam(key, label) {
+  const k = (key || "").toLowerCase();
+  const lbl = (label || "").toLowerCase();
+  if (k === "ph" || lbl.includes("ph")) return "pH";
+  if (k === "temperature" || k === "temp" || lbl.includes("temp")) return "temperature";
+  if (k === "salinity" || lbl.includes("salin")) return "salinity";
+  if (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen")) return "dissolved_o2";
+  return null;
 }
 
-const PARAM_KEY_MAP = { pH: "pH", Temp: "temperature", Salinity: "salinity", "DO₂": "dissolved_o2" };
+const getStatusFor = (val, paramKey, siteThresholds) => {
+  if (val === null || val === undefined) return "unknown";
+  if (!siteThresholds || !Array.isArray(siteThresholds)) return "unknown";
 
-function SiteAverageChart({ avgData, siteThresholds }) {
-  if (!avgData) return null;
+  const targetKey = paramKey.toLowerCase();
+  const entry = siteThresholds.find(t => {
+    const k = (t.parameter?.key || "").toLowerCase();
+    const lbl = (t.parameter?.label || t.parameter_name || "").toLowerCase();
+    if (k === targetKey) return true;
+    if (targetKey === "ph" && (k === "ph" || lbl.includes("ph"))) return true;
+    if (targetKey === "temperature" && (k === "temperature" || k === "temp" || lbl.includes("temp"))) return true;
+    if (targetKey === "salinity" && (k === "salinity" || lbl.includes("salin"))) return true;
+    if (targetKey === "dissolved_o2" && (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen"))) return true;
+    return false;
+  });
 
-  const data = [
-    { name: "pH", value: avgData.pH },
-    { name: "Temp", value: avgData.temperature },
-    { name: "Salinity", value: avgData.salinity },
-    { name: "DO₂", value: avgData.dissolved_o2 },
-  ];
+  if (!entry || (entry.min === undefined && entry.max === undefined)) return "unknown";
+  if (entry.min !== null && entry.min !== undefined && val < entry.min) return "breach";
+  if (entry.max !== null && entry.max !== undefined && val > entry.max) return "breach";
+  return "normal";
+};
 
-  const colorFor = (name, value) => {
-    if (value === null || value === undefined) return "#c9c9c9";
-    const targetKey = (PARAM_KEY_MAP[name] || "").toLowerCase();
-    let t = null;
-    if (Array.isArray(siteThresholds)) {
-      t = siteThresholds.find(entry => {
-        const k = (entry.parameter?.key || "").toLowerCase();
-        const lbl = (entry.parameter?.label || entry.parameter_name || "").toLowerCase();
-        if (k === targetKey) return true;
-        if ((targetKey === "ph") && (k === "ph" || lbl.includes("ph"))) return true;
-        if ((targetKey === "temperature") && (k === "temperature" || k === "temp" || lbl.includes("temp"))) return true;
-        if ((targetKey === "salinity") && (k === "salinity" || lbl.includes("salin"))) return true;
-        if ((targetKey === "dissolved_o2") && (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen"))) return true;
-        return false;
-      });
-    } else if (siteThresholds && typeof siteThresholds === "object") {
-      t = siteThresholds[targetKey] || siteThresholds[name];
+function SiteHistoryChart({ siteId, devices, sites }) {
+  const site = sites?.find(s => s._id === siteId);
+  const [selectedParam, setSelectedParam] = useState("pH");
+  const [rangeHours, setRangeHours] = useState(24);
+  const [historyData, setHistoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const siteDevices = devices.filter(d => (d.site?._id || d.site) === siteId);
+      if (siteDevices.length === 0) {
+        setHistoryData([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(false);
+      try {
+        const fromDate = new Date(Date.now() - rangeHours * 60 * 60 * 1000).toISOString();
+        const responses = await Promise.all(
+          siteDevices.map(d => api.get(`/readings?device=${d._id}&limit=2000&from=${fromDate}`))
+        );
+
+        let allReadings = [];
+        responses.forEach(res => {
+          if (res.data?.data) allReadings = allReadings.concat(res.data.data);
+        });
+        allReadings.sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+
+        const labelOptions = rangeHours > 24
+          ? { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }
+          : { hour: "2-digit", minute: "2-digit" };
+
+        const dataMap = {};
+        allReadings.forEach(r => {
+          const paramKey = classifyParam(r.sensor?.parameter?.key, r.sensor?.parameter?.label || r.parameter_name);
+          if (!paramKey) return;
+
+          const timeKey = new Date(r.recorded_at).setSeconds(0, 0);
+          if (!dataMap[timeKey]) {
+            dataMap[timeKey] = {
+              timeKey,
+              timeLabel: new Date(timeKey).toLocaleString([], labelOptions),
+            };
+          }
+          dataMap[timeKey][paramKey] = r.value;
+        });
+
+        if (!cancelled) setHistoryData(Object.values(dataMap).sort((a, b) => a.timeKey - b.timeKey));
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, [siteId, devices, rangeHours]);
+
+  const controls = (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
+      <div style={{ display: "flex", gap: "6px" }}>
+        {Object.keys(PARAM_COLORS).map(key => (
+          <button
+            key={key}
+            onClick={() => setSelectedParam(key)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: "6px",
+              border: `1px solid ${selectedParam === key ? PARAM_COLORS[key] : "#deeae3"}`,
+              cursor: "pointer",
+              fontSize: "11px",
+              fontWeight: selectedParam === key ? 700 : 500,
+              background: selectedParam === key ? PARAM_COLORS[key] : "#fff",
+              color: selectedParam === key ? "#fff" : "#3a4a42",
+            }}
+          >
+            {key === "pH" ? "pH" : key === "temperature" ? "Temp" : key === "salinity" ? "Salinity" : "DO₂"}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: "6px" }}>
+        {TIME_RANGES.map(opt => (
+          <button
+            key={opt.hours}
+            onClick={() => setRangeHours(opt.hours)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: "12px",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "11px",
+              fontWeight: rangeHours === opt.hours ? 700 : 500,
+              background: rangeHours === opt.hours ? "#1f4d3a" : "#e6ede9",
+              color: rangeHours === opt.hours ? "#fff" : "#3a4a42",
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <div>{controls}<p style={{ textAlign: "center", color: "#5c7c6a", fontSize: "13px", margin: "24px 0" }}>Loading history…</p></div>;
+  }
+  if (error) {
+    return <div>{controls}<p style={{ textAlign: "center", color: "#5c7c6a", fontSize: "13px", margin: "24px 0" }}>Couldn't load history for this site.</p></div>;
+  }
+  if (historyData.length === 0) {
+    return <div>{controls}<p style={{ textAlign: "center", color: "#5c7c6a", fontSize: "13px", margin: "24px 0" }}>No historical data for this range.</p></div>;
+  }
+
+  const chartData = buildSeriesWithGaps(historyData, selectedParam);
+  const xTicks = getDayTicks(chartData);
+
+  const renderCustomDot = (props, paramKey) => {
+    const { cx, cy, value } = props;
+    if (value === null || value === undefined) return null;
+    const status = getStatusFor(value, paramKey, site?.thresholds);
+    const fill = status === "breach" ? "#e24b4a" : status === "normal" ? "#5a9c5a" : PARAM_COLORS[paramKey] || "#c9c9c9";
+    return <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={4} stroke="none" fill={fill} />;
+  };
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length && !payload[0].payload?.isGap) {
+      const val = payload[0].value;
+      const paramKey = selectedParam;
+      const status = getStatusFor(val, paramKey, site?.thresholds);
+      const isBreach = status === "breach";
+
+      return (
+        <div style={{
+          backgroundColor: isBreach ? "#fdecea" : "#fff",
+          border: `1px solid ${isBreach ? "#e24b4a" : "#ccc"}`,
+          padding: "10px",
+          borderRadius: "8px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          color: isBreach ? "#a32d2d" : "#333"
+        }}>
+          <p style={{ margin: "0 0 5px 0", fontWeight: "bold" }}>{formatTooltipTime(payload[0].payload.timeKey)}</p>
+          <p style={{ margin: 0 }}>
+            {payload[0].name}: {val ?? "—"}
+          </p>
+        </div>
+      );
     }
-
-    const status = getStatus(t?.min, t?.max, value);
-    if (status === "breach") return "#e24b4a";
-    if (status === "normal") return "#5a9c5a";
-    return "#c9c9c9";
+    return null;
   };
 
   return (
     <div>
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip formatter={(v) => (v !== null && v !== undefined ? v : "—")} />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-            {data.map((d, i) => (
-              <Cell key={i} fill={colorFor(d.name, d.value)} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-      <div style={{ display: "flex", gap: "14px", fontSize: "11px", color: "#5a7a6c", marginTop: "6px" }}>
-        <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#5a9c5a", borderRadius: 2, marginRight: 4 }} />Normal</span>
-        <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#e24b4a", borderRadius: 2, marginRight: 4 }} />Breaching threshold</span>
-        <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#c9c9c9", borderRadius: 2, marginRight: 4 }} />No data</span>
+      {controls}
+      <div style={{ height: "220px", width: "100%" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e1e0d9" />
+            <XAxis dataKey="timeKey" height={40} ticks={xTicks} interval={0} tick={makeDayAwareTick(xTicks, { fontSize: 11, fill: "#898781" })} />
+            <YAxis tick={{ fontSize: 11, fill: "#898781" }} />
+            <Tooltip content={<CustomTooltip />} />
+            <Line
+              type="monotone"
+              name={PARAM_LABELS[selectedParam]}
+              dataKey={selectedParam}
+              stroke={PARAM_COLORS[selectedParam]}
+              strokeWidth={2}
+              dot={(p) => renderCustomDot(p, selectedParam)}
+              activeDot={{ r: 6 }}
+              connectNulls={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
@@ -85,6 +255,7 @@ function AdminDashboard() {
   const [sites, setSites] = useState([]);
   const [recentLogins, setRecentLogins] = useState([]);
   const [userCount, setUserCount] = useState(null);
+  const [pendingUsersCount, setPendingUsersCount] = useState(0);
   const [readings, setReadings] = useState([]);
   const [liveSensors, setLiveSensors] = useState({});
   const [loading, setLoading] = useState(true);
@@ -121,6 +292,12 @@ function AdminDashboard() {
           setUserCount((usersRes.data.data || []).length);
         } catch {
           setUserCount(null);
+        }
+        try {
+          const pendingRes = await api.get("/users/pending-count");
+          setPendingUsersCount(pendingRes.data.count || 0);
+        } catch {
+          setPendingUsersCount(0);
         }
         try {
           const loginsRes = await api.get("/users/recent-logins");
@@ -190,12 +367,19 @@ function AdminDashboard() {
     const site = a.device?.site;
     if (!site?._id) return;
     if (!siteAttentionMap[site._id]) {
-      siteAttentionMap[site._id] = { siteId: site._id, siteName: site.name, count: 0, worst: a.severity_level, alerts: [] };
+      siteAttentionMap[site._id] = { siteId: site._id, siteName: site.name, count: 0, worst: 'low', alertsMap: {} };
     }
     const entry = siteAttentionMap[site._id];
-    entry.count++;
-    entry.alerts.push(a);
-    if (severityRank[a.severity_level] > severityRank[entry.worst]) entry.worst = a.severity_level;
+    // Alerts from API are newest-first, so the first one we see is the latest
+    if (!entry.alertsMap[a.parameter_name]) {
+      entry.alertsMap[a.parameter_name] = a;
+    }
+  });
+
+  Object.values(siteAttentionMap).forEach(entry => {
+    entry.alerts = Object.values(entry.alertsMap);
+    entry.count = entry.alerts.length;
+    entry.worst = entry.alerts.reduce((w, a) => severityRank[a.severity_level] > severityRank[w] ? a.severity_level : w, 'low');
   });
 
   const rankedSites = Object.values(siteAttentionMap)
@@ -205,41 +389,6 @@ function AdminDashboard() {
   const toggleSite = (siteId) => {
     setExpandedSiteIds(prev => ({ ...prev, [siteId]: !prev[siteId] }));
   };
-
-  // ── average latest readings across every device at a site ──
-  const round1 = (n) => Math.round(n * 10) / 10;
-  const getSiteAverages = (siteId) => {
-    const siteReadings = readings.filter(r => r.device?.site?._id === siteId || r.device?.site === siteId);
-    if (siteReadings.length === 0) return null;
-
-    const extractVal = (r, paramKey) => {
-      if (!r) return null;
-      if (r[paramKey] !== undefined && r[paramKey] !== null) return r[paramKey];
-      const pKey = r.sensor?.parameter?.key || "";
-      const pLabel = (r.sensor?.parameter?.label || r.parameter_name || "").toLowerCase();
-      if (pKey === paramKey) return r.value;
-      if (paramKey === "pH" && (pKey === "pH" || pLabel.includes("ph"))) return r.value;
-      if (paramKey === "temperature" && (pKey === "temperature" || pKey === "temp" || pLabel.includes("temp"))) return r.value;
-      if (paramKey === "salinity" && (pKey === "salinity" || pLabel.includes("salin"))) return r.value;
-      if ((paramKey === "dissolved_o2" || paramKey === "do2") && (pKey === "dissolved_o2" || pKey === "do2" || pLabel.includes("o2") || pLabel.includes("oxygen"))) return r.value;
-      return null;
-    };
-
-    const avgVal = (paramKey) => {
-      const validVals = siteReadings.map(r => extractVal(r, paramKey)).filter(v => v !== null && v !== undefined);
-      return validVals.length ? round1(validVals.reduce((a, b) => a + b, 0) / validVals.length) : null;
-    };
-
-    return {
-      deviceCount: siteReadings.length,
-      pH: avgVal("pH"),
-      temperature: avgVal("temperature"),
-      salinity: avgVal("salinity"),
-      dissolved_o2: avgVal("dissolved_o2"),
-    };
-  };
-
-  const getSiteThresholds = (siteId) => sites.find(s => s._id === siteId)?.thresholds || null;
 
   // ── relative time, e.g. "5m ago", "3h ago", "2d ago" ──
   const timeAgo = (d) => {
@@ -287,16 +436,87 @@ function AdminDashboard() {
           </div>
         ) : (
           <>
+            {/* Pending User Registrations Banner */}
+            {pendingUsersCount > 0 && (
+              <div style={{
+                background: "#fffbeb",
+                border: "1px solid #fde68a",
+                borderRadius: "10px",
+                padding: "14px 18px",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "12px",
+                boxShadow: "0 2px 6px rgba(217, 119, 6, 0.08)"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    background: "#fef3c7",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}>
+                    <Clock size={19} color="#b45309" />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: "14px", color: "#92400e" }}>
+                      {pendingUsersCount} User Registration{pendingUsersCount > 1 ? "s" : ""} Awaiting Review
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#b45309" }}>
+                      Unapproved users cannot log in or view dashboard/site details.
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Link
+                    to="/pending-requests"
+                    style={{
+                      background: "#164e3d",
+                      color: "#fff",
+                      padding: "7px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12.5px",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Pending Requests →
+                  </Link>
+                  <Link
+                    to="/manage-users"
+                    style={{
+                      background: "#d97706",
+                      color: "#fff",
+                      padding: "7px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12.5px",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Users →
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* Stats */}
             <div className="am-stats">
               {[
-                { icon: "🚨", val: unreadAlerts,          label: "Unread alerts"     },
-                { icon: "📡", val: `${activeDevices}/${devices.length}`, label: "Devices active" },
-                { icon: "📍", val: sites.length,          label: "Sites monitored"   },
-                { icon: "👥", val: userCount ?? "—",       label: "Total users"       },
+                { icon: <Bell size={22} color="#d97706" />, val: unreadAlerts, label: "Unread alerts" },
+                { icon: <Radio size={22} color="#1d7068" />, val: `${activeDevices}/${devices.length}`, label: "Devices active" },
+                { icon: <MapPin size={22} color="#164e3d" />, val: sites.length, label: "Sites monitored" },
+                { icon: <Users size={22} color="#2b9388" />, val: userCount ?? "—", label: "Total users" },
               ].map((s, i) => (
                 <div className="am-stat-card" key={i}>
-                  <span className="am-stat-icon">{s.icon}</span>
+                  <span className="am-stat-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</span>
                   <div>
                     <div className="am-stat-val">{s.val}</div>
                     <div className="am-stat-lbl">{s.label}</div>
@@ -308,20 +528,22 @@ function AdminDashboard() {
             {/* Sites needing attention — ranked accordion showing ONLY breaching sites sorted by severity */}
             <div className="am-card" style={{ padding: "18px 20px", marginBottom: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>📍 Sites needing attention</h2>
+                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <MapPin size={18} color="#164e3d" />
+                  <span>Sites needing attention</span>
+                </h2>
                 <Link to="/admin-alerts" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
               </div>
 
               {rankedSites.length === 0 ? (
-                <div style={{ padding: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", color: "#166534", fontSize: "13px" }}>
-                  🟢 All sites operating normally — no active parameter breaches.
+                <div style={{ padding: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", color: "#166534", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircle2 size={16} color="#166534" />
+                  <span>All sites operating normally — no active parameter breaches.</span>
                 </div>
               ) : (
                 <div style={{ border: "1px solid #deeae3", borderRadius: "10px", overflow: "hidden" }}>
                   {rankedSites.map((s, i) => {
                     const isOpen = !!expandedSiteIds[s.siteId];
-                    const avgData = getSiteAverages(s.siteId);
-                    const thresholds = getSiteThresholds(s.siteId);
                     const isSiteLive = readings.some((r) => {
                       const sId = r.sensor?._id?.toString() || r.sensor?.toString();
                       const rSiteId = r.device?.site?._id || r.device?.site;
@@ -360,14 +582,14 @@ function AdminDashboard() {
                                 </span>
                               )}
                             </div>
-                            <div style={{ fontSize: "11px", color: "#64748b" }}>
+                            <div style={{ fontSize: "11px", color: "#475569", fontWeight: 500 }}>
                               Severity: <strong style={{ color: severityText[s.worst] }}>{s.worst.toUpperCase()}</strong> · {s.count} active breach{s.count > 1 ? "es" : ""}
                             </div>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                             <span className={`am-badge am-badge--${severityClass(s.worst)}`}>{s.worst}</span>
                             <span style={{
-                              fontSize: "16px", color: "#8aaa98",
+                              fontSize: "16px", color: "#5c7c6a", fontWeight: 600,
                               display: "inline-block", transform: isOpen ? "rotate(90deg)" : "none",
                               transition: "transform 0.15s",
                             }}>›</span>
@@ -384,16 +606,16 @@ function AdminDashboard() {
                               <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: severityBg[a.severity_level] || "#fff", borderRadius: "6px", marginBottom: "6px", border: `1px solid ${severityBorder[a.severity_level] || "#ccc"}` }}>
                                 <div>
                                   <strong style={{ fontSize: "13px", color: severityText[a.severity_level] }}>{a.parameter_name}: {a.measured_value} {a.unit}</strong>
-                                  <div style={{ fontSize: "11px", color: "#475569" }}>Device: {a.device?.device_id || "—"} · {a.message}</div>
+                                  <div style={{ fontSize: "11px", color: "#334155", fontWeight: 500 }}>Device: {a.device?.device_id || "—"} · {a.message}</div>
                                 </div>
                                 <span className={`am-badge am-badge--${severityClass(a.severity_level)}`}>{a.severity_level}</span>
                               </div>
                             ))}
 
                             <div style={{ fontSize: "12px", fontWeight: 600, color: "#1c3a2a", margin: "14px 0 6px" }}>
-                              Parameter Trend Chart ({s.siteName}):
+                              Parameter History ({s.siteName}):
                             </div>
-                            <SiteAverageChart avgData={avgData} siteThresholds={thresholds} />
+                            <SiteHistoryChart siteId={s.siteId} devices={devices} sites={sites} />
                           </div>
                         )}
                       </div>
@@ -408,14 +630,17 @@ function AdminDashboard() {
 
               <div className="am-card" style={{ padding: "18px 20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>📡 Devices needing attention</h2>
+                  <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Radio size={18} color="#1d7068" />
+                    <span>Devices needing attention</span>
+                  </h2>
                   <Link to="/manage-devices" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
                 </div>
                 {attentionDevices.length === 0 ? (
                   <p style={{ fontSize: "13px", color: "#3b6d11" }}>All devices online.</p>
                 ) : attentionDevices.slice(0, 5).map(d => (
                   <div key={d._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid #edf4ef" }}>
-                    <span style={{ fontSize: "13px", color: "#2d4a3e" }}>{d.device_id} <span style={{ color: "#8aaa98" }}>· {d.site?.name || "—"}</span></span>
+                    <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{d.device_id} <span style={{ color: "#5c7c6a" }}>· {d.site?.name || "—"}</span></span>
                     <span className={`am-badge am-badge--${statusClass(d.status)}`}>{d.status}</span>
                   </div>
                 ))}
@@ -423,14 +648,17 @@ function AdminDashboard() {
 
               <div className="am-card" style={{ padding: "18px 20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>🚨 Recent alerts</h2>
+                  <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Bell size={18} color="#d97706" />
+                    <span>Recent alerts</span>
+                  </h2>
                   <Link to="/admin-alerts" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
                 </div>
                 {recentAlerts.length === 0 ? (
-                  <p style={{ fontSize: "13px", color: "#8aaa98" }}>No alerts found.</p>
+                  <p style={{ fontSize: "13px", color: "#5c7c6a", fontWeight: 500 }}>No alerts found.</p>
                 ) : recentAlerts.map(a => (
                   <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid #edf4ef" }}>
-                    <span style={{ fontSize: "13px", color: "#2d4a3e" }}>{a.parameter_name} <span style={{ color: "#8aaa98" }}>· {a.device?.device_id || "—"}</span></span>
+                    <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{a.parameter_name} <span style={{ color: "#5c7c6a" }}>· {a.device?.device_id || "—"}</span></span>
                     <span className={`am-badge am-badge--${severityClass(a.severity_level)}`}>{a.severity_level}</span>
                   </div>
                 ))}
@@ -440,15 +668,18 @@ function AdminDashboard() {
 
             <div className="am-card" style={{ padding: "18px 20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a" }}>🕒 Recently logged in</h2>
+                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Clock size={18} color="#164e3d" />
+                  <span>Recently logged in</span>
+                </h2>
                 <Link to="/recent-logins" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
               </div>
               {recentLogins.length === 0 ? (
-                <p style={{ fontSize: "13px", color: "#8aaa98" }}>No login activity recorded yet.</p>
+                <p style={{ fontSize: "13px", color: "#5c7c6a", fontWeight: 500 }}>No login activity recorded yet.</p>
               ) : recentLogins.map(u => (
                 <div key={u._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid #edf4ef" }}>
-                  <span style={{ fontSize: "13px", color: "#2d4a3e" }}>{u.name} <span style={{ color: "#8aaa98" }}>· {u.email}</span></span>
-                  <span style={{ fontSize: "12px", color: "#8aaa98" }}>{timeAgo(u.lastLogin)}</span>
+                  <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{u.name} <span style={{ color: "#5c7c6a" }}>· {u.email}</span></span>
+                  <span style={{ fontSize: "12px", color: "#5c7c6a", fontWeight: 500 }}>{timeAgo(u.lastLogin)}</span>
                 </div>
               ))}
             </div>

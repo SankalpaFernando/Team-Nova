@@ -64,6 +64,7 @@ function App() {
             <ProtectedRoute><Profile /></ProtectedRoute>
           } />
           <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Home />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
@@ -87,7 +88,7 @@ function App() {
             <ProtectedRoute allowedRoles={['admin', 'site_engineer']}><AdminAlerts /></ProtectedRoute>
           } />
           <Route path="/admin-maps" element={
-            <ProtectedRoute adminOnly><AdminMaps /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin', 'site_engineer']}><AdminMaps /></ProtectedRoute>
           } />
           <Route path="/admin-profile" element={
             <ProtectedRoute adminOnly><AdminProfile /></ProtectedRoute>

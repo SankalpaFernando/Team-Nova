@@ -2,7 +2,7 @@
   padding: 30px;
   max-width: 1200px;
   margin: 0 auto;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
 }
 
 .parameter-admin-container h1 {
@@ -43,6 +43,40 @@
   .parameter-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.parameter-form-card {
+  padding: 24px 28px;
+  box-sizing: border-box;
+}
+
+.parameter-form-card h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1c3a2a;
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e9f5ee;
+}
+
+.parameter-form-card .form-group {
+  margin-bottom: 18px;
+}
+
+.parameter-table-card {
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.parameter-table-card h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1c3a2a;
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e9f5ee;
 }
 
 .card {

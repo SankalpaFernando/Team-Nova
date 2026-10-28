@@ -5,6 +5,8 @@ import mangrove from "../assests/mangrove.png";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
+import { User, LogOut } from "lucide-react";
 
 function Profile() {
   const { user, logout } = useAuth();
@@ -103,10 +105,9 @@ function Profile() {
   return (
     <div
       className="profile-page"
-      style={{ backgroundImage: `url(${mangrove})` }}
+      style={{ backgroundImage: `url(${mangrove})`, minHeight: "100vh", display: "flex", flexDirection: "column" }}
     >
-      <div className="profile-overlay">
-
+      <div className="profile-overlay" style={{ flex: 1 }}>
         {/* Navbar */}
         <UserNavbar />
 
@@ -117,14 +118,14 @@ function Profile() {
 
         {/* Centered Profile Card */}
         <div className="profile-container">
-
           <div className="profile-card">
-
             <div className="profile-image">
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Profile" />
               ) : (
-                <div className="default-avatar">👤</div>
+                <div className="default-avatar">
+                  <User size={32} color="#1f4d3a" />
+                </div>
               )}
             </div>
 
@@ -143,7 +144,6 @@ function Profile() {
             {fieldError && <p className="field-error">{fieldError}</p>}
 
             <div className="profile-details">
-
               {/* Name */}
               <div className="detail-row">
                 <span>Full Name</span>
@@ -227,18 +227,18 @@ function Profile() {
                   </div>
                 )}
               </div>
-
             </div>
 
-            <button className="logout-btn" onClick={handleLogout}>
-              🚪 Log Out
+            <button className="logout-btn" onClick={handleLogout} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+              <LogOut size={16} />
+              <span>Log Out</span>
             </button>
-
           </div>
-
         </div>
-
       </div>
+
+      {/* Shared Footer */}
+      <Footer />
     </div>
   );
 }

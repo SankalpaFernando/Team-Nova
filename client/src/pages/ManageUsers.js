@@ -3,6 +3,20 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
+import {
+  Users,
+  ShieldCheck,
+  HardHat,
+  User,
+  MapPin,
+  Pencil,
+  Trash2,
+  X,
+  CheckCircle2,
+  Check,
+  Clock,
+  AlertCircle
+} from "lucide-react";
 import "./ManageUsers.css";
 
 function ManageUsers() {
@@ -10,10 +24,12 @@ function ManageUsers() {
   const navigate = useNavigate();
 
   // ── Data state ─────────────────────────────────────────
-  const [users, setUsers]     = useState([]);
-  const [sites, setSites]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState("");
+  const [users, setUsers]         = useState([]);
+  const [sites, setSites]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [processingId, setProcessingId] = useState(null);
 
   // ── Modal state ────────────────────────────────────────
   const [showAdd, setShowAdd]       = useState(false);
@@ -23,7 +39,12 @@ function ManageUsers() {
 
   // ── Form state ─────────────────────────────────────────
   const [form, setForm] = useState({
-    name: "", email: "", password: "", role: "registered_user", assignedSite: ""
+    name: "",
+    email: "",
+    password: "",
+    role: "registered_user",
+    status: "approved",
+    assignedSite: ""
   });
   const [saving, setSaving]   = useState(false);
   const [formErr, setFormErr] = useState("");
@@ -33,7 +54,7 @@ function ManageUsers() {
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3500);
   };
 
   // ── Fetch all users & sites ────────────────────────────
@@ -58,10 +79,51 @@ function ManageUsers() {
 
   // ── Counts for stat cards ──────────────────────────────
   const countByRole = (role) => users.filter(u => u.role === role).length;
+  const countPending = users.filter(u => u.status === "pending").length;
+  const countApproved = users.filter(u => (u.status || "approved") === "approved").length;
+  const countRejected = users.filter(u => u.status === "rejected").length;
+
+  // ── Approve & Reject Handlers ─────────────────────────
+  const handleApprove = async (userId, userName) => {
+    setProcessingId(userId);
+    try {
+      const res = await api.put(`/users/${userId}/approve`);
+      if (res.data?.success) {
+        showToast(res.data.message || `User "${userName}" approved! Approval email with login link sent.`);
+        load();
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to approve user.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (userId, userName) => {
+    setProcessingId(userId);
+    try {
+      const res = await api.put(`/users/${userId}/reject`);
+      if (res.data?.success) {
+        showToast(`User "${userName}" registration rejected.`, "delete");
+        load();
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to reject user.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   // ── Add user ───────────────────────────────────────────
   const openAdd = () => {
-    setForm({ name: "", email: "", password: "", role: "registered_user", assignedSite: "" });
+    setForm({
+      name: "",
+      email: "",
+      password: "",
+      role: "registered_user",
+      status: "approved",
+      assignedSite: ""
+    });
     setFormErr("");
     setShowAdd(true);
   };
@@ -97,7 +159,14 @@ function ManageUsers() {
   const openEdit = (u) => {
     setSelected(u);
     const siteId = u.assignedSite?._id || u.assignedSite || "";
-    setForm({ name: u.name, email: u.email, password: "", role: u.role, assignedSite: siteId });
+    setForm({
+      name: u.name,
+      email: u.email,
+      password: "",
+      role: u.role,
+      status: u.status || "approved",
+      assignedSite: siteId
+    });
     setFormErr("");
     setShowEdit(true);
   };
@@ -114,10 +183,11 @@ function ManageUsers() {
     }
     setSaving(true);
     try {
-      // 1. Update basic info
+      // 1. Update basic info & status
       await api.put(`/users/${selected._id}`, {
         name: form.name,
-        email: form.email
+        email: form.email,
+        status: form.status
       });
 
       // 2. Call role update endpoint
@@ -126,9 +196,15 @@ function ManageUsers() {
         assignedSite: form.assignedSite
       });
 
+      const wasPendingOrRejected = selected.status !== "approved";
+      const isNowApproved = form.status === "approved";
       setShowEdit(false);
       load();
-      showToast("User updated successfully!");
+      if (wasPendingOrRejected && isNowApproved) {
+        showToast(`User updated and approved! Approval email with login link sent to ${form.email}.`);
+      } else {
+        showToast("User updated successfully!");
+      }
     } catch (err) {
       setFormErr(err.response?.data?.message || "Failed to update user.");
     } finally {
@@ -171,9 +247,27 @@ function ManageUsers() {
     registered_user:  "Registered User"
   }[role] || role);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  const statusBadge = (status) => {
+    const s = status || "approved";
+    if (s === "pending") {
+      return (
+        <span className="mu-badge mu-badge--pending" title="Awaiting Administrator Approval">
+          <Clock size={12} /> Pending
+        </span>
+      );
+    }
+    if (s === "rejected") {
+      return (
+        <span className="mu-badge mu-badge--rejected" title="Registration Rejected">
+          <X size={12} /> Rejected
+        </span>
+      );
+    }
+    return (
+      <span className="mu-badge mu-badge--approved" title="Approved & Active">
+        <CheckCircle2 size={12} /> Approved
+      </span>
+    );
   };
 
   const formatDate = (dateStr) => {
@@ -182,6 +276,15 @@ function ManageUsers() {
       day: "2-digit", month: "short", year: "numeric"
     });
   };
+
+  // ── Filtered user list ─────────────────────────────────
+  const filteredUsers = users.filter((u) => {
+    const s = u.status || "approved";
+    if (activeTab === "pending") return u.status === "pending";
+    if (activeTab === "approved") return s === "approved";
+    if (activeTab === "rejected") return u.status === "rejected";
+    return true;
+  });
 
   // ── Render ─────────────────────────────────────────────
   return (
@@ -199,7 +302,7 @@ function ManageUsers() {
             <p className="mu-breadcrumb">Admin › Users</p>
             <h1 className="mu-title">Manage Users</h1>
             <p className="mu-subtitle">
-              View, create, edit and assign roles/sites to system users.
+              Review registrations, approve new users, assign roles, and manage access permissions.
             </p>
           </div>
           <button className="mu-btn-primary" onClick={openAdd}>
@@ -207,16 +310,52 @@ function ManageUsers() {
           </button>
         </div>
 
+        {/* Pending Banner Alert if requests exist */}
+        {countPending > 0 && (
+          <div className="mu-pending-banner">
+            <div className="mu-pending-banner-left">
+              <div className="mu-pending-banner-icon">
+                <Clock size={22} color="#b45309" />
+              </div>
+              <div>
+                <div className="mu-pending-banner-title">
+                  {countPending} User Registration{countPending > 1 ? "s" : ""} Awaiting Review
+                </div>
+                <p className="mu-pending-banner-sub">
+                  New users cannot log in or view any site details until approved by an administrator.
+                </p>
+              </div>
+            </div>
+            {activeTab !== "pending" && (
+              <button className="mu-pending-banner-btn" onClick={() => setActiveTab("pending")}>
+                Review Pending ({countPending})
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Stats */}
         <div className="mu-stats">
           {[
-            { icon: "👥", val: users.length,                    label: "Total Users"       },
-            { icon: "🛡️", val: countByRole("admin"),             label: "Admins"            },
-            { icon: "👷", val: countByRole("site_engineer"),    label: "Site Engineers"    },
-            { icon: "👤", val: countByRole("registered_user"),     label: "Registered Users" },
+            { icon: <Users size={22} color="#2b9388" />, val: users.length, label: "Total Users" },
+            {
+              icon: <Clock size={22} color="#d97706" />,
+              val: countPending,
+              label: "Pending Approvals",
+              highlight: countPending > 0,
+              onClick: () => setActiveTab("pending")
+            },
+            { icon: <ShieldCheck size={22} color="#164e3d" />, val: countByRole("admin"), label: "Admins" },
+            { icon: <HardHat size={22} color="#0ca678" />, val: countByRole("site_engineer"), label: "Site Engineers" },
+            { icon: <User size={22} color="#1d7068" />, val: countByRole("registered_user"), label: "Registered Users" },
           ].map((s, i) => (
-            <div className="mu-stat-card" key={i}>
-              <span className="mu-stat-icon">{s.icon}</span>
+            <div
+              className={`mu-stat-card ${s.highlight ? "mu-stat-card--highlight" : ""}`}
+              key={i}
+              onClick={s.onClick}
+              style={s.onClick ? { cursor: "pointer" } : undefined}
+            >
+              <span className="mu-stat-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</span>
               <div>
                 <div className="mu-stat-val">{s.val}</div>
                 <div className="mu-stat-lbl">{s.label}</div>
@@ -227,6 +366,25 @@ function ManageUsers() {
 
         {/* Error */}
         {error && <div className="mu-error">{error}</div>}
+
+        {/* Filter Tabs */}
+        <div className="mu-filter-tabs">
+          {[
+            { id: "all", label: `All Users (${users.length})` },
+            { id: "pending", label: `Pending Approvals (${countPending})`, badge: countPending },
+            { id: "approved", label: `Approved Users (${countApproved})` },
+            { id: "rejected", label: `Rejected (${countRejected})` }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              className={`mu-filter-tab ${activeTab === tab.id ? "mu-filter-tab--active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span>{tab.label}</span>
+              {tab.badge > 0 && <span className="mu-tab-badge">{tab.badge}</span>}
+            </button>
+          ))}
+        </div>
 
         {/* Loading */}
         {loading ? (
@@ -245,18 +403,21 @@ function ManageUsers() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role & Assignment</th>
+                  <th>Status</th>
                   <th>Joined</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {users.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="mu-empty">
-                      No users found. Click <strong>＋ Create User</strong> to add one.
+                    <td colSpan="7" className="mu-empty">
+                      {activeTab === "pending"
+                        ? "🎉 No pending user registrations! All user requests have been processed."
+                        : "No users found in this filter."}
                     </td>
                   </tr>
-                ) : users.map((u, i) => (
+                ) : filteredUsers.map((u, i) => (
                   <tr key={u._id} className="mu-tr">
                     <td className="mu-td-num">{i + 1}</td>
                     <td className="mu-td-name">
@@ -264,7 +425,14 @@ function ManageUsers() {
                         <div className="mu-avatar">
                           {u.name?.[0]?.toUpperCase() || "U"}
                         </div>
-                        {u.name}
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{u.name}</div>
+                          {u.status === "pending" && (
+                            <span style={{ fontSize: "11px", color: "#d97706", fontWeight: 600 }}>
+                              New Registration
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="mu-td-email">{u.email}</td>
@@ -272,27 +440,98 @@ function ManageUsers() {
                       <span className={`mu-badge ${roleClass(u.role)}`}>
                         {roleLabel(u.role)}
                       </span>
-                      {u.role === 'site_engineer' && (
-                        <div style={{ fontSize: '0.78rem', color: '#2b8a3e', marginTop: '4px' }}>
-                          📍 {u.assignedSite?.name || 'Unassigned Site'}
+                      {u.role === "site_engineer" && (
+                        <div style={{ fontSize: "0.78rem", color: "#2b8a3e", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <MapPin size={13} color="#2b8a3e" />
+                          <span>{u.assignedSite?.name || "Unassigned Site"}</span>
                         </div>
                       )}
                     </td>
-                    <td className="mu-td-dim">{formatDate(u.created_at)}</td>
+                    <td>
+                      {statusBadge(u.status)}
+                    </td>
+                    <td className="mu-td-dim">{formatDate(u.created_at || u.createdAt)}</td>
                     <td>
                       <div className="mu-actions">
-                        <button
-                          className="mu-act mu-act--edit"
-                          onClick={() => openEdit(u)}
-                        >
-                          ✏ Edit
-                        </button>
-                        <button
-                          className="mu-act mu-act--del"
-                          onClick={() => openDelete(u)}
-                        >
-                          🗑 Delete
-                        </button>
+                        {u.status === "pending" ? (
+                          <>
+                            <button
+                              className="mu-act mu-act--approve"
+                              disabled={processingId === u._id}
+                              onClick={() => handleApprove(u._id, u.name)}
+                              title="Approve registration"
+                            >
+                              <Check size={13} /> {processingId === u._id ? "Approving…" : "Approve"}
+                            </button>
+                            <button
+                              className="mu-act mu-act--reject"
+                              disabled={processingId === u._id}
+                              onClick={() => handleReject(u._id, u.name)}
+                              title="Reject registration"
+                            >
+                              <X size={13} /> Reject
+                            </button>
+                            <button
+                              className="mu-act mu-act--del"
+                              onClick={() => openDelete(u)}
+                              title="Delete user"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </>
+                        ) : u.status === "rejected" ? (
+                          <>
+                            <button
+                              className="mu-act mu-act--approve"
+                              disabled={processingId === u._id}
+                              onClick={() => handleApprove(u._id, u.name)}
+                              title="Re-approve user access"
+                            >
+                              <Check size={13} /> Approve
+                            </button>
+                            <button
+                              className="mu-act mu-act--edit"
+                              onClick={() => openEdit(u)}
+                              title="Edit user"
+                            >
+                              <Pencil size={13} /> Edit
+                            </button>
+                            <button
+                              className="mu-act mu-act--del"
+                              onClick={() => openDelete(u)}
+                              title="Delete user"
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className="mu-act mu-act--edit"
+                              onClick={() => openEdit(u)}
+                              style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                            >
+                              <Pencil size={13} /> Edit
+                            </button>
+                            {u.role !== "admin" && (
+                              <button
+                                className="mu-act mu-act--reject"
+                                disabled={processingId === u._id}
+                                onClick={() => handleReject(u._id, u.name)}
+                                title="Revoke access"
+                              >
+                                <X size={13} /> Revoke
+                              </button>
+                            )}
+                            <button
+                              className="mu-act mu-act--del"
+                              onClick={() => openDelete(u)}
+                              style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -350,6 +589,12 @@ function ManageUsers() {
                 <option value="registered_user">Registered User</option>
                 <option value="site_engineer">Site Engineer</option>
                 <option value="admin">Admin</option>
+              </select>
+
+              <label className="mu-lbl">Approval Status</label>
+              <select className="mu-inp" name="status" value={form.status} onChange={fc}>
+                <option value="approved">Approved (Active immediately)</option>
+                <option value="pending">Pending Approval</option>
               </select>
 
               {form.role === "site_engineer" && (
@@ -413,6 +658,13 @@ function ManageUsers() {
                 onChange={fc}
               />
 
+              <label className="mu-lbl">Account Status</label>
+              <select className="mu-inp" name="status" value={form.status} onChange={fc}>
+                <option value="approved">Approved (Active Access)</option>
+                <option value="pending">Pending Approval</option>
+                <option value="rejected">Rejected (Access Blocked)</option>
+              </select>
+
               <label className="mu-lbl">System Role</label>
               <select className="mu-inp" name="role" value={form.role} onChange={fc}>
                 <option value="registered_user">Registered User</option>
@@ -445,7 +697,7 @@ function ManageUsers() {
                   className="mu-btn-primary"
                   disabled={saving}
                 >
-                  {saving ? "Saving…" : "Save Role Changes"}
+                  {saving ? "Saving…" : "Save Changes"}
                 </button>
               </div>
             </form>
@@ -462,7 +714,7 @@ function ManageUsers() {
               <button className="mu-close" onClick={() => setShowDelete(false)}>✕</button>
             </div>
             <div className="mu-del-body">
-              <div className="mu-del-icon">🗑️</div>
+              <div className="mu-del-icon" style={{ display: "flex", justifyContent: "center" }}><Trash2 size={36} color="#e24b4a" /></div>
               <p>
                 Are you sure you want to delete <strong>{selected?.name}</strong>?
               </p>
@@ -494,8 +746,8 @@ function ManageUsers() {
       {/* Toast */}
       {toast.show && (
         <div className={`mu-toast mu-toast--${toast.type}`}>
-          <span className="mu-toast-icon">
-            {toast.type === "delete" ? "🗑️" : "✅"}
+          <span className="mu-toast-icon" style={{ display: "inline-flex", alignItems: "center" }}>
+            {toast.type === "delete" ? <Trash2 size={16} color="#e24b4a" /> : <CheckCircle2 size={16} color="#166534" />}
           </span>
           {toast.message}
         </div>

@@ -39,6 +39,12 @@ const int           MAX_LINE_LEN          = 100;     // longest valid radio line
 const float TEMP_MIN = -55.0, TEMP_MAX = 125.0;
 const float PH_MIN   = 0.0,   PH_MAX   = 14.0;
 
+// ───────── Reliability Constants ─────────
+const int MAX_RETRIES = 3;
+const unsigned long RETRY_DELAY_MS = 1000;
+const unsigned long HTTP_TIMEOUT_MS = 5000;
+const unsigned long WIFI_RECONNECT_TIMEOUT_MS = 5000;
+
 // ───────── HC-12 ─────────
 SoftwareSerial HC12(D4, D3);
 String rxBuffer = "";

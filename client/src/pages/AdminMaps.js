@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
+import socket from "../services/socket";
+import { MapPin, Compass, Waves, ArrowRight, ArrowLeft, Pencil, Sliders, Trash2, X, Plus } from 'lucide-react';
 import "./AdminMaps.css";
 
 const getParamRangeStr = (siteThresholds, paramKey) => {
@@ -77,6 +79,22 @@ function AdminMaps() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const handleSiteCreated = () => load();
+    const handleSiteUpdated = () => load();
+    const handleSiteDeleted = () => load();
+
+    socket.on("site_created", handleSiteCreated);
+    socket.on("site_updated", handleSiteUpdated);
+    socket.on("site_deleted", handleSiteDeleted);
+
+    return () => {
+      socket.off("site_created", handleSiteCreated);
+      socket.off("site_updated", handleSiteUpdated);
+      socket.off("site_deleted", handleSiteDeleted);
+    };
+  }, []);
 
   // ── counts ────────────────────────────────────────────
   const byRegion = (r) => sites.filter(s => s.region === r).length;
@@ -259,17 +277,17 @@ function AdminMaps() {
             <h1 className="am-title">Monitoring Sites</h1>
             <p className="am-subtitle">Manage lagoon monitoring locations and alert thresholds.</p>
           </div>
-          <button className="am-btn-primary" onClick={openAdd}>＋ Add New Site</button>
+          <button className="am-btn-primary" onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Plus size={16} /> Add New Site</button>
         </div>
 
         {/* Stats */}
         <div className="am-stats">
           {[
-            { icon: "📍", val: sites.length,                     label: "Total Sites"       },
-            { icon: "🧭", val: byRegion("Northern"),             label: "Northern Province" },
-            { icon: "🌊", val: byRegion("Southern"),             label: "Southern Province" },
-            { icon: "➡️", val: byRegion("Eastern"),  label: "Eastern Province" },
-            { icon: "⬅️", val: byRegion("Western"),  label: "Western Province" },
+            { icon: <MapPin size={24} color="#3b82f6" />, val: sites.length,                     label: "Total Sites"       },
+            { icon: <Compass size={24} color="#f59e0b" />, val: byRegion("Northern"),             label: "Northern Province" },
+            { icon: <Waves size={24} color="#0ea5e9" />, val: byRegion("Southern"),             label: "Southern Province" },
+            { icon: <ArrowRight size={24} color="#10b981" />, val: byRegion("Eastern"),  label: "Eastern Province" },
+            { icon: <ArrowLeft size={24} color="#8b5cf6" />, val: byRegion("Western"),  label: "Western Province" },
           ].map((s, i) => (
             <div className="am-stat-card" key={i}>
               <span className="am-stat-icon">{s.icon}</span>
@@ -330,13 +348,17 @@ function AdminMaps() {
                 {filteredSites.length === 0 ? (
                   <tr>
                     <td colSpan="8" className="am-empty">
-                      No sites found. Click <strong>＋ Add New Site</strong> to get started.
+                      No sites found. Click <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}><Plus size={14} /> Add New Site</strong> to get started.
                     </td>
                   </tr>
                 ) : filteredSites.map((site, i) => (
                   <tr key={site._id} className="am-tr">
                     <td className="am-td-num">{i + 1}</td>
-                    <td className="am-td-name">{site.name}</td>
+                    <td className="am-td-name">
+                      <Link to={`/sites/${site._id}`} state={{ fromAdmin: true }} style={{ color: "#007bff", textDecoration: "underline", cursor: "pointer" }}>
+                        {site.name}
+                      </Link>
+                    </td>
                     <td className="am-td-loc">{site.location}</td>
                     <td>
                       <span className={`am-badge am-badge--${regionClass(site.region)}`}>{site.region}</span>
@@ -346,9 +368,9 @@ function AdminMaps() {
                     <td className="am-td-dim">{site.createdBy?.name || "Admin"}</td>
                     <td>
                       <div className="am-actions">
-                        <button className="am-act am-act--edit"   onClick={() => openEdit(site)}>✏ Edit</button>
-                        <button className="am-act am-act--thresh" onClick={() => openThresh(site)}>🎛 Thresholds</button>
-                        <button className="am-act am-act--del"    onClick={() => openDelete(site)}>🗑 Delete</button>
+                        <button className="am-act am-act--edit"   onClick={() => openEdit(site)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Pencil size={14} /> Edit</button>
+                        <button className="am-act am-act--thresh" onClick={() => openThresh(site)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Sliders size={14} /> Thresholds</button>
+                        <button className="am-act am-act--del"    onClick={() => openDelete(site)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Trash2 size={14} /> Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -367,7 +389,7 @@ function AdminMaps() {
           <div className="am-modal" onClick={e => e.stopPropagation()}>
             <div className="am-modal-head">
               <h2>Add New Site</h2>
-              <button className="am-close" onClick={() => setShowAdd(false)}>✕</button>
+              <button className="am-close" onClick={() => setShowAdd(false)}><X size={18} /></button>
             </div>
             <form className="am-modal-body" onSubmit={doAdd}>
               {formErr && <p className="am-ferr">{formErr}</p>}
@@ -394,7 +416,7 @@ function AdminMaps() {
           <div className="am-modal" onClick={e => e.stopPropagation()}>
             <div className="am-modal-head">
               <h2>Edit Site</h2>
-              <button className="am-close" onClick={() => setShowEdit(false)}>✕</button>
+              <button className="am-close" onClick={() => setShowEdit(false)}><X size={18} /></button>
             </div>
             <form className="am-modal-body" onSubmit={doEdit}>
               {formErr && <p className="am-ferr">{formErr}</p>}

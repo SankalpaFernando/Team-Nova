@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/navbar";
 import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
+import { Clock, ShieldCheck, ArrowLeft, LogIn, CheckCircle2 } from "lucide-react";
 import "./Register.css";
 
 function Register() {
@@ -16,11 +17,15 @@ function Register() {
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [registeredName, setRegisteredName] = useState("");
 
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
+    if (serverError) setServerError("");
     setForm({
       ...form,
       [e.target.name]: e.target.value
@@ -59,15 +64,37 @@ function Register() {
     if (Object.keys(validationErrors).length === 0) {
       setLoading(true);
       try {
-        await register(form.name, form.email, form.password);
-        // Registered users always go to dashboard
-        navigate("/dashboard");
+        const res = await register(form.name, form.email, form.password);
+        setRegisteredName(form.name);
+        setRegisteredEmail(form.email);
+        setIsSubmitted(true);
       } catch (err) {
-        setServerError(err.response?.data?.message || "Registration failed. Please try again.");
+        if (!err.response) {
+          setServerError("Something went wrong. Please try again later.");
+        } else {
+          const msg = err.response.data?.message || "";
+          if (
+            (err.response.status === 400 || err.response.status === 409) &&
+            (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("already exists"))
+          ) {
+            setServerError("An account with this email already exists. Please sign in or use a different email.");
+          } else if (err.response.status >= 500) {
+            setServerError("Something went wrong. Please try again later.");
+          } else {
+            setServerError(msg || "Registration failed. Please check your information and try again.");
+          }
+        }
       } finally {
         setLoading(false);
       }
     }
+  };
+
+  const resetForm = () => {
+    setForm({ name: "", email: "", password: "" });
+    setErrors({});
+    setServerError("");
+    setIsSubmitted(false);
   };
 
   return (
@@ -78,53 +105,92 @@ function Register() {
         className="hero"
         style={{ backgroundImage: `url(${mangrove})` }}
       >
-        <div className="register-box">
-          <h2>User Register</h2>
+        {isSubmitted ? (
+          <div className="register-success-card">
+            <div className="reg-success-icon-wrap">
+              <Clock size={40} color="#d97706" />
+            </div>
 
-          {serverError && (
-            <p style={{ color: "red", fontSize: "14px", marginBottom: "10px" }}>
-              {serverError}
+            <h2>Registration Submitted!</h2>
+            <div className="reg-status-pill">Pending Admin Approval</div>
+
+            <p className="reg-success-msg">
+              Thank you, <strong>{registeredName}</strong>. Your account request for <strong>{registeredEmail}</strong> has been received.
             </p>
-          )}
 
-          <form onSubmit={handleSubmit}>
+            <div className="reg-notice-box">
+              <ShieldCheck size={20} color="#15803d" className="reg-notice-icon" />
+              <div>
+                <strong>Administrator Verification Required</strong>
+                <p>
+                  To protect sensitive environmental and site data, an administrator must review and approve your registration before you can log in and view details.
+                </p>
+              </div>
+            </div>
 
-            <label>Name</label>
-            <input
-              type="text"
-              name="name"
-              placeholder="Enter Name"
-              value={form.name}
-              onChange={handleChange}
-            />
-            <span className="error">{errors.name}</span>
+            <div className="reg-success-actions">
+              <button className="reg-btn-home" onClick={() => navigate("/")}>
+                <ArrowLeft size={16} /> Return to Home
+              </button>
+              <button className="reg-btn-reset" onClick={resetForm}>
+                Register Another Account
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="register-box">
+            <h2>User Register</h2>
 
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter Email"
-              value={form.email}
-              onChange={handleChange}
-            />
-            <span className="error">{errors.email}</span>
+            <div className="reg-approval-hint">
+              <ShieldCheck size={16} color="#1d7068" />
+              <span>Registrations require admin approval prior to dashboard access.</span>
+            </div>
 
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter Password"
-              value={form.password}
-              onChange={handleChange}
-            />
-            <span className="error">{errors.password}</span>
+            {serverError && (
+              <div className="register-error-alert">
+                {serverError}
+              </div>
+            )}
 
-            <button type="submit" className="register-btn" disabled={loading}>
-              {loading ? "Registering..." : "Register"}
-            </button>
+            <form onSubmit={handleSubmit}>
 
-          </form>
-        </div>
+              <label>Name</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Enter Name"
+                value={form.name}
+                onChange={handleChange}
+              />
+              <span className="error">{errors.name}</span>
+
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter Email"
+                value={form.email}
+                onChange={handleChange}
+              />
+              <span className="error">{errors.email}</span>
+
+              <label>Password</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Enter Password"
+                value={form.password}
+                onChange={handleChange}
+              />
+              <span className="error">{errors.password}</span>
+
+              <button type="submit" className="register-btn" disabled={loading}>
+                {loading ? "Submitting Request..." : "Register"}
+              </button>
+
+            </form>
+          </div>
+        )}
       </div>
       <Footer />
     </div>

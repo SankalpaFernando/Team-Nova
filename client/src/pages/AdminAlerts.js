@@ -5,6 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import "./AdminAlerts.css";
 import AdminSidebar from "../components/AdminSidebar";
+import { Check, Clock, AlertOctagon, CheckCircle, Eye, AlertTriangle, X, Info } from 'lucide-react';
+
 
 function AdminAlerts() {
   const { user, logout } = useAuth();
@@ -181,16 +183,16 @@ function AdminAlerts() {
                 : 'Review site alerts and confirm engineer-submitted resolutions.'}
             </p>
           </div>
-          <button className="am-btn-sec" onClick={markAllRead}>✓ Mark All Read</button>
+          <button className="am-btn-sec" onClick={markAllRead}><Check size={14} style={{ marginRight: 4 }} /> Mark All Read</button>
         </div>
 
         {/* Stats */}
         <div className="am-stats">
           {[
-            { icon: "🚨", val: byStatus("unread"), label: "Unread" },
-            { icon: "⏳", val: byStatus("pending_confirmation"), label: "Pending Confirmation" },
-            { icon: "🔴", val: bySeverity("critical") + bySeverity("high"), label: "High / Critical" },
-            { icon: "✅", val: byStatus("resolved"), label: "Resolved" },
+            { icon: <AlertTriangle size={24} color="#ef4444" />, val: byStatus("unread"), label: "Unread" },
+            { icon: <Clock size={24} color="#f59e0b" />, val: byStatus("pending_confirmation"), label: "Pending Confirmation" },
+            { icon: <AlertOctagon size={24} color="#dc2626" />, val: bySeverity("critical") + bySeverity("high"), label: "High / Critical" },
+            { icon: <CheckCircle size={24} color="#10b981" />, val: byStatus("resolved"), label: "Resolved" },
           ].map((s, i) => (
             <div className="am-stat-card" key={i}>
               <span className="am-stat-icon">{s.icon}</span>
@@ -207,7 +209,7 @@ function AdminAlerts() {
           <div className="am-card" style={{ padding: "20px", marginBottom: "24px", borderLeft: "6px solid #f59e0b", background: "#fffbeb" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <h2 style={{ margin: 0, fontSize: "1.1rem", color: "#92400e", display: "flex", alignItems: "center", gap: "8px" }}>
-                ⏳ Pending Engineer Resolutions ({pendingConfirmations.length})
+                <Clock size={18} /> Pending Engineer Resolutions ({pendingConfirmations.length})
               </h2>
               <span style={{ fontSize: "0.85rem", color: "#b45309" }}>Action required by Admin</span>
             </div>
@@ -221,14 +223,14 @@ function AdminAlerts() {
                   <div style={{ display: "flex", gap: "8px" }}>
                     <button
                       className="am-btn-primary"
-                      style={{ background: "#16a34a", padding: "6px 14px", fontSize: "0.85rem" }}
+                      style={{ background: "#16a34a", padding: "6px 14px", fontSize: "0.85rem", display: 'flex', alignItems: 'center', gap: '4px' }}
                       onClick={async () => {
                         setSelected(a);
                         await updateStatus('resolved');
                       }}
                       disabled={saving}
                     >
-                      ✓ Confirm Resolved
+                      <Check size={14} /> Confirm Resolved
                     </button>
                   </div>
                 </div>
@@ -259,16 +261,16 @@ function AdminAlerts() {
           </div>
         ) : (
           <div className="am-card">
-            <table className="am-table" ref={filterRef}>
+            <table className="am-table am-table--alerts" ref={filterRef}>
               <colgroup>
-                <col style={{ width: "4%" }} />
-                <col style={{ width: "13%" }} />
-                <col style={{ width: "13%" }} />
+                <col style={{ width: "5%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "11%" }} />
                 <col style={{ width: "22%" }} />
-                <col style={{ width: "8%" }} />
+                <col style={{ width: "7%" }} />
                 <col style={{ width: "15%" }} />
-                <col style={{ width: "15%" }} />
-                <col style={{ width: "10%" }} />
+                <col style={{ width: "17%" }} />
+                <col style={{ width: "11%" }} />
               </colgroup>
               <thead>
                 <tr>
@@ -376,7 +378,7 @@ function AdminAlerts() {
                     <td className="am-td-dim">{formatTime(alert.created_at)}</td>
                     <td>
                       <div className="am-actions">
-                        <button className="am-act am-act--edit" onClick={() => openDetail(alert)}>👁 View</button>
+                        <button className="am-act am-act--edit" style={{ display: 'flex', alignItems: 'center', gap: '4px' }} onClick={() => openDetail(alert)}><Eye size={14} /> View</button>
                       </div>
                     </td>
                   </tr>
@@ -393,7 +395,7 @@ function AdminAlerts() {
           <div className="am-modal" onClick={e => e.stopPropagation()}>
             <div className="am-modal-head">
               <h2>Alert Details</h2>
-              <button className="am-close" onClick={() => setShowDetail(false)}>✕</button>
+              <button className="am-close" onClick={() => setShowDetail(false)}><X size={18} /></button>
             </div>
             <div className="am-modal-body">
               <p><strong>Parameter:</strong> {selected.parameter_name}</p>
@@ -418,8 +420,8 @@ function AdminAlerts() {
                   )
                 ) : (
                   selected.status !== "resolved" && (
-                    <button className="am-btn-primary" style={{ background: "#16a34a" }} onClick={() => updateStatus("resolved")} disabled={saving}>
-                      {selected.status === 'pending_confirmation' ? '✓ Confirm Resolved' : '✓ Mark Resolved Directly'}
+                    <button className="am-btn-primary" style={{ background: "#16a34a", display: 'flex', alignItems: 'center', gap: '4px' }} onClick={() => updateStatus("resolved")} disabled={saving}>
+                      <Check size={16} /> {selected.status === 'pending_confirmation' ? 'Confirm Resolved' : 'Mark Resolved Directly'}
                     </button>
                   )
                 )}
@@ -431,7 +433,7 @@ function AdminAlerts() {
 
       {toast.show && (
         <div className={`am-toast am-toast--${toast.type}`}>
-          <span className="am-toast-icon">{toast.type === "delete" ? "⚠️" : "✅"}</span>
+          <span className="am-toast-icon">{toast.type === "delete" ? <AlertTriangle size={18} /> : <CheckCircle size={18} />}</span>
           {toast.message}
         </div>
       )}

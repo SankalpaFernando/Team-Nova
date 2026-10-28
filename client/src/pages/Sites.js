@@ -1,12 +1,18 @@
 import "./Sites.css";
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
+import socket from "../services/socket";
 import UserNavbar from "../components/UserNavbar";
 import Footer from "../components/Footer";
 import SriLankaMap from "../components/SriLankaMap";
 
 function Sites() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const selectedSiteId = searchParams.get("site");
+
   const [sites, setSites] = useState([]);
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +35,39 @@ function Sites() {
     };
 
     loadSites();
+  }, []);
+
+  useEffect(() => {
+    const handleSiteCreated = (newSite) => {
+      if (!newSite) return;
+      setSites((prev) => {
+        const exists = prev.some((s) => s._id === newSite._id);
+        if (exists) return prev;
+        return [newSite, ...prev];
+      });
+    };
+
+    const handleSiteUpdated = (updatedSite) => {
+      if (!updatedSite) return;
+      setSites((prev) =>
+        prev.map((s) => (s._id === updatedSite._id ? updatedSite : s))
+      );
+    };
+
+    const handleSiteDeleted = (deletedId) => {
+      if (!deletedId) return;
+      setSites((prev) => prev.filter((s) => s._id !== deletedId));
+    };
+
+    socket.on("site_created", handleSiteCreated);
+    socket.on("site_updated", handleSiteUpdated);
+    socket.on("site_deleted", handleSiteDeleted);
+
+    return () => {
+      socket.off("site_created", handleSiteCreated);
+      socket.off("site_updated", handleSiteUpdated);
+      socket.off("site_deleted", handleSiteDeleted);
+    };
   }, []);
 
   // Group devices by site once
@@ -72,6 +111,7 @@ function Sites() {
                   sites={sites}
                   devicesBySite={devicesBySite}
                   isUserPage={true}
+                  selectedSiteId={selectedSiteId}
                 />
               )}
             </div>

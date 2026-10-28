@@ -4,6 +4,7 @@ import api from '../services/api';
 import socket from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import AdminSidebar from '../components/AdminSidebar';
+import { Radio, Thermometer, Bell, Mail, Sliders, CheckCircle2 } from 'lucide-react';
 import './AdminAlerts.css';
 
 function SiteEngineerDashboard() {
@@ -191,13 +192,13 @@ function SiteEngineerDashboard() {
             {/* Stats Cards */}
             <div className="am-stats" style={{ marginBottom: '20px' }}>
               {[
-                { icon: "📡", val: devices.length, label: "Assigned Devices" },
-                { icon: "🔬", val: sensors.filter(s => s.status === 'active').length, label: "Active Sensors" },
-                { icon: "🚨", val: activeAlerts.length, label: "Active Site Alerts" },
-                { icon: "✉️", val: messages.filter(m => m.status === 'unread').length, label: "Site Messages" }
+                { icon: <Radio size={22} color="#1d7068" />, val: devices.length, label: "Assigned Devices" },
+                { icon: <Thermometer size={22} color="#164e3d" />, val: sensors.filter(s => s.status === 'active').length, label: "Active Sensors" },
+                { icon: <Bell size={22} color="#d97706" />, val: activeAlerts.length, label: "Active Site Alerts" },
+                { icon: <Mail size={22} color="#2b9388" />, val: messages.filter(m => m.status === 'unread').length, label: "Site Messages" }
               ].map((s, i) => (
                 <div className="am-stat-card" key={i}>
-                  <span className="am-stat-icon">{s.icon}</span>
+                  <span className="am-stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.icon}</span>
                   <div>
                     <div className="am-stat-val">{s.val}</div>
                     <div className="am-stat-lbl">{s.label}</div>
@@ -208,24 +209,30 @@ function SiteEngineerDashboard() {
 
             {/* Active Alerts Section */}
             <div className="am-card" style={{ padding: '18px 20px', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c3a2a', marginBottom: '12px' }}>🚨 Active Site Breaches & Alerts</h2>
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c3a2a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bell size={18} color="#d97706" />
+                <span>Active Site Breaches & Alerts</span>
+              </h2>
               {activeAlerts.length === 0 ? (
-                <p style={{ fontSize: '13px', color: '#166534' }}>🟢 No active breaches — all parameters operating within configured limits.</p>
+                <div style={{ padding: '12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', color: '#166534', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CheckCircle2 size={16} color="#166534" />
+                  <span>No active breaches — all parameters operating within configured limits.</span>
+                </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {activeAlerts.map(a => (
                     <div key={a._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
                       <div>
                         <strong style={{ fontSize: '14px', color: '#0f172a' }}>{a.parameter_name}: {a.measured_value} {a.unit}</strong>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{a.message} (Device: {a.device?.device_id || '—'})</div>
+                        <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px', fontWeight: 500 }}>{a.message} (Device: {a.device?.device_id || '—'})</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span className={`am-badge am-badge--${a.severity_level}`}>{a.severity_level}</span>
                         <button
                           onClick={() => handleResolveAlert(a._id)}
-                          style={{ padding: '6px 12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                          style={{ padding: '6px 12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                         >
-                          ✓ Resolve Alert
+                          <CheckCircle2 size={14} /> Resolve Alert
                         </button>
                       </div>
                     </div>
@@ -238,18 +245,21 @@ function SiteEngineerDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
               <div className="am-card" style={{ padding: '18px 20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c3a2a', margin: 0 }}>📡 Monitored Devices</h2>
+                  <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c3a2a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Radio size={18} color="#1d7068" />
+                    <span>Monitored Devices</span>
+                  </h2>
                   <Link to="/manage-devices" style={{ fontSize: '12px', color: '#1c3a2a', fontWeight: 600 }}>View All →</Link>
                 </div>
                 {devices.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: '#64748b' }}>No devices registered for this site.</p>
+                  <p style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>No devices registered for this site.</p>
                 ) : devices.slice(0, 5).map(dev => (
                   <div key={dev._id} style={{ padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <strong>{dev.device_id}</strong>
                       <span className={`am-badge am-badge--${dev.status === 'active' ? 'rn' : 're'}`}>{dev.status}</span>
                     </div>
-                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                    <div style={{ fontSize: '11px', color: '#475569', marginTop: '4px', fontWeight: 500 }}>
                       Sampling interval: {dev.sampling_interval_seconds}s
                     </div>
                   </div>
@@ -258,11 +268,14 @@ function SiteEngineerDashboard() {
 
               <div className="am-card" style={{ padding: '18px 20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c3a2a', margin: 0 }}>🔬 Registered Probes & Sensors</h2>
+                  <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c3a2a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Thermometer size={18} color="#164e3d" />
+                    <span>Registered Probes & Sensors</span>
+                  </h2>
                   <Link to="/manage-sensors" style={{ fontSize: '12px', color: '#1c3a2a', fontWeight: 600 }}>View All →</Link>
                 </div>
                 {sensors.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: '#64748b' }}>No sensors registered for this site.</p>
+                  <p style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>No sensors registered for this site.</p>
                 ) : sensors.slice(0, 5).map(sen => {
                   const senId = sen._id?.toString();
                   const latestR = readings.find(r => (r.sensor?._id?.toString() || r.sensor?.toString()) === senId);
@@ -291,7 +304,7 @@ function SiteEngineerDashboard() {
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                        <div style={{ fontSize: '11px', color: '#475569', fontWeight: 500 }}>
                           {sen.model_name} (SN: {sen.serial_number})
                           {latestR && <span style={{ fontWeight: 600, color: '#0f172a', marginLeft: '6px' }}>· Latest: {latestR.value} {sen.parameter?.unit || ''}</span>}
                         </div>
@@ -305,7 +318,10 @@ function SiteEngineerDashboard() {
 
             {/* Threshold Adjustments Section */}
             <div className="am-card" style={{ padding: '18px 20px' }}>
-              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c3a2a', marginBottom: '12px' }}>⚙️ Adjust Site Parameter Thresholds</h2>
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c3a2a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sliders size={18} color="#164e3d" />
+                <span>Adjust Site Parameter Thresholds</span>
+              </h2>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
@@ -341,10 +357,10 @@ function SiteEngineerDashboard() {
                       </td>
                       <td style={{ padding: '8px 12px' }}>
                         <button
-                          style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer' }}
+                          style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                           onClick={() => handleRemoveThreshold(idx)}
                         >
-                          ✕ Remove
+                          Remove
                         </button>
                       </td>
                     </tr>
@@ -361,7 +377,7 @@ function SiteEngineerDashboard() {
                   <option value="">-- Select Parameter to Add --</option>
                   {availableParameters.map(p => (
                     <option key={p._id} value={p._id}>
-                      {p.label} ({p.unit || 'unitless'}) {p.scope === 'site' ? '📍 [Site Local]' : '🌐 [Global]'}
+                      {p.label} ({p.unit || 'unitless'}) {p.scope === 'site' ? '[Site Local]' : '[Global]'}
                     </option>
                   ))}
                 </select>
@@ -377,7 +393,7 @@ function SiteEngineerDashboard() {
                 style={{ marginTop: '20px', padding: '10px 20px', background: '#1c3a2a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
                 onClick={handleSaveThresholds}
               >
-                💾 Save Threshold Configuration
+                Save Threshold Configuration
               </button>
             </div>
           </>

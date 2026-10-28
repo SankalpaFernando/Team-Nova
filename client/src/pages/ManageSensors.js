@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AdminSidebar from '../components/AdminSidebar';
+import { Pencil, Trash2 } from 'lucide-react';
 import './ManageSensors.css';
 
 function ManageSensors() {
@@ -195,7 +196,7 @@ function ManageSensors() {
                 <select className="mu-inp" name="parameter" value={formData.parameter} onChange={handleChange} required>
                   {parameters.map(p => (
                     <option key={p._id} value={p._id}>
-                      {p.label} ({p.unit || 'unitless'}) {p.scope === 'site' ? '📍 [Site Local]' : '🌐 [Global]'}
+                      {p.label} ({p.unit || 'unitless'}) {p.scope === 'site' ? '[Site Local]' : '[Global]'}
                     </option>
                   ))}
                 </select>
@@ -277,11 +278,11 @@ function ManageSensors() {
                         </span>
                       </td>
                       <td style={{ display: 'flex', gap: '6px' }}>
-                        <button className="mu-act" onClick={() => handleEditClick(s)}>
-                          ✏️ Edit
+                        <button className="mu-act" onClick={() => handleEditClick(s)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Pencil size={14} /> Edit
                         </button>
-                        <button className="mu-act mu-act--del" onClick={() => handleDelete(s._id)}>
-                          🗑 Delete
+                        <button className="mu-act mu-act--del" onClick={() => handleDelete(s._id)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Trash2 size={14} /> Delete
                         </button>
                       </td>
                     </tr>
