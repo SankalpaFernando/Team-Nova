@@ -217,7 +217,7 @@ function AdminAlerts() {
               {pendingConfirmations.map((a) => (
                 <div key={a._id} style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "8px", border: "1px solid #fcd34d", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <strong style={{ color: "#1e293b" }}>{a.parameter_name}</strong> at <span>{a.device?.site?.name || 'Site'}</span> ({a.device?.device_id || 'Device'})
+                    <strong style={{ color: "#1e293b" }}>{a.parameter_name || (a.type === 'device_offline' ? 'Device Offline' : a.type === 'system_offline' ? 'System Offline' : 'Alert')}</strong> at <span>{a.device?.site?.name || (a.type === 'system_offline' ? 'System' : 'Site')}</span> ({a.device?.device_id || (a.type === 'system_offline' ? 'All Devices' : 'Device')})
                     <div style={{ fontSize: "0.85rem", color: "#475569", marginTop: "2px" }}>{a.message}</div>
                   </div>
                   <div style={{ display: "flex", gap: "8px" }}>
