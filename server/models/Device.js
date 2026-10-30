@@ -33,8 +33,11 @@ const deviceSchema = new mongoose.Schema({
     type: Number,
     default: 900
   },
-  lastSeen: { type: Date, default: null }
-},{ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+  lastSeen: { type: Date, default: null },
+  fault_reason: { type: String, default: null },
+  faulty_since: { type: Date, default: null },
+  auto_flagged: { type: Boolean, default: false }
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
 module.exports = mongoose.model('Device', deviceSchema);

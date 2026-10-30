@@ -15,7 +15,8 @@ exports.authenticateDeviceOrUser = async (req, res, next) => {
       if (!device) {
         return res.status(401).json({ success: false, message: 'Invalid device API key' });
       }
-      if (device.status !== 'active') {
+      const isAllowed = device.status === 'active' || (device.status === 'faulty' && device.auto_flagged === true);
+      if (!isAllowed) {
         return res.status(403).json({ success: false, message: 'Device is not active' });
       }
       req.device = device;
