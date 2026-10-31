@@ -813,6 +813,72 @@ html {
     }
 
 }
+
+/* =========================
+   ABOUT PAGE - TEAM BOX
+========================= */
+
+/* Stacks the white boxes vertically, centered, with a space between them */
+.visitor-about-stack{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:30px;
+}
+
+/* Boxes grow with their content */
+.visitor-about-stack > .visitor-about-container{
+    max-height:none;
+    overflow:visible;
+}
+
+/* Team members: 3 per row, any leftover cards centered on the last row */
+.visitor-team-box .visitor-monitor-grid{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:12px;
+}
+
+.visitor-team-box .visitor-monitor-grid > .visitor-monitor-card{
+    flex:0 0 calc((100% - 24px) / 3);
+    max-width:calc((100% - 24px) / 3);
+    padding:14px 10px;
+}
+
+/* Slightly larger text for people cards (team box only) */
+.visitor-team-box .visitor-monitor-card h4{
+    font-size:16px;
+}
+
+.visitor-team-box .visitor-monitor-card p{
+    font-size:13px;
+}
+
+/* Tablets and phones: 2 per row, then 1 per row */
+@media(max-width:800px){
+    .visitor-team-box .visitor-monitor-grid > .visitor-monitor-card{
+        flex:0 0 calc((100% - 12px) / 2);
+        max-width:calc((100% - 12px) / 2);
+    }
+
+    /* first box keeps the original top offset, the others use the gap */
+    .visitor-about-stack > .visitor-about-container{
+        margin:0 0 20px;
+    }
+
+    .visitor-about-stack > .visitor-about-container:first-child{
+        margin:80px 0 0;
+    }
+}
+
+@media(max-width:500px){
+    .visitor-team-box .visitor-monitor-grid > .visitor-monitor-card{
+        flex:0 0 100%;
+        max-width:100%;
+    }
+}
 /* Dashboard-style navbar (used by About.js) */
 
 .dashboard-navbar{
