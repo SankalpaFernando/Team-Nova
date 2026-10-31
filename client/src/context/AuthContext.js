@@ -69,6 +69,20 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // refreshUser — call after saving profile to update React state immediately
+  // without requiring a logout/login cycle.
+  const refreshUser = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      const fresh = res.data.user;
+      localStorage.setItem('mg_user', JSON.stringify(fresh));
+      setUser(fresh);
+    } catch {
+      // silently ignore — e.g. immediately after a password change the old
+      // token is still valid so this should not normally fail
+    }
+  };
+
   // Helper flags
   const isAdmin = user?.role === 'admin';
   const isSiteEngineer = user?.role === 'site_engineer';
@@ -82,7 +96,8 @@ export const AuthProvider = ({ children }) => {
       register, 
       forgotPassword,
       resetPassword,
-      logout, 
+      logout,
+      refreshUser,
       isAdmin, 
       isSiteEngineer,
       isLoggedIn 
