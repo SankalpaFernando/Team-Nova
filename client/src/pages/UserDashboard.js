@@ -349,7 +349,7 @@ const handleLogout = () => {
               <MapPin size={26} color="#164e3d" />
             </div>
             <div className="card-body">
-              <h3>No. of Sites</h3>
+              <h3>Total Sites</h3>
               <h2>{loading ? "…" : sites.length}</h2>
               <p>Monitoring sites registered</p>
             </div>
