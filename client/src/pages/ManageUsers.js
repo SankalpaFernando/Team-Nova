@@ -173,27 +173,13 @@ function ManageUsers() {
 
   const doEdit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim()) {
-      setFormErr("Name and email are required.");
-      return;
-    }
-    if (form.role === "site_engineer" && !form.assignedSite) {
-      setFormErr("Selecting an assigned site is required when setting role to Site Engineer.");
-      return;
-    }
     setSaving(true);
+    setFormErr("");
     try {
-      // 1. Update basic info & status
+      // The request sends ONLY role and status
       await api.put(`/users/${selected._id}`, {
-        name: form.name,
-        email: form.email,
-        status: form.status
-      });
-
-      // 2. Call role update endpoint
-      await api.put(`/users/${selected._id}/role`, {
         role: form.role,
-        assignedSite: form.assignedSite
+        status: form.status
       });
 
       const wasPendingOrRejected = selected.status !== "approved";
@@ -201,7 +187,7 @@ function ManageUsers() {
       setShowEdit(false);
       load();
       if (wasPendingOrRejected && isNowApproved) {
-        showToast(`User updated and approved! Approval email with login link sent to ${form.email}.`);
+        showToast(`User updated and approved! Approval email with login link sent to ${selected.email}.`);
       } else {
         showToast("User updated successfully!");
       }
@@ -641,21 +627,25 @@ function ManageUsers() {
             <form className="mu-modal-body" onSubmit={doEdit}>
               {formErr && <p className="mu-ferr">{formErr}</p>}
 
+              {/* Read-only User Identity */}
               <label className="mu-lbl">Full Name</label>
               <input
                 className="mu-inp"
-                name="name"
-                value={form.name}
-                onChange={fc}
+                type="text"
+                value={selected?.name || ""}
+                disabled
+                readOnly
+                style={{ background: "#f3f4f6", color: "#6b7280", cursor: "not-allowed" }}
               />
 
               <label className="mu-lbl">Email Address</label>
               <input
                 className="mu-inp"
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={fc}
+                type="text"
+                value={selected?.email || ""}
+                disabled
+                readOnly
+                style={{ background: "#f3f4f6", color: "#6b7280", cursor: "not-allowed" }}
               />
 
               <label className="mu-lbl">Account Status</label>
@@ -671,18 +661,6 @@ function ManageUsers() {
                 <option value="site_engineer">Site Engineer</option>
                 <option value="admin">Admin</option>
               </select>
-
-              {form.role === "site_engineer" && (
-                <>
-                  <label className="mu-lbl">Assigned Site</label>
-                  <select className="mu-inp" name="assignedSite" value={form.assignedSite} onChange={fc}>
-                    <option value="">-- Select Assigned Site --</option>
-                    {sites.map(s => (
-                      <option key={s._id} value={s._id}>{s.name} ({s.region})</option>
-                    ))}
-                  </select>
-                </>
-              )}
 
               <div className="mu-modal-foot">
                 <button
