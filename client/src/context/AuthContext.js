@@ -30,9 +30,21 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Register function - submits registration for admin approval
+  // Register function - submits registration form and requests 6-digit email verification code
   const register = async (name, email, password) => {
     const res = await api.post('/auth/register', { name, email, password });
+    return res.data;
+  };
+
+  // Verify email code - creates the pending user record for admin review
+  const verifyEmailCode = async (email, code) => {
+    const res = await api.post('/auth/verify-email-code', { email, code });
+    return res.data;
+  };
+
+  // Resend verification code with cooldown & hourly limits
+  const resendEmailCode = async (email) => {
+    const res = await api.post('/auth/resend-email-code', { email });
     return res.data;
   };
 
@@ -78,8 +90,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('mg_user', JSON.stringify(fresh));
       setUser(fresh);
     } catch {
-      // silently ignore — e.g. immediately after a password change the old
-      // token is still valid so this should not normally fail
+      // silently ignore
     }
   };
 
@@ -93,7 +104,9 @@ export const AuthProvider = ({ children }) => {
       user, 
       loading, 
       login, 
-      register, 
+      register,
+      verifyEmailCode,
+      resendEmailCode,
       forgotPassword,
       resetPassword,
       logout,
