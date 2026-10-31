@@ -82,6 +82,8 @@ const userSchema = new mongoose.Schema({
 // Hash password before saving
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
+  // If flag is set, the password is already a valid bcrypt hash (e.g. transferred from EmailVerification)
+  if (this._skipPasswordHash) return;
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
 });

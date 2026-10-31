@@ -221,3 +221,138 @@
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
+
+/* =========================================
+   EMAIL VERIFICATION STEP STYLES
+   ========================================= */
+
+.reg-verify-box {
+  width: 380px;
+  max-width: 92%;
+  text-align: center;
+  animation: fadeIn 0.25s ease;
+}
+
+.reg-verify-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #e6f4ea;
+  border: 2px solid #b7dfca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
+.reg-verify-desc {
+  font-size: 13.5px;
+  color: #374151;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.reg-verify-desc strong {
+  color: #164e3d;
+  word-break: break-all;
+}
+
+.reg-code-input {
+  width: 100%;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 26px !important;
+  font-weight: 700;
+  letter-spacing: 10px;
+  text-align: center;
+  padding: 12px 8px !important;
+  border: 2px solid #164e3d !important;
+  border-radius: 8px !important;
+  background: #ffffff;
+  color: #164e3d;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.reg-code-input:focus {
+  outline: none;
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.reg-alert {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  line-height: 1.4;
+  text-align: center;
+  font-weight: 500;
+}
+
+.reg-alert--success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+.reg-verify-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.reg-resend-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reg-resend-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.reg-resend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reg-diff-email-btn {
+  background: none;
+  border: none;
+  color: #047857;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+  transition: color 0.15s;
+}
+
+.reg-diff-email-btn:hover {
+  color: #065f46;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

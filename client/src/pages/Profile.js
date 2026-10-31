@@ -20,7 +20,6 @@ function Profile() {
   const [avatarPreview, setAvatarPreview] = useState(null);
 
   const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,16 +48,13 @@ function Profile() {
     setEditingField(null);
     setFieldError("");
     setName(user?.name || "");
-    setEmail(user?.email || "");
   };
 
-  const saveNameOrEmail = async () => {
+  const saveName = async () => {
     setFieldError("");
     setSaving(true);
     try {
-      await api.put("/users/profile", { name, email });
-      // Refresh React state from the server so the displayed name/email
-      // updates immediately without requiring a logout.
+      await api.put("/users/profile", { name });
       await refreshUser();
       setEditingField(null);
     } catch (err) {
@@ -156,7 +152,7 @@ function Profile() {
                       onChange={(e) => setName(e.target.value)}
                       autoFocus
                     />
-                    <button className="save-btn" onClick={saveNameOrEmail} disabled={saving}>✓</button>
+                    <button className="save-btn" onClick={saveName} disabled={saving}>✓</button>
                     <button className="cancel-btn" onClick={cancelEdit} disabled={saving}>✕</button>
                   </div>
                 ) : (
@@ -167,27 +163,15 @@ function Profile() {
                 )}
               </div>
 
-              {/* Email */}
+              {/* Email (Read-only verified) */}
               <div className="detail-row">
                 <span>Email</span>
-
-                {editingField === "email" ? (
-                  <div className="edit-inline">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      autoFocus
-                    />
-                    <button className="save-btn" onClick={saveNameOrEmail} disabled={saving}>✓</button>
-                    <button className="cancel-btn" onClick={cancelEdit} disabled={saving}>✕</button>
-                  </div>
-                ) : (
-                  <div className="value-inline">
-                    <strong>{user?.email}</strong>
-                    <button className="pencil-btn" onClick={() => startEdit("email")}>✎</button>
-                  </div>
-                )}
+                <div className="value-inline">
+                  <strong>{user?.email}</strong>
+                  <span style={{ fontSize: "11.5px", fontWeight: "600", color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 8px", borderRadius: "10px", marginLeft: "8px" }}>
+                    Verified
+                  </span>
+                </div>
               </div>
 
               {/* Password */}
