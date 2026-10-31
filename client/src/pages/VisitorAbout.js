@@ -6,6 +6,10 @@ import dulanga from "../assests/team/dulanga.jpeg";
 import drarthiyan from "../assests/team/drarthiyan.jpg";
 import drsarves from "../assests/team/drsarves.webp";
 import kavithra from "../assests/team/kavithra.jpeg";
+import nisansala from "../assests/team/nisansala.jpeg";
+import aruni from "../assests/team/aruni.jpeg";
+import chandrika from "../assests/team/chandrika.jpeg";
+
 
 
 import {
@@ -20,10 +24,10 @@ import {
 */
 const TEAM_MEMBERS = [
   { firstName: "Kavithra", lastName: "Nirmali", programme: "Department of Computer Science", university: "University of Jaffna", photo: kavithra },
-  { firstName: "Kasuni", lastName: "Nisansala", programme: "Department of Computer Science", university: "University of Jaffna", photo: null },
+  { firstName: "Kasuni", lastName: "Nisansala", programme: "Department of Computer Science", university: "University of Jaffna", photo:nisansala },
   { firstName: "Dulanga", lastName: "Munasinghe", programme: "Department of Computer Science", university: "University of Jaffna", photo: dulanga },
-  { firstName: "Aruni", lastName: "Umeshika", programme: "Department of Computer Science", university: "University of Jaffna", photo: null },
-  { firstName: "Chandrika", lastName: "Kandepola", programme: "Department of Computer Science", university: "University of Jaffna", photo: null },
+  { firstName: "Umeshika", lastName: "Rathnasiri", programme: "Department of Computer Science", university: "University of Jaffna", photo: aruni },
+  { firstName: "Chandrika", lastName: "Kandepola", programme: "Department of Computer Science", university: "University of Jaffna", photo: chandrika },
 ];
 
 const SUPERVISOR = {
