@@ -9,7 +9,7 @@ import Footer from "../components/Footer";
 import { User, LogOut } from "lucide-react";
 
 function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -56,11 +56,11 @@ function Profile() {
     setFieldError("");
     setSaving(true);
     try {
-      const res = await api.put("/users/profile", { name, email });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify({ ...user, ...updatedUser }));
+      await api.put("/users/profile", { name, email });
+      // Refresh React state from the server so the displayed name/email
+      // updates immediately without requiring a logout.
+      await refreshUser();
       setEditingField(null);
-      window.location.reload();
     } catch (err) {
       setFieldError(err.response?.data?.message || "Couldn't save changes.");
     } finally {

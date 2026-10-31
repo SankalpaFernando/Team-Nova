@@ -15,10 +15,11 @@ const errorHandler = (err, req, res, next) => {
 
   // Mongoose duplicate key  e.g. same email twice
   if (err.code === 11000) {
-    const field = Object.keys(err.keyValue)[0];
+    const field = Object.keys(err.keyValue || {})[0] || 'email';
+    const capitalized = field.charAt(0).toUpperCase() + field.slice(1);
     return res.status(400).json({ 
       success: false, 
-      message: `${field} already exists` 
+      message: `${capitalized} already exists` 
     });
   }
 

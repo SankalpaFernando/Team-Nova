@@ -356,23 +356,130 @@ exports.deleteUser = async (req, res, next) => {
 // @access  Private
 exports.updateProfile = async (req, res, next) => {
   try {
-    const updates = {};
-    if (req.body.name) updates.name = req.body.name;
-    if (req.body.email) updates.email = req.body.email;
-    if (req.body.notificationPrefs) {
-      updates.notificationPrefs = {
-        ...req.user.notificationPrefs,
-        ...req.body.notificationPrefs
-      };
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      updates,
-      { new: true, runValidators: true }
-    ).select('-password').populate('assignedSite', 'name location region');
+    if (req.body.name !== undefined) {
+      const trimmedName = String(req.body.name).trim();
+      if (!trimmedName) {
+        return res.status(400).json({ success: false, message: 'Name cannot be empty' });
+      }
+      user.name = trimmedName;
+    }
 
-    res.status(200).json({ success: true, data: user });
+    if (req.body.email !== undefined) {
+      const trimmedEmail = String(req.body.email).trim().toLowerCase();
+      if (!trimmedEmail) {
+        return res.status(400).json({ success: false, message: 'Email cannot be empty' });
+      }
+      if (trimmedEmail !== user.email) {
+        const existing = await User.findOne({ email: trimmedEmail });
+        if (existing && existing._id.toString() !== user._id.toString()) {
+          return res.status(400).json({ success: false, message: 'Email already exists' });
+        }
+        user.email = trimmedEmail;
+      }
+    }
+
+    // Handle notification preferences if sent nested or flat
+    if (
+      req.body.notificationPrefs ||
+      req.body.sms_enabled !== undefined ||
+      req.body.phone !== undefined ||
+      req.body.sms_min_severity !== undefined ||
+      req.body.email_alerts_enabled !== undefined ||
+      req.body.email_min_severity !== undefined
+    ) {
+      const prefs = req.body.notificationPrefs || req.body;
+      if (!user.notificationPrefs) {
+        user.notificationPrefs = {};
+      }
+      if (prefs.sms_enabled !== undefined) user.notificationPrefs.sms_enabled = Boolean(prefs.sms_enabled);
+      if (prefs.sms_min_severity !== undefined) user.notificationPrefs.sms_min_severity = prefs.sms_min_severity;
+      if (prefs.phone !== undefined) user.notificationPrefs.phone = String(prefs.phone).trim();
+      if (prefs.email_alerts_enabled !== undefined) user.notificationPrefs.email_alerts_enabled = Boolean(prefs.email_alerts_enabled);
+      if (prefs.email_min_severity !== undefined) user.notificationPrefs.email_min_severity = prefs.email_min_severity;
+    }
+
+    // Handle optional password change if passed to /profile
+    if (req.body.currentPassword && req.body.newPassword) {
+      const userWithPass = await User.findById(req.user.id).select('+password');
+      if (!(await userWithPass.comparePassword(req.body.currentPassword))) {
+        return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      }
+      if (req.body.newPassword.length < 6) {
+        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+      }
+      user.password = req.body.newPassword;
+    }
+
+    await user.save();
+    await user.populate('assignedSite', 'name location region');
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.status(200).json({ success: true, data: userObj, user: userObj });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update notification preferences directly
+// @route   PUT /api/users/notification-prefs
+// @access  Private
+exports.updateNotificationPrefs = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const prefs = req.body.notificationPrefs || req.body;
+    if (!user.notificationPrefs) {
+      user.notificationPrefs = {};
+    }
+    if (prefs.sms_enabled !== undefined) user.notificationPrefs.sms_enabled = Boolean(prefs.sms_enabled);
+    if (prefs.sms_min_severity !== undefined) user.notificationPrefs.sms_min_severity = prefs.sms_min_severity;
+    if (prefs.phone !== undefined) user.notificationPrefs.phone = String(prefs.phone).trim();
+    if (prefs.email_alerts_enabled !== undefined) user.notificationPrefs.email_alerts_enabled = Boolean(prefs.email_alerts_enabled);
+    if (prefs.email_min_severity !== undefined) user.notificationPrefs.email_min_severity = prefs.email_min_severity;
+
+    await user.save();
+
+    res.status(200).json({ 
+      success: true, 
+      data: user.notificationPrefs, 
+      notificationPrefs: user.notificationPrefs,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        notificationPrefs: user.notificationPrefs
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get notification preferences
+// @route   GET /api/users/notification-prefs
+// @access  Private
+exports.getNotificationPrefs = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.status(200).json({ 
+      success: true, 
+      data: user.notificationPrefs, 
+      notificationPrefs: user.notificationPrefs 
+    });
   } catch (error) {
     next(error);
   }

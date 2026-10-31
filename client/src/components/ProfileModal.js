@@ -4,7 +4,7 @@ import api from "../services/api";
 import "./ProfileModal.css";
 
 function ProfileModal({ isOpen, onClose }) {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -79,12 +79,12 @@ function ProfileModal({ isOpen, onClose }) {
     setSuccessMessage("");
     setSaving(true);
     try {
-      const res = await api.put("/users/profile", { name, email });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify({ ...user, ...updatedUser }));
+      await api.put("/users/profile", { name, email });
+      // Refresh React state from the server so the name/email in the modal header
+      // and in any navbar/sidebar updates immediately without requiring a logout.
+      await refreshUser();
       setSuccessMessage("Profile updated successfully.");
       setEditingField(null);
-      setTimeout(() => window.location.reload(), 800);
     } catch (err) {
       setFieldError(err.response?.data?.message || "Couldn't save changes.");
     } finally {
@@ -139,16 +139,15 @@ function ProfileModal({ isOpen, onClose }) {
 
     setSaving(true);
     try {
-      // Uses the confirmed-working PUT /users/profile endpoint with notificationPrefs payload
-      const res = await api.put("/users/profile", {
+      await api.put("/users/profile", {
         notificationPrefs: {
           sms_enabled: smsEnabled,
           sms_min_severity: smsMinSeverity,
           phone,
         },
       });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify(updatedUser));
+      // Refresh so the displayed prefs values are always in sync with the DB
+      await refreshUser();
       setSuccessMessage("SMS notification preferences saved.");
       setEditingField(null);
     } catch (err) {
@@ -163,14 +162,14 @@ function ProfileModal({ isOpen, onClose }) {
     setSuccessMessage("");
     setSaving(true);
     try {
-      const res = await api.put("/users/profile", {
+      await api.put("/users/profile", {
         notificationPrefs: {
           email_alerts_enabled: emailEnabled,
           email_min_severity: emailMinSeverity,
         },
       });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify(updatedUser));
+      // Refresh so the displayed prefs values are always in sync with the DB
+      await refreshUser();
       setSuccessMessage("Email notification preferences saved.");
       setEditingField(null);
     } catch (err) {
@@ -191,7 +190,7 @@ function ProfileModal({ isOpen, onClose }) {
           <div className="pm-title-group">
             <span className="pm-icon">👤</span>
             <div>
-              <h2 className="pm-title">Profile & Settings</h2>
+              <h2 className="pm-title">Profile &amp; Settings</h2>
               <p className="pm-subtitle">{user?.email || ""}</p>
             </div>
           </div>
@@ -277,7 +276,7 @@ function ProfileModal({ isOpen, onClose }) {
           {/* Section 3: Password Security */}
           <div className="pm-card">
             <div className="pm-card-header">
-              <h3>Security & Password</h3>
+              <h3>Security &amp; Password</h3>
               {editingField !== "password" && (
                 <button className="pm-edit-btn" onClick={() => startEdit("password")}>
                   Change Password
@@ -362,9 +361,9 @@ function ProfileModal({ isOpen, onClose }) {
                     value={smsMinSeverity}
                     onChange={(e) => setSmsMinSeverity(e.target.value)}
                   >
-                    <option value="low">Low & Above</option>
-                    <option value="medium">Medium & Above</option>
-                    <option value="high">High & Above</option>
+                    <option value="low">Low &amp; Above</option>
+                    <option value="medium">Medium &amp; Above</option>
+                    <option value="high">High &amp; Above</option>
                     <option value="critical">Critical Only</option>
                   </select>
 

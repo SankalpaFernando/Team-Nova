@@ -7,6 +7,8 @@ const {
   updateUser,
   deleteUser,
   updateProfile,
+  updateNotificationPrefs,
+  getNotificationPrefs,
   getRecentLogins,
   changeUserRole,
   approveUser,
@@ -18,6 +20,9 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 
 router.put('/profile', updateProfile);
+router.route('/notification-prefs')
+  .get(getNotificationPrefs)
+  .put(updateNotificationPrefs);
 router.get('/recent-logins', authorize('admin'), getRecentLogins);
 router.get('/pending-count', authorize('admin'), getPendingUsersCount);
 router.put('/:id/role', authorize('admin'), changeUserRole);

@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 function AdminProfile() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   // ── Avatar ─────────────────────────────────────────────
@@ -50,13 +50,10 @@ function AdminProfile() {
     setFieldError("");
     setSaving(true);
     try {
-      const res = await api.put("/users/profile", { name, email });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify({ ...user, ...updatedUser }));
+      await api.put("/users/profile", { name, email });
+      // Refresh React state from the server so the sidebar and header update immediately
+      await refreshUser();
       setEditingField(null);
-      // Reflects instantly here; a page refresh will also pick it up
-      // via AuthContext reading mg_user on next load.
-      window.location.reload();
     } catch (err) {
       setFieldError(err.response?.data?.message || "Couldn't save changes.");
     } finally {
