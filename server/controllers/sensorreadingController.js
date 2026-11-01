@@ -161,7 +161,12 @@ exports.createReading = async (req, res, next) => {
           targetType: 'device',
           deviceId: deviceDoc._id,
           action: 'recovered',
-          device: deviceDoc
+          device: {
+            _id: deviceDoc._id,
+            device_id: deviceDoc.device_id,
+            status: deviceDoc.status,
+            site: deviceDoc.site ? (deviceDoc.site._id ? { _id: deviceDoc.site._id, name: deviceDoc.site.name } : deviceDoc.site) : null
+          }
         });
       }
     }
@@ -227,10 +232,16 @@ exports.createReading = async (req, res, next) => {
       }
 
       if (io) {
+        const safeDevice = {
+          _id: deviceDoc._id,
+          device_id: deviceDoc.device_id,
+          status: deviceDoc.status,
+          site: deviceDoc.site ? (deviceDoc.site._id ? { _id: deviceDoc.site._id, name: deviceDoc.site.name } : deviceDoc.site) : null
+        };
         io.emit('new_reading', {
           ...readingDoc.toObject(),
           sensor: sensorDoc,
-          device: deviceDoc
+          device: safeDevice
         });
       }
     }

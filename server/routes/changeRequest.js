@@ -10,7 +10,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect);
 
-router.get('/', getChangeRequests);
+router.get('/', authorize('admin', 'site_engineer'), getChangeRequests);
 router.get('/pending-count', authorize('admin'), getPendingCount);
 router.put('/:id/approve', authorize('admin'), approveChangeRequest);
 router.put('/:id/reject', authorize('admin'), rejectChangeRequest);

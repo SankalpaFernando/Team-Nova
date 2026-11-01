@@ -40,6 +40,11 @@ exports.getDevices = async (req, res, next) => {
       sensors: sensorsByDevice[dev._id.toString()] || []
     }));
 
+    // Never expose device apiKey to non-admin users
+    if (req.user && req.user.role !== 'admin') {
+      devicesWithSensors.forEach(d => { delete d.apiKey; });
+    }
+
     res.status(200).json({ success: true, count: devicesWithSensors.length, data: devicesWithSensors });
   } catch (error) {
     next(error);
@@ -58,6 +63,11 @@ exports.getDevice = async (req, res, next) => {
       .populate('parameter', 'key label unit')
       .lean();
     device.sensors = sensors;
+
+    // Never expose device apiKey to non-admin users
+    if (req.user && req.user.role !== 'admin') {
+      delete device.apiKey;
+    }
 
     res.status(200).json({ success: true, data: device });
   } catch (error) {
@@ -106,7 +116,12 @@ exports.createDevice = async (req, res, next) => {
         targetType: 'device',
         deviceId: device._id,
         action: 'create',
-        device
+        device: {
+          _id: device._id,
+          device_id: device.device_id,
+          status: device.status,
+          site: device.site
+        }
       });
     }
 
@@ -205,7 +220,12 @@ exports.updateDevice = async (req, res, next) => {
         targetType: 'device',
         deviceId: updatedDevice._id,
         action: 'update',
-        device: updatedDevice
+        device: {
+          _id: updatedDevice._id,
+          device_id: updatedDevice.device_id,
+          status: updatedDevice.status,
+          site: updatedDevice.site
+        }
       });
     }
 

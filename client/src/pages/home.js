@@ -97,7 +97,7 @@ function Home() {
             </div>
             <h3>What are Mangroves?</h3>
             <p>
-              Salt-tolerant trees and shrubs thriving along tropical shorelines. Their complex stilt roots
+              Coastal trees and shrubs thriving along tropical shorelines. Their complex stilt roots
               stabilize coastal sediments and serve as vital marine nurseries.
             </p>
           </div>
@@ -108,7 +108,7 @@ function Home() {
             </div>
             <h3>Why Monitor Water Quality?</h3>
             <p>
-              Salinity variations, temperature spikes, and water level changes directly impact forest health.
+              Temperature fluctuations and pH changes directly impact forest health.
               Continuous telemetry enables early intervention before degradation occurs.
             </p>
           </div>
@@ -152,7 +152,7 @@ function Home() {
             </div>
             <h3>Smart IoT Monitoring</h3>
             <p>
-              MangroveGuard collects real-time water level, salinity, pH, and sensor health data to empower environmental
+              MangroveGuard collects real-time temperature and pH telemetry to empower environmental
               researchers and authorities.
             </p>
           </div>
@@ -183,7 +183,7 @@ function Home() {
               <h3>What environmental parameters are monitored?</h3>
             </div>
             <p>
-              Water level, salinity concentration, water temperature, dissolved oxygen levels, and remote sensor device health are monitored continuously in real time.
+              Water temperature and pH levels are monitored continuously in real time.
             </p>
           </div>
 
@@ -203,7 +203,7 @@ function Home() {
               <h3>How does real-time monitoring help conservation?</h3>
             </div>
             <p>
-              Automated threshold alerts immediately flag chemical pollution, rapid salinity shifts, or tidal anomalies, allowing teams to respond before irreversible ecological damage.
+              Automated threshold alerts immediately notify site engineers when temperature or pH readings exceed safe limits, allowing teams to respond before irreversible ecological damage.
             </p>
           </div>
         </div>

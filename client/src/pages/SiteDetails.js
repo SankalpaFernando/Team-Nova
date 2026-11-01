@@ -1,7 +1,7 @@
 import "./SiteDetails.css";
 import "./AdminMaps.css";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
 import socket from "../services/socket";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -10,7 +10,9 @@ import { buildSeriesWithGaps } from "../utils/chartGaps";
 import { getDayTicks, makeDayAwareTick, formatTooltipTime } from "../utils/timeAxis";
 import UserNavbar from "../components/UserNavbar";
 import AdminSidebar from "../components/AdminSidebar";
+import UserLayout from "../components/UserLayout";
 import Footer from "../components/Footer";
+import { ChevronDown, ChevronUp, Cpu } from "lucide-react";
 
 function SiteDetails() {
   const { id } = useParams();
@@ -23,7 +25,9 @@ function SiteDetails() {
 
   const [site, setSite] = useState(null);
   const [devices, setDevices] = useState([]);
+  const [sensors, setSensors] = useState([]);
   const [latestReadings, setLatestReadings] = useState([]);
+  const [expandedDevices, setExpandedDevices] = useState({});
 
   // Chart states
   const [timeRange, setTimeRange] = useState(24); // hours: 1, 24, 168 (7d), 720 (1m)
@@ -57,32 +61,71 @@ function SiteDetails() {
     return "normal";
   };
 
+  const loadSite = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [siteRes, readingsRes, sensorsRes] = await Promise.all([
+        api.get(`/sites/${id}`),
+        api.get("/readings/latest"),
+        api.get("/sensors", { params: { site: id } }).catch(() => ({ data: { data: [] } }))
+      ]);
+
+      setSite(siteRes.data.data.site);
+      setDevices(siteRes.data.data.devices || []);
+      setLatestReadings(readingsRes.data.data || []);
+      setSensors(sensorsRes.data.data || []);
+    } catch (err) {
+      setError(
+        err.response?.status === 404
+          ? "This site couldn't be found."
+          : "Couldn't load this site's data from the server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadSite = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const [siteRes, readingsRes] = await Promise.all([
-          api.get(`/sites/${id}`),
-          api.get("/readings/latest"),
-        ]);
-
-        setSite(siteRes.data.data.site);
-        setDevices(siteRes.data.data.devices || []);
-        setLatestReadings(readingsRes.data.data || []);
-      } catch (err) {
-        setError(
-          err.response?.status === 404
-            ? "This site couldn't be found."
-            : "Couldn't load this site's data from the server."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadSite();
   }, [id]);
+
+  useEffect(() => {
+    const handleSensorChange = () => {
+      api.get("/sensors", { params: { site: id } })
+        .then(res => setSensors(res.data.data || []))
+        .catch(() => {});
+    };
+
+    socket.on("sensor_created", handleSensorChange);
+    socket.on("sensor_updated", handleSensorChange);
+    socket.on("sensor_deleted", handleSensorChange);
+
+    return () => {
+      socket.off("sensor_created", handleSensorChange);
+      socket.off("sensor_updated", handleSensorChange);
+      socket.off("sensor_deleted", handleSensorChange);
+    };
+  }, [id]);
+
+  // Group sensors by device ID
+  const sensorsByDevice = useMemo(() => {
+    const map = {};
+    sensors.forEach((s) => {
+      const devId = s.device?._id || s.device;
+      if (!devId) return;
+      if (!map[devId]) map[devId] = [];
+      map[devId].push(s);
+    });
+    return map;
+  }, [sensors]);
+
+  const toggleDevice = (devId) => {
+    setExpandedDevices((prev) => ({
+      ...prev,
+      [devId]: !prev[devId],
+    }));
+  };
 
   // Fetch Historical Data
   useEffect(() => {
@@ -95,7 +138,7 @@ function SiteDetails() {
       try {
         const fromDate = new Date(Date.now() - timeRange * 60 * 60 * 1000).toISOString();
 
-        // Fetch up to 1000 readings per device for the selected time range
+        // Fetch up to 2000 readings per device for the selected time range
         const deviceRequests = devices.map(d =>
           api.get(`/readings?device=${d._id}&limit=2000&from=${fromDate}`)
         );
@@ -131,15 +174,14 @@ function SiteDetails() {
           const k = r.sensor?.parameter?.key?.toLowerCase() || "";
           const lbl = (r.sensor?.parameter?.label || r.parameter_name || "").toLowerCase();
 
-          if (k === "ph" || lbl.includes("ph")) dataMap[timeKey].pH = r.value;
-          else if (k === "temperature" || k === "temp" || lbl.includes("temp")) dataMap[timeKey].temperature = r.value;
-          else if (k === "salinity" || lbl.includes("salin")) dataMap[timeKey].salinity = r.value;
-          else if (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen")) dataMap[timeKey].dissolved_o2 = r.value;
+          if (k === "ph" || lbl.includes("ph")) dataMap[timeKey].pH = r.value !== undefined ? r.value : r.pH;
+          else if (k === "temperature" || k === "temp" || lbl.includes("temp")) dataMap[timeKey].temperature = r.value !== undefined ? r.value : r.temperature;
+          else if (k === "salinity" || lbl.includes("salin")) dataMap[timeKey].salinity = r.value !== undefined ? r.value : r.salinity;
+          else if (k === "dissolved_o2" || k === "do2" || lbl.includes("o2") || lbl.includes("oxygen")) dataMap[timeKey].dissolved_o2 = r.value !== undefined ? r.value : r.dissolved_o2;
         });
 
-        const chartData = Object.values(dataMap).sort((a, b) => a.timeKey - b.timeKey);
-        setHistoryData(chartData);
-
+        const chartPoints = Object.values(dataMap).sort((a, b) => a.timeKey - b.timeKey);
+        setHistoryData(chartPoints);
       } catch (err) {
         console.error("Failed to load history data", err);
       } finally {
@@ -189,13 +231,14 @@ function SiteDetails() {
 
         if (!pName) return prev;
 
+        const val = newReading.value !== undefined ? newReading.value : newReading[pName];
         const lastItem = prev.length > 0 ? prev[prev.length - 1] : null;
 
         if (lastItem && lastItem.timeKey === timeKey) {
-          const updated = { ...lastItem, [pName]: newReading.value };
+          const updated = { ...lastItem, [pName]: val };
           return [...prev.slice(0, -1), updated];
         } else {
-          const newItem = { timeKey, timeLabel, [pName]: newReading.value };
+          const newItem = { timeKey, timeLabel, [pName]: val };
           return [...prev, newItem];
         }
       });
@@ -254,7 +297,6 @@ function SiteDetails() {
       const val = payload[0].value;
       const paramKey = selectedParam;
       const status = getStatusFor(val, paramKey, site?.thresholds);
-
       const isBreach = status === "breach";
 
       return (
@@ -278,6 +320,7 @@ function SiteDetails() {
 
   const renderContent = () => (
     <>
+      {/* Sensor Average Cards */}
       <div className="details-container">
         <div className="detail-card">
           <h3>pH Level</h3>
@@ -376,6 +419,7 @@ function SiteDetails() {
                 <XAxis dataKey="timeKey" height={40} ticks={xTicks} interval={0} tick={makeDayAwareTick(xTicks, { fontSize: 12, fill: "#666" })} />
                 <YAxis tick={{ fontSize: 12, fill: "#666" }} />
                 <Tooltip content={<CustomTooltip />} />
+                <Legend verticalAlign="top" height={36} />
 
                 {selectedParam === "pH" && <Line type="monotone" name="pH" dataKey="pH" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "pH")} activeDot={{ r: 6 }} connectNulls={false} />}
                 {selectedParam === "temperature" && <Line type="monotone" name="Temperature (°C)" dataKey="temperature" stroke="#b0b0b0" strokeWidth={2} dot={(p) => renderCustomDot(p, "temperature")} activeDot={{ r: 6 }} connectNulls={false} />}
@@ -398,22 +442,147 @@ function SiteDetails() {
         </p>
       )}
 
-      {/* Devices */}
+      {/* Devices & Sensors (Touchable / Clickable to view sensors with Model Name) */}
       <div className="devices-section">
-        <h3>Devices at this Site</h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", flexWrap: "wrap", gap: "8px" }}>
+          <h3 style={{ margin: 0, color: "#2f5d50" }}>Devices at this Site</h3>
+          <span style={{ fontSize: "12px", color: "#666" }}>Touch / click a device to view its sensors</span>
+        </div>
 
         {devices.length === 0 ? (
           <p className="no-devices">No devices installed at this site yet</p>
         ) : (
           <ul className="device-list">
-            {devices.map((d) => (
-              <li key={d._id} className={`device-item device-${d.status}`}>
-                <span className="device-id">{d.device_id}</span>
-                <span className={`device-status device-status-${d.status}`}>
-                  {d.status}
-                </span>
-              </li>
-            ))}
+            {devices.map((d) => {
+              const devSensors = sensorsByDevice[d._id] || [];
+              const isExpanded = !!expandedDevices[d._id];
+
+              return (
+                <li key={d._id} style={{ listStyle: "none", marginBottom: "8px" }}>
+                  <div
+                    className={`device-item device-${d.status} device-item-clickable`}
+                    onClick={() => toggleDevice(d._id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleDevice(d._id);
+                      }
+                    }}
+                    style={{
+                      cursor: "pointer",
+                      userSelect: "none",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                    title="Touch / click to view sensors"
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span className="device-id">{d.device_id}</span>
+                      <span style={{
+                        fontSize: "11px",
+                        background: "#e8f0ec",
+                        color: "#2f5d50",
+                        padding: "2px 8px",
+                        borderRadius: "10px",
+                        fontWeight: 600
+                      }}>
+                        {devSensors.length} {devSensors.length === 1 ? "sensor" : "sensors"}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span className={`device-status device-status-${d.status}`}>
+                        {d.status}
+                      </span>
+                      <span style={{ color: "#777", display: "flex", alignItems: "center" }}>
+                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div style={{
+                      margin: "4px 0 8px 12px",
+                      padding: "12px 16px",
+                      background: "#f4f8f6",
+                      borderRadius: "8px",
+                      borderLeft: "3px solid #2f5d50"
+                    }}>
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        marginBottom: "10px",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: "#1c3a2a",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px"
+                      }}>
+                        <Cpu size={14} color="#1d7068" />
+                        <span>Installed Sensors ({devSensors.length})</span>
+                      </div>
+
+                      {devSensors.length === 0 ? (
+                        <p style={{ margin: 0, fontSize: "12px", color: "#666", fontStyle: "italic" }}>
+                          No sensors attached to this device.
+                        </p>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                          {devSensors.map((s) => (
+                            <div
+                              key={s._id}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                background: "#ffffff",
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #dce8e2",
+                                fontSize: "13px"
+                              }}
+                            >
+                              <div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                  <strong style={{ color: "#1f4d3a", fontSize: "13px" }}>
+                                    {s.model_name ? s.model_name : (s.sensor_id || "Sensor Probe")}
+                                  </strong>
+                                  <span style={{
+                                    fontSize: "11px",
+                                    background: "#eaf3ee",
+                                    color: "#1d7068",
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    fontWeight: 600
+                                  }}>
+                                    {s.parameter?.label || s.parameter?.name || s.type || "Parameter"}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: "11px", color: "#666", marginTop: "3px" }}>
+                                  {s.sensor_id && <span>ID: {s.sensor_id} &nbsp;•&nbsp; </span>}
+                                  {s.parameter?.unit && <span>Unit: {s.parameter.unit} &nbsp;•&nbsp; </span>}
+                                  {s.parameter?.valid_min !== undefined && s.parameter?.valid_max !== undefined && (
+                                    <span>Range: {s.parameter.valid_min}–{s.parameter.valid_max}</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <span className={`device-status device-status-${s.status}`} style={{ fontSize: "11px", padding: "3px 10px" }}>
+                                {s.status}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -478,6 +647,42 @@ function SiteDetails() {
   }
 
   // Regular Registered User Mode
+  if (user && user.role === 'registered_user') {
+    return (
+      <UserLayout activePage="sites">
+        <div className="ul-header">
+          <div>
+            <p className="ul-breadcrumb">Monitoring › Sites › {site?.name || "Details"}</p>
+            <h1 className="ul-title">{site?.name || "Site Details"}</h1>
+            {site && (
+              <p className="ul-subtitle">
+                📍 {site.location} &nbsp;•&nbsp; {site.region} Region &nbsp;•&nbsp;{" "}
+                {activeCount}/{devices.length} devices active
+              </p>
+            )}
+          </div>
+          <Link to="/sites" className="ul-btn-sec">
+            ← Back to Sites
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="ul-loading">Loading site data…</div>
+        ) : error ? (
+          <div className="ul-error">
+            <p>{error}</p>
+            <Link to="/sites" className="ul-btn-sec" style={{ marginTop: "10px" }}>
+              ← Back to Sites
+            </Link>
+          </div>
+        ) : (
+          renderContent()
+        )}
+      </UserLayout>
+    );
+  }
+
+  // Visitor Mode
   return (
     <div className="site-page">
       <UserNavbar />
@@ -487,13 +692,13 @@ function SiteDetails() {
       ) : error ? (
         <div className="site-status-msg">
           <p className="site-error">{error}</p>
-          <Link to="/sites" className="back-link">
+          <Link to="/visitor-sites" className="back-link">
             ← Back to Sites
           </Link>
         </div>
       ) : (
         <>
-          <Link to="/sites" className="back-link">
+          <Link to="/visitor-sites" className="back-link">
             ← Back to Sites
           </Link>
 
