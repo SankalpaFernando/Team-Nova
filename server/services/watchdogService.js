@@ -146,7 +146,12 @@ async function runWatchdogCheck() {
             targetType: 'device',
             deviceId: d._id,
             action: 'faulty',
-            device: d
+            device: {
+              _id: d._id,
+              device_id: d.device_id,
+              status: d.status,
+              site: d.site ? (d.site._id ? { _id: d.site._id, name: d.site.name } : d.site) : null
+            }
           });
         }
       } else {
@@ -257,4 +262,3 @@ module.exports = {
   stopWatchdog,
   runWatchdogCheck
 };
-

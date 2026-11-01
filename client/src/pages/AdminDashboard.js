@@ -658,17 +658,38 @@ function AdminDashboard() {
                         {/* Expanded detail — parameter breach chart & alert list */}
                         {isOpen && (
                           <div style={{ padding: "14px 18px", background: "#fafcfb", borderTop: "1px solid #edf4ef" }}>
-                            <div style={{ fontWeight: 600, fontSize: "12px", color: "#1c3a2a", marginBottom: "8px" }}>
-                              Active Breaching Parameters:
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                              <span style={{ fontWeight: 600, fontSize: "12px", color: "#1c3a2a" }}>
+                                Active Breaching Parameters:
+                              </span>
+                              <Link to={`/sites/${s.siteId}`} state={{ fromAdmin: true }} style={{ fontSize: "12px", color: "#164e3d", fontWeight: 600, textDecoration: "none" }}>
+                                View site details →
+                              </Link>
                             </div>
                             {s.alerts.map(a => (
-                              <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: severityBg[a.severity_level] || "#fff", borderRadius: "6px", marginBottom: "6px", border: `1px solid ${severityBorder[a.severity_level] || "#ccc"}` }}>
+                              <Link
+                                key={a._id}
+                                to={`/sites/${s.siteId}`}
+                                state={{ fromAdmin: true }}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  padding: "8px 12px",
+                                  background: severityBg[a.severity_level] || "#fff",
+                                  borderRadius: "6px",
+                                  marginBottom: "6px",
+                                  border: `1px solid ${severityBorder[a.severity_level] || "#ccc"}`,
+                                  textDecoration: "none",
+                                  color: "inherit"
+                                }}
+                              >
                                 <div>
                                   <strong style={{ fontSize: "13px", color: severityText[a.severity_level] }}>{a.parameter_name || "Alert"}{a.measured_value !== undefined && a.measured_value !== null ? `: ${a.measured_value} ${a.unit || ""}` : ""}</strong>
                                   <div style={{ fontSize: "11px", color: "#334155", fontWeight: 500 }}>Device: {a.device?.device_id || "—"} · {a.message}</div>
                                 </div>
                                 <span className={`am-badge am-badge--${severityClass(a.severity_level)}`}>{a.severity_level}</span>
-                              </div>
+                              </Link>
                             ))}
 
                             <div style={{ fontSize: "12px", fontWeight: 600, color: "#1c3a2a", margin: "14px 0 6px" }}>

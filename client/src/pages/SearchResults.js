@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/navbar";
 import UserNavbar from "../components/UserNavbar";
 import AdminSidebar from "../components/AdminSidebar";
+import UserLayout from "../components/UserLayout";
 import Footer from "../components/Footer";
 import mangrove from "../assests/mangrove.png";
 import api from "../services/api";
@@ -85,6 +86,18 @@ function SearchResults() {
       path: "/sites",
       description: "View all active lagoon and coastal monitoring sites with sensor telemetry.",
       keywords: ["site", "sites", "negombo", "puttalam", "jaffna", "kalpitiya", "lagoon"]
+    },
+    {
+      title: "Telemetry Devices",
+      path: "/devices",
+      description: "View transmission devices and hardware online status.",
+      keywords: ["device", "devices", "hardware", "online", "status"]
+    },
+    {
+      title: "Sensor Probes",
+      path: "/sensors",
+      description: "View water chemistry sensor probes and calibration details.",
+      keywords: ["sensor", "sensors", "probes", "calibration", "ph", "temperature"]
     },
     {
       title: "Alerts & Notifications",
@@ -306,7 +319,7 @@ function SearchResults() {
   const suggestionsText = isVisitor
     ? "Jaffna, Negombo, Sites, About, or Contact"
     : isRegisteredUser
-    ? "Dashboard, Sites, Jaffna, Alerts, pH, or Salinity"
+    ? "Dashboard, Sites, Devices, Sensors, Jaffna, Alerts, pH, or Temperature"
     : "Dashboard, Sites, Devices, Sensors, Parameters, Jaffna, or Alerts";
 
   // Reusable results content
@@ -531,11 +544,44 @@ function SearchResults() {
     );
   }
 
-  // PUBLIC / REGISTERED USER LAYOUT
+  // REGISTERED USER SHELL LAYOUT
+  if (isRegisteredUser) {
+    return (
+      <UserLayout activePage="dashboard">
+        <div className="ul-header">
+          <div>
+            <p className="ul-breadcrumb">Member &rsaquo; Search</p>
+            <h1 className="ul-title">Search Results</h1>
+            <p className="ul-subtitle">
+              System-wide results for <strong style={{ color: "#1d7068" }}>"{query}"</strong>
+              {totalCount > 0 && ` (${totalCount} matches)`}
+            </p>
+          </div>
+        </div>
+
+        <form className="ul-filter-bar" onSubmit={handleInlineSearch} style={{ gap: "12px", marginBottom: "24px" }}>
+          <input
+            type="text"
+            className="ul-select"
+            style={{ flex: 1, minWidth: "240px" }}
+            placeholder="Search sites, devices, gauges, alerts, locations..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          <button type="submit" className="ul-btn-sec">Search</button>
+        </form>
+
+        <div style={{ marginTop: "16px" }}>
+          {renderResultsList()}
+        </div>
+      </UserLayout>
+    );
+  }
+
+  // PUBLIC VISITOR LAYOUT
   return (
     <div className="search-page">
-      {/* Role-appropriate Navbar: Visitor Navbar for visitors, User Navbar for registered users */}
-      {isVisitor ? <Navbar showBackHome={true} /> : <UserNavbar />}
+      <Navbar showBackHome={true} />
 
       <section
         className="search-hero"
@@ -554,11 +600,7 @@ function SearchResults() {
               <div className="search-inline-box">
                 <input
                   type="text"
-                  placeholder={
-                    isVisitor
-                      ? "Search mangrove locations, sites, Jaffna, Negombo..."
-                      : "Search sites, sensor gauges, alerts, locations..."
-                  }
+                  placeholder="Search mangrove locations, sites, Jaffna, Negombo..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                 />

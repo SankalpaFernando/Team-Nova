@@ -13,7 +13,7 @@ import chandrika from "../assests/team/chandrika.jpeg";
 
 
 import {
-  Globe, Leaf, Waves, Thermometer, Battery, Activity,
+  Globe, Leaf, Thermometer, Activity,
   Users, User, GraduationCap
 } from 'lucide-react';
 
@@ -137,32 +137,29 @@ function VisitorAbout() {
                   What We Monitor
                 </h3>
 
-                <div className="visitor-monitor-grid" style={{ marginBottom: "30px" }}>
-                  <div className="visitor-monitor-card">
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: "center" }}>
-                      <Waves size={20} color="#0b5d3b" /> Water Level
-                    </h4>
-                    <p>Tracks tidal flow & anomalous sea level changes.</p>
+                <div
+                    className="visitor-monitor-grid"
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      flexWrap: "wrap",
+                      gap: "20px",
+                      marginBottom: "30px"
+                    }}
+                  >
+                    <div className="visitor-monitor-card" style={{ flex: "1 1 260px", maxWidth: "340px", padding: "16px 20px" }}>
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: "center" }}>
+                        <Thermometer size={20} color="#0b5d3b" /> Temperature
+                      </h4>
+                      <p>Monitors water temperature fluctuations.</p>
+                    </div>
+                    <div className="visitor-monitor-card" style={{ flex: "1 1 260px", maxWidth: "340px", padding: "16px 20px" }}>
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: "center" }}>
+                        <Activity size={20} color="#0b5d3b" /> pH
+                      </h4>
+                      <p>Measures how acidic or alkaline the water is.</p>
+                    </div>
                   </div>
-                  <div className="visitor-monitor-card">
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: "center" }}>
-                      <Activity size={20} color="#0b5d3b" /> Salinity
-                    </h4>
-                    <p>Measures critical salt concentrations for plant health.</p>
-                  </div>
-                  <div className="visitor-monitor-card">
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: "center" }}>
-                      <Thermometer size={20} color="#0b5d3b" /> Temperature
-                    </h4>
-                    <p>Monitors water temperature fluctuations.</p>
-                  </div>
-                  <div className="visitor-monitor-card">
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: "center" }}>
-                      <Battery size={20} color="#0b5d3b" /> Diagnostics
-                    </h4>
-                    <p>Tracks device uptime, battery, and signal health.</p>
-                  </div>
-                </div>
 
                 <h3 className="visitor-about-title" style={{ fontSize: "20px", marginBottom: "10px", color: "#0b5d3b" }}>
                   Why Mangrove Guard?
