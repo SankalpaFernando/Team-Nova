@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 function AdminProfile() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   // ── Avatar ─────────────────────────────────────────────
@@ -13,12 +13,11 @@ function AdminProfile() {
 
   // ── Editable fields ────────────────────────────────────
   const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [editingField, setEditingField] = useState(null); // "name" | "email" | "password" | null
+  const [editingField, setEditingField] = useState(null); // "name" | "password" | null
   const [saving, setSaving] = useState(false);
   const [fieldError, setFieldError] = useState("");
 
@@ -31,7 +30,6 @@ function AdminProfile() {
   const startEdit = (field) => {
     setFieldError("");
     setEditingField(field);
-    // Reset password fields fresh every time that editor opens
     if (field === "password") {
       setCurrentPassword("");
       setNewPassword("");
@@ -43,20 +41,15 @@ function AdminProfile() {
     setEditingField(null);
     setFieldError("");
     setName(user?.name || "");
-    setEmail(user?.email || "");
   };
 
-  const saveNameOrEmail = async () => {
+  const saveName = async () => {
     setFieldError("");
     setSaving(true);
     try {
-      const res = await api.put("/users/profile", { name, email });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify({ ...user, ...updatedUser }));
+      await api.put("/users/profile", { name });
+      await refreshUser();
       setEditingField(null);
-      // Reflects instantly here; a page refresh will also pick it up
-      // via AuthContext reading mg_user on next load.
-      window.location.reload();
     } catch (err) {
       setFieldError(err.response?.data?.message || "Couldn't save changes.");
     } finally {
@@ -86,7 +79,6 @@ function AdminProfile() {
         currentPassword,
         newPassword,
       });
-      // Backend issues a fresh token on password change
       localStorage.setItem("mg_token", res.data.token);
       setEditingField(null);
       setCurrentPassword("");
@@ -212,7 +204,7 @@ function AdminProfile() {
                       onChange={(e) => setName(e.target.value)}
                       autoFocus
                     />
-                    <button className="ap-save-btn" onClick={saveNameOrEmail} disabled={saving}>✓</button>
+                    <button className="ap-save-btn" onClick={saveName} disabled={saving}>✓</button>
                     <button className="ap-cancel-btn" onClick={cancelEdit} disabled={saving}>✕</button>
                   </div>
                 ) : (
@@ -223,27 +215,15 @@ function AdminProfile() {
                 )}
               </div>
 
-              {/* Email */}
+              {/* Email (Read-only verified) */}
               <div className="ap-row">
                 <span>Email</span>
-
-                {editingField === "email" ? (
-                  <div className="ap-edit-inline">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      autoFocus
-                    />
-                    <button className="ap-save-btn" onClick={saveNameOrEmail} disabled={saving}>✓</button>
-                    <button className="ap-cancel-btn" onClick={cancelEdit} disabled={saving}>✕</button>
-                  </div>
-                ) : (
-                  <div className="ap-value-inline">
-                    <strong>{user?.email}</strong>
-                    <button className="ap-pencil-btn" onClick={() => startEdit("email")}>✎</button>
-                  </div>
-                )}
+                <div className="ap-value-inline">
+                  <strong>{user?.email}</strong>
+                  <span style={{ fontSize: "11.5px", fontWeight: "600", color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 8px", borderRadius: "10px", marginLeft: "8px" }}>
+                    Verified
+                  </span>
+                </div>
               </div>
 
               {/* Role (admin-only, read-only) */}

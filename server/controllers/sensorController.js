@@ -106,12 +106,23 @@ exports.createSensor = async (req, res, next) => {
       model_name,
       serial_number,
       calibration_date,
-      status
+      status: status || 'active'
     });
 
     const populatedSensor = await Sensor.findById(sensor._id)
       .populate('device', 'device_id site status')
       .populate('parameter', 'key label unit');
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('device_status_changed', {
+        targetType: 'sensor',
+        sensorId: sensor._id,
+        deviceId: device._id,
+        action: 'create',
+        sensor: populatedSensor
+      });
+    }
 
     res.status(201).json({ success: true, data: populatedSensor });
   } catch (error) {
@@ -177,11 +188,43 @@ exports.updateSensor = async (req, res, next) => {
       });
     }
 
+    // Handle fault metadata on status changes
+    if (req.body.status) {
+      if (req.body.status === 'active') {
+        req.body.fault_reason = null;
+        req.body.faulty_since = null;
+        req.body.auto_flagged = false;
+      } else if (['faulty', 'inactive'].includes(req.body.status)) {
+        if (!req.body.fault_reason) {
+          req.body.fault_reason = req.body.status === 'faulty'
+            ? 'Manually set to faulty'
+            : 'Manually set to inactive';
+        }
+        if (!req.body.faulty_since) {
+          req.body.faulty_since = new Date();
+        }
+        if (req.body.auto_flagged === undefined) {
+          req.body.auto_flagged = false;
+        }
+      }
+    }
+
     const updatedSensor = await Sensor.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     ).populate('device', 'device_id site status').populate('parameter', 'key label unit');
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('device_status_changed', {
+        targetType: 'sensor',
+        sensorId: updatedSensor._id,
+        deviceId: updatedSensor.device?._id || updatedSensor.device,
+        action: 'update',
+        sensor: updatedSensor
+      });
+    }
 
     res.status(200).json({ success: true, data: updatedSensor });
   } catch (error) {
@@ -235,7 +278,19 @@ exports.deleteSensor = async (req, res, next) => {
       });
     }
 
+    const deviceId = sensor.device?._id || sensor.device;
     await sensor.deleteOne();
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('device_status_changed', {
+        targetType: 'sensor',
+        sensorId: sensor._id,
+        deviceId,
+        action: 'delete'
+      });
+    }
+
     res.status(200).json({ success: true, message: 'Sensor deleted successfully' });
   } catch (error) {
     next(error);

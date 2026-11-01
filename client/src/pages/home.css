@@ -39,11 +39,7 @@ html {
 .hero-overlay {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(
-    180deg,
-    rgba(15, 56, 44, 0.72) 0%,
-    rgba(15, 56, 44, 0.88) 100%
-  );
+  
   display: flex;
   justify-content: center;
   align-items: center;
@@ -57,6 +53,23 @@ html {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Soft radial shade behind the text block only — fades to transparent at the edges so the surrounding photo stays at full brightness. No full-width overlay. */
+.hero-content::before {
+  content: "";
+  position: absolute;
+  inset: -50px -100px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+    rgba(4, 40, 30, 0.55) 0%,
+    rgba(4, 40, 30, 0.38) 45%,
+    rgba(4, 40, 30, 0) 75%
+  );
 }
 
 /* Hero Badge / Tagline Pill */
@@ -65,12 +78,12 @@ html {
   align-items: center;
   gap: 10px;
   padding: 8px 18px;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 100px;
-  color: #e2f4eb;
+  color: #fff;
   font-size: 13.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -116,11 +129,10 @@ html {
   line-height: 1.1;
   letter-spacing: -0.03em;
   margin-bottom: 18px;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6), 0 0 3px rgba(0, 0, 0, 0.45);
 }
 
 .hero-content h3 {
-
   color: #d1fae5;
   font-size: 24px;
   font-weight: 500;
@@ -128,6 +140,7 @@ html {
   letter-spacing: -0.01em;
   margin-bottom: 24px;
   max-width: 720px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6), 0 0 3px rgba(0,0,0,0.45);
 }
 
 .hero-description {
@@ -136,7 +149,8 @@ html {
   line-height: 1.7;
   max-width: 700px;
   margin: 0 auto 36px;
-  font-weight: 400;
+  font-weight: 500;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6), 0 0 3px rgba(0,0,0,0.45);
 }
 
 /* =========================
@@ -463,7 +477,7 @@ html {
 
     height:100%;
 
-    background:rgba(0,0,0,0.45);
+    
 
     display:flex;
 
@@ -670,7 +684,7 @@ html {
 .visitor-about-overlay {
     width: 100%;
     min-height: 100%;
-    background: rgba(0,0,0,0.45);
+    
     display: flex;
     justify-content: center;
     align-items: center;

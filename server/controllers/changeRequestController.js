@@ -116,6 +116,15 @@ exports.approveChangeRequest = async (req, res, next) => {
     request.reviewedAt = new Date();
     await request.save();
 
+    const io = req.app.get('io');
+    if (io && (entityType === 'device' || entityType === 'sensor')) {
+      io.emit('device_status_changed', {
+        targetType: entityType,
+        targetId,
+        action
+      });
+    }
+
     const updatedRequest = await ChangeRequest.findById(request._id)
       .populate('requestedBy', 'name email role')
       .populate('site', 'name location region')

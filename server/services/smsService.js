@@ -14,8 +14,8 @@ const sendSms = async (to, message) => {
 /**
  * Process targeted SMS alerts with persistent DB-backed cooldown.
  * @param {Object} alert - The newly created Alert document
- * @param {Object} site - The populated Site document
- * @param {Object} parameter - The Parameter document
+ * @param {Object} site - The populated Site document (optional for system alerts)
+ * @param {Object} parameter - The Parameter document (optional for non-threshold alerts)
  */
 const processAlertSms = async (alert, site, parameter) => {
   try {
@@ -24,16 +24,23 @@ const processAlertSms = async (alert, site, parameter) => {
     const cooldownThreshold = new Date(Date.now() - cooldownMs);
 
     // PERSISTENT COOLDOWN CHECK:
-    // Check if an SMS was already sent for this same (device, parameter) within cooldown window
-    const recentSentAlert = await Alert.findOne({
-      device: alert.device,
-      parameter: alert.parameter,
-      sms_sent: true,
-      sms_sent_at: { $gte: cooldownThreshold }
-    });
+    // Build target-specific cooldown query based on alert type
+    let cooldownQuery;
+    if (alert.type === 'system_offline') {
+      cooldownQuery = { type: 'system_offline', sms_sent: true, sms_sent_at: { $gte: cooldownThreshold } };
+    } else if (alert.type === 'device_offline') {
+      cooldownQuery = { device: alert.device, type: 'device_offline', sms_sent: true, sms_sent_at: { $gte: cooldownThreshold } };
+    } else if (alert.type === 'sensor_offline') {
+      cooldownQuery = { sensor: alert.sensor, type: 'sensor_offline', sms_sent: true, sms_sent_at: { $gte: cooldownThreshold } };
+    } else {
+      cooldownQuery = { device: alert.device, parameter: alert.parameter, sms_sent: true, sms_sent_at: { $gte: cooldownThreshold } };
+    }
 
+    const recentSentAlert = await Alert.findOne(cooldownQuery);
+
+    const targetLabel = parameter?.label || alert.parameter_name || alert.type || 'Alert';
     if (recentSentAlert) {
-      console.log(`⏳ [SMS SERVICE] Throttling SMS for device ${alert.device} parameter "${parameter.label}". Last sent at ${recentSentAlert.sms_sent_at}`);
+      console.log(`⏳ [SMS SERVICE] Throttling SMS for ${targetLabel}. Last sent at ${recentSentAlert.sms_sent_at}`);
       return false;
     }
 
@@ -43,7 +50,7 @@ const processAlertSms = async (alert, site, parameter) => {
     let recipientUser = null;
 
     // Check if site has assigned engineer
-    if (site.assignedEngineer) {
+    if (site && site.assignedEngineer) {
       const engineer = await User.findById(site.assignedEngineer);
       if (engineer && engineer.notificationPrefs && engineer.notificationPrefs.sms_enabled) {
         const minRank = severityOrder[engineer.notificationPrefs.sms_min_severity || 'critical'] || 4;
@@ -69,7 +76,7 @@ const processAlertSms = async (alert, site, parameter) => {
     }
 
     if (!recipientUser) {
-      console.log(`ℹ️ [SMS SERVICE] Alert generated for site "${site.name}" but no recipient opted into SMS for severity "${alert.severity_level}".`);
+      console.log(`ℹ️ [SMS SERVICE] Alert generated for "${site?.name || 'System'}" but no recipient opted into SMS for severity "${alert.severity_level}".`);
       return false;
     }
 

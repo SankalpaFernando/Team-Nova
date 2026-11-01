@@ -60,6 +60,7 @@ const generateAlertForReading = async (readingDoc, sensorDoc, deviceDoc, siteDoc
 
   // Create Alert document (persisting denormalized parameter_name and unit)
   const alert = await Alert.create({
+    type: 'threshold',
     reading: readingDoc._id,
     device: deviceDoc._id,
     sensor: sensorDoc._id,
@@ -121,7 +122,9 @@ exports.createReading = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Device not found' });
     }
 
-    if (deviceDoc.status !== 'active') {
+    // Accept readings from 'active' devices OR 'faulty' devices that were auto_flagged
+    const isAllowed = deviceDoc.status === 'active' || (deviceDoc.status === 'faulty' && deviceDoc.auto_flagged === true);
+    if (!isAllowed) {
       return res.status(400).json({ success: false, message: 'Device is not active' });
     }
 
@@ -132,11 +135,51 @@ exports.createReading = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No readings provided' });
     }
 
+    const serverReceiveTime = new Date();
+    const io = req.app.get('io');
+
+    // Automatic recovery for device: if device was faulty and auto_flagged, recover to active
+    let deviceRecovered = false;
+    if (deviceDoc.status === 'faulty' && deviceDoc.auto_flagged === true) {
+      deviceDoc.status = 'active';
+      deviceDoc.fault_reason = null;
+      deviceDoc.faulty_since = null;
+      deviceDoc.auto_flagged = false;
+      deviceRecovered = true;
+    }
+    deviceDoc.lastSeen = serverReceiveTime;
+    await deviceDoc.save();
+
+    if (deviceRecovered) {
+      // Resolve open device_offline alert
+      await Alert.updateMany(
+        { device: deviceDoc._id, type: 'device_offline', status: { $ne: 'resolved' } },
+        { status: 'resolved' }
+      );
+      if (io) {
+        io.emit('device_status_changed', {
+          targetType: 'device',
+          deviceId: deviceDoc._id,
+          action: 'recovered',
+          device: {
+            _id: deviceDoc._id,
+            device_id: deviceDoc.device_id,
+            status: deviceDoc.status,
+            site: deviceDoc.site ? (deviceDoc.site._id ? { _id: deviceDoc.site._id, name: deviceDoc.site.name } : deviceDoc.site) : null
+          }
+        });
+      }
+    }
+
+    // If there is an unresolved system_offline alert, resolve it since data has arrived
+    await Alert.updateMany(
+      { type: 'system_offline', status: { $ne: 'resolved' } },
+      { status: 'resolved' }
+    );
+
     const createdReadings = [];
     const generatedAlerts = [];
     let adaptiveSamplingTriggered = false;
-
-    const io = req.app.get('io');
 
     for (const item of readingList) {
       if (!item.sensor || item.value === undefined) continue;
@@ -144,11 +187,40 @@ exports.createReading = async (req, res, next) => {
       const sensorDoc = await Sensor.findById(item.sensor).populate('parameter');
       if (!sensorDoc) continue;
 
+      // Automatic recovery for sensor: if sensor was faulty and auto_flagged, recover to active
+      let sensorRecovered = false;
+      if (sensorDoc.status === 'faulty' && sensorDoc.auto_flagged === true) {
+        sensorDoc.status = 'active';
+        sensorDoc.fault_reason = null;
+        sensorDoc.faulty_since = null;
+        sensorDoc.auto_flagged = false;
+        sensorRecovered = true;
+      }
+      sensorDoc.lastReadingAt = serverReceiveTime;
+      await sensorDoc.save();
+
+      if (sensorRecovered) {
+        // Resolve open sensor_offline alert
+        await Alert.updateMany(
+          { sensor: sensorDoc._id, type: 'sensor_offline', status: { $ne: 'resolved' } },
+          { status: 'resolved' }
+        );
+        if (io) {
+          io.emit('device_status_changed', {
+            targetType: 'sensor',
+            sensorId: sensorDoc._id,
+            deviceId: deviceDoc._id,
+            action: 'recovered',
+            sensor: sensorDoc
+          });
+        }
+      }
+
       const readingDoc = await SensorReading.create({
         sensor: sensorDoc._id,
         device: deviceDoc._id,
         value: item.value,
-        recorded_at: item.recorded_at ? new Date(item.recorded_at) : new Date()
+        recorded_at: item.recorded_at ? new Date(item.recorded_at) : serverReceiveTime
       });
 
       createdReadings.push(readingDoc);
@@ -160,16 +232,19 @@ exports.createReading = async (req, res, next) => {
       }
 
       if (io) {
+        const safeDevice = {
+          _id: deviceDoc._id,
+          device_id: deviceDoc.device_id,
+          status: deviceDoc.status,
+          site: deviceDoc.site ? (deviceDoc.site._id ? { _id: deviceDoc.site._id, name: deviceDoc.site.name } : deviceDoc.site) : null
+        };
         io.emit('new_reading', {
           ...readingDoc.toObject(),
           sensor: sensorDoc,
-          device: deviceDoc
+          device: safeDevice
         });
       }
     }
-
-    // Update device lastSeen timestamp
-    await Device.findByIdAndUpdate(deviceDoc._id, { lastSeen: new Date() });
 
     // Adaptive sampling interval calculation:
     // If value is within ~20% of threshold, suggest 60s sample rate; otherwise default sampling_interval_seconds

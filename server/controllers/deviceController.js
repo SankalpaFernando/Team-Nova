@@ -1,9 +1,10 @@
 const Device = require('../models/Device');
+const Sensor = require('../models/Sensor');
 const Site = require('../models/Site');
 const ChangeRequest = require('../models/ChangeRequest');
 const crypto = require('crypto');
 
-// @desc    Get all devices
+// @desc    Get all devices (with populated sensors for health & status monitoring)
 // @route   GET /api/devices
 // @access  Private
 exports.getDevices = async (req, res, next) => {
@@ -19,20 +20,55 @@ exports.getDevices = async (req, res, next) => {
       query.site = req.user.assignedSite;
     }
 
-    const devices = await Device.find(query).populate('site', 'name location region');
-    res.status(200).json({ success: true, count: devices.length, data: devices });
+    const devices = await Device.find(query).populate('site', 'name location region').lean();
+
+    // Attach sensors to each device
+    const deviceIds = devices.map(d => d._id);
+    const sensors = await Sensor.find({ device: { $in: deviceIds } })
+      .populate('parameter', 'key label unit')
+      .lean();
+
+    const sensorsByDevice = {};
+    for (const sensor of sensors) {
+      const devId = sensor.device.toString();
+      if (!sensorsByDevice[devId]) sensorsByDevice[devId] = [];
+      sensorsByDevice[devId].push(sensor);
+    }
+
+    const devicesWithSensors = devices.map(dev => ({
+      ...dev,
+      sensors: sensorsByDevice[dev._id.toString()] || []
+    }));
+
+    // Never expose device apiKey to non-admin users
+    if (req.user && req.user.role !== 'admin') {
+      devicesWithSensors.forEach(d => { delete d.apiKey; });
+    }
+
+    res.status(200).json({ success: true, count: devicesWithSensors.length, data: devicesWithSensors });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Get single device
+// @desc    Get single device (with sensors attached)
 // @route   GET /api/devices/:id
 // @access  Private
 exports.getDevice = async (req, res, next) => {
   try {
-    const device = await Device.findById(req.params.id).populate('site', 'name location region');
+    const device = await Device.findById(req.params.id).populate('site', 'name location region').lean();
     if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
+
+    const sensors = await Sensor.find({ device: device._id })
+      .populate('parameter', 'key label unit')
+      .lean();
+    device.sensors = sensors;
+
+    // Never expose device apiKey to non-admin users
+    if (req.user && req.user.role !== 'admin') {
+      delete device.apiKey;
+    }
+
     res.status(200).json({ success: true, data: device });
   } catch (error) {
     next(error);
@@ -73,6 +109,21 @@ exports.createDevice = async (req, res, next) => {
       site: siteId,
       sampling_interval_seconds: sampling_interval_seconds || 900
     });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('device_status_changed', {
+        targetType: 'device',
+        deviceId: device._id,
+        action: 'create',
+        device: {
+          _id: device._id,
+          device_id: device.device_id,
+          status: device.status,
+          site: device.site
+        }
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -134,11 +185,49 @@ exports.updateDevice = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Forbidden: Insufficient privileges' });
     }
 
+    // Handle fault metadata on status changes
+    if (req.body.status) {
+      if (req.body.status === 'active') {
+        req.body.fault_reason = null;
+        req.body.faulty_since = null;
+        req.body.auto_flagged = false;
+      } else if (['faulty', 'inactive', 'maintenance'].includes(req.body.status)) {
+        if (!req.body.fault_reason) {
+          req.body.fault_reason = req.body.status === 'faulty'
+            ? 'Manually set to faulty'
+            : req.body.status === 'maintenance'
+              ? 'Scheduled maintenance'
+              : 'Manually set to inactive';
+        }
+        if (!req.body.faulty_since) {
+          req.body.faulty_since = new Date();
+        }
+        if (req.body.auto_flagged === undefined) {
+          req.body.auto_flagged = false;
+        }
+      }
+    }
+
     const updatedDevice = await Device.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     ).populate('site', 'name location region');
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('device_status_changed', {
+        targetType: 'device',
+        deviceId: updatedDevice._id,
+        action: 'update',
+        device: {
+          _id: updatedDevice._id,
+          device_id: updatedDevice.device_id,
+          status: updatedDevice.status,
+          site: updatedDevice.site
+        }
+      });
+    }
 
     res.status(200).json({ success: true, data: updatedDevice });
   } catch (error) {
@@ -185,6 +274,16 @@ exports.deleteDevice = async (req, res, next) => {
     }
 
     await device.deleteOne();
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('device_status_changed', {
+        targetType: 'device',
+        deviceId: device._id,
+        action: 'delete'
+      });
+    }
+
     res.status(200).json({ success: true, message: 'Device removed successfully' });
   } catch (error) {
     next(error);

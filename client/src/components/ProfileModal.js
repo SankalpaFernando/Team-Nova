@@ -4,10 +4,9 @@ import api from "../services/api";
 import "./ProfileModal.css";
 
 function ProfileModal({ isOpen, onClose }) {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,7 +20,7 @@ function ProfileModal({ isOpen, onClose }) {
   const [emailEnabled, setEmailEnabled] = useState(user?.notificationPrefs?.email_alerts_enabled ?? true);
   const [emailMinSeverity, setEmailMinSeverity] = useState(user?.notificationPrefs?.email_min_severity || "critical");
 
-  const [editingField, setEditingField] = useState(null); // "name_email" | "password" | "sms" | "email" | null
+  const [editingField, setEditingField] = useState(null); // "name" | "password" | "sms" | "email" | null
   const [saving, setSaving] = useState(false);
   const [fieldError, setFieldError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -29,7 +28,6 @@ function ProfileModal({ isOpen, onClose }) {
   useEffect(() => {
     if (user) {
       setName(user.name || "");
-      setEmail(user.email || "");
       setSmsEnabled(user.notificationPrefs?.sms_enabled || false);
       setSmsMinSeverity(user.notificationPrefs?.sms_min_severity || "critical");
       setPhone(user.notificationPrefs?.phone || "");
@@ -66,7 +64,6 @@ function ProfileModal({ isOpen, onClose }) {
     setFieldError("");
     setSuccessMessage("");
     setName(user?.name || "");
-    setEmail(user?.email || "");
     setSmsEnabled(user?.notificationPrefs?.sms_enabled || false);
     setSmsMinSeverity(user?.notificationPrefs?.sms_min_severity || "critical");
     setPhone(user?.notificationPrefs?.phone || "");
@@ -74,17 +71,15 @@ function ProfileModal({ isOpen, onClose }) {
     setEmailMinSeverity(user?.notificationPrefs?.email_min_severity || "critical");
   };
 
-  const saveNameOrEmail = async () => {
+  const saveName = async () => {
     setFieldError("");
     setSuccessMessage("");
     setSaving(true);
     try {
-      const res = await api.put("/users/profile", { name, email });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify({ ...user, ...updatedUser }));
+      await api.put("/users/profile", { name });
+      await refreshUser();
       setSuccessMessage("Profile updated successfully.");
       setEditingField(null);
-      setTimeout(() => window.location.reload(), 800);
     } catch (err) {
       setFieldError(err.response?.data?.message || "Couldn't save changes.");
     } finally {
@@ -139,16 +134,14 @@ function ProfileModal({ isOpen, onClose }) {
 
     setSaving(true);
     try {
-      // Uses the confirmed-working PUT /users/profile endpoint with notificationPrefs payload
-      const res = await api.put("/users/profile", {
+      await api.put("/users/profile", {
         notificationPrefs: {
           sms_enabled: smsEnabled,
           sms_min_severity: smsMinSeverity,
           phone,
         },
       });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify(updatedUser));
+      await refreshUser();
       setSuccessMessage("SMS notification preferences saved.");
       setEditingField(null);
     } catch (err) {
@@ -163,14 +156,13 @@ function ProfileModal({ isOpen, onClose }) {
     setSuccessMessage("");
     setSaving(true);
     try {
-      const res = await api.put("/users/profile", {
+      await api.put("/users/profile", {
         notificationPrefs: {
           email_alerts_enabled: emailEnabled,
           email_min_severity: emailMinSeverity,
         },
       });
-      const updatedUser = res.data.data;
-      localStorage.setItem("mg_user", JSON.stringify(updatedUser));
+      await refreshUser();
       setSuccessMessage("Email notification preferences saved.");
       setEditingField(null);
     } catch (err) {
@@ -191,7 +183,7 @@ function ProfileModal({ isOpen, onClose }) {
           <div className="pm-title-group">
             <span className="pm-icon">👤</span>
             <div>
-              <h2 className="pm-title">Profile & Settings</h2>
+              <h2 className="pm-title">Profile &amp; Settings</h2>
               <p className="pm-subtitle">{user?.email || ""}</p>
             </div>
           </div>
@@ -228,31 +220,34 @@ function ProfileModal({ isOpen, onClose }) {
           <div className="pm-card">
             <div className="pm-card-header">
               <h3>Account Info</h3>
-              {editingField !== "name_email" && (
-                <button className="pm-edit-btn" onClick={() => startEdit("name_email")}>
-                  Edit
+              {editingField !== "name" && (
+                <button className="pm-edit-btn" onClick={() => startEdit("name")}>
+                  Edit Name
                 </button>
               )}
             </div>
 
-            {editingField === "name_email" ? (
+            {editingField === "name" ? (
               <div className="pm-edit-form">
-                <label className="pm-label">Name</label>
+                <label className="pm-label">Full Name</label>
                 <input
                   type="text"
                   className="pm-input"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoFocus
                 />
-                <label className="pm-label">Email</label>
+                <label className="pm-label">Email Address (Verified - Read Only)</label>
                 <input
                   type="email"
                   className="pm-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={user?.email || ""}
+                  disabled
+                  readOnly
+                  style={{ background: "#f3f4f6", cursor: "not-allowed", color: "#6b7280" }}
                 />
                 <div className="pm-form-actions">
-                  <button className="pm-btn pm-btn--primary" onClick={saveNameOrEmail} disabled={saving}>
+                  <button className="pm-btn pm-btn--primary" onClick={saveName} disabled={saving}>
                     {saving ? "Saving..." : "Save Changes"}
                   </button>
                   <button className="pm-btn pm-btn--secondary" onClick={cancelEdit} disabled={saving}>
@@ -268,7 +263,12 @@ function ProfileModal({ isOpen, onClose }) {
                 </div>
                 <div>
                   <div className="pm-field-label">Email Address</div>
-                  <div className="pm-field-val">{user?.email || "—"}</div>
+                  <div className="pm-field-val" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>{user?.email || "—"}</span>
+                    <span style={{ fontSize: "11px", fontWeight: "600", color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "1px 6px", borderRadius: "8px" }}>
+                      Verified
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -277,7 +277,7 @@ function ProfileModal({ isOpen, onClose }) {
           {/* Section 3: Password Security */}
           <div className="pm-card">
             <div className="pm-card-header">
-              <h3>Security & Password</h3>
+              <h3>Security &amp; Password</h3>
               {editingField !== "password" && (
                 <button className="pm-edit-btn" onClick={() => startEdit("password")}>
                   Change Password
@@ -293,6 +293,7 @@ function ProfileModal({ isOpen, onClose }) {
                   className="pm-input"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoFocus
                 />
                 <label className="pm-label">New Password</label>
                 <input
@@ -362,9 +363,9 @@ function ProfileModal({ isOpen, onClose }) {
                     value={smsMinSeverity}
                     onChange={(e) => setSmsMinSeverity(e.target.value)}
                   >
-                    <option value="low">Low & Above</option>
-                    <option value="medium">Medium & Above</option>
-                    <option value="high">High & Above</option>
+                    <option value="low">Low &amp; Above</option>
+                    <option value="medium">Medium &amp; Above</option>
+                    <option value="high">High &amp; Above</option>
                     <option value="critical">Critical Only</option>
                   </select>
 

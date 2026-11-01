@@ -8,8 +8,8 @@ const sendEmail = require('../utils/sendEmail');
  * instead of SMS, and tracks its own email_sent / email_sent_at fields
  * so the two channels can be throttled independently.
  * @param {Object} alert - The newly created Alert document
- * @param {Object} site - The populated Site document
- * @param {Object} parameter - The Parameter document
+ * @param {Object} site - The populated Site document (optional for system alerts)
+ * @param {Object} parameter - The Parameter document (optional for non-threshold alerts)
  */
 const processAlertEmail = async (alert, site, parameter) => {
   try {
@@ -17,16 +17,23 @@ const processAlertEmail = async (alert, site, parameter) => {
     const cooldownMs = cooldownMinutes * 60 * 1000;
     const cooldownThreshold = new Date(Date.now() - cooldownMs);
 
-    // PERSISTENT COOLDOWN CHECK — same pattern as SMS, but keyed on email_sent
-    const recentSentAlert = await Alert.findOne({
-      device: alert.device,
-      parameter: alert.parameter,
-      email_sent: true,
-      email_sent_at: { $gte: cooldownThreshold }
-    });
+    // PERSISTENT COOLDOWN CHECK — keyed on email_sent
+    let cooldownQuery;
+    if (alert.type === 'system_offline') {
+      cooldownQuery = { type: 'system_offline', email_sent: true, email_sent_at: { $gte: cooldownThreshold } };
+    } else if (alert.type === 'device_offline') {
+      cooldownQuery = { device: alert.device, type: 'device_offline', email_sent: true, email_sent_at: { $gte: cooldownThreshold } };
+    } else if (alert.type === 'sensor_offline') {
+      cooldownQuery = { sensor: alert.sensor, type: 'sensor_offline', email_sent: true, email_sent_at: { $gte: cooldownThreshold } };
+    } else {
+      cooldownQuery = { device: alert.device, parameter: alert.parameter, email_sent: true, email_sent_at: { $gte: cooldownThreshold } };
+    }
 
+    const recentSentAlert = await Alert.findOne(cooldownQuery);
+
+    const targetLabel = parameter?.label || alert.parameter_name || (alert.type === 'device_offline' ? 'Device Offline' : alert.type === 'system_offline' ? 'System Offline' : 'Alert');
     if (recentSentAlert) {
-      console.log(`⏳ [EMAIL SERVICE] Throttling email for device ${alert.device} parameter "${parameter.label}". Last sent at ${recentSentAlert.email_sent_at}`);
+      console.log(`⏳ [EMAIL SERVICE] Throttling email for ${targetLabel}. Last sent at ${recentSentAlert.email_sent_at}`);
       return false;
     }
 
@@ -36,12 +43,10 @@ const processAlertEmail = async (alert, site, parameter) => {
     let recipientUser = null;
 
     // Prefer the site's assigned engineer, if opted in
-    if (site.assignedEngineer) {
+    if (site && site.assignedEngineer) {
       const engineer = await User.findById(site.assignedEngineer);
-      console.log(`🔍 [EMAIL DEBUG] Engineer found: ${engineer?.email}, prefs:`, JSON.stringify(engineer?.notificationPrefs));
       if (engineer && engineer.notificationPrefs && engineer.notificationPrefs.email_alerts_enabled) {
         const minRank = severityOrder[engineer.notificationPrefs.email_min_severity || 'critical'] || 4;
-        console.log(`🔍 [EMAIL DEBUG] alertRank=${alertSeverityRank}, minRank=${minRank}, hasEmail=${!!engineer.email}`);
         if (alertSeverityRank >= minRank && engineer.email) {
           recipientUser = engineer;
         }
@@ -64,16 +69,18 @@ const processAlertEmail = async (alert, site, parameter) => {
     }
 
     if (!recipientUser) {
-      console.log(`ℹ️ [EMAIL SERVICE] Alert generated for site "${site.name}" but no recipient opted into email for severity "${alert.severity_level}".`);
+      console.log(`ℹ️ [EMAIL SERVICE] Alert generated for "${site?.name || 'System'}" but no recipient opted into email for severity "${alert.severity_level}".`);
       return false;
     }
+
+    const siteName = site?.name || 'System / Network';
 
     // Send the email using the existing sendEmail utility
     const emailResult = await sendEmail({
       to: recipientUser.email,
-      subject: `[MangroveGuard Alert] ${alert.severity_level.toUpperCase()} - ${parameter.label} at ${site.name}`,
+      subject: `[MangroveGuard Alert] ${alert.severity_level.toUpperCase()} - ${targetLabel} at ${siteName}`,
       text: alert.message,
-      html: `<p><strong>${alert.severity_level.toUpperCase()} ALERT</strong></p><p>${alert.message}</p><p>Site: ${site.name}</p>`
+      html: `<p><strong>${alert.severity_level.toUpperCase()} ALERT</strong></p><p>${alert.message}</p><p>Site: ${siteName}</p>`
     });
 
     // sendEmail returns { devMode: true } if no SMTP config is set,

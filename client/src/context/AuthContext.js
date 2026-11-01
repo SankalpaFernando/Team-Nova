@@ -30,9 +30,21 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Register function - submits registration for admin approval
+  // Register function - submits registration form and requests 6-digit email verification code
   const register = async (name, email, password) => {
     const res = await api.post('/auth/register', { name, email, password });
+    return res.data;
+  };
+
+  // Verify email code - creates the pending user record for admin review
+  const verifyEmailCode = async (email, code) => {
+    const res = await api.post('/auth/verify-email-code', { email, code });
+    return res.data;
+  };
+
+  // Resend verification code with cooldown & hourly limits
+  const resendEmailCode = async (email) => {
+    const res = await api.post('/auth/resend-email-code', { email });
     return res.data;
   };
 
@@ -69,6 +81,19 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // refreshUser — call after saving profile to update React state immediately
+  // without requiring a logout/login cycle.
+  const refreshUser = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      const fresh = res.data.user;
+      localStorage.setItem('mg_user', JSON.stringify(fresh));
+      setUser(fresh);
+    } catch {
+      // silently ignore
+    }
+  };
+
   // Helper flags
   const isAdmin = user?.role === 'admin';
   const isSiteEngineer = user?.role === 'site_engineer';
@@ -79,10 +104,13 @@ export const AuthProvider = ({ children }) => {
       user, 
       loading, 
       login, 
-      register, 
+      register,
+      verifyEmailCode,
+      resendEmailCode,
       forgotPassword,
       resetPassword,
-      logout, 
+      logout,
+      refreshUser,
       isAdmin, 
       isSiteEngineer,
       isLoggedIn 

@@ -263,8 +263,52 @@ function AdminDashboard() {
 
   // Accordion: track which site rows are expanded (map of siteId -> boolean)
   const [expandedSiteIds, setExpandedSiteIds] = useState({});
+  const [actionLoading, setActionLoading] = useState({});
 
   const handleLogout = () => { logout(); navigate("/"); };
+
+  const refreshDevices = async () => {
+    try {
+      const res = await api.get("/devices");
+      setDevices(res.data.data || []);
+    } catch (err) {
+      console.error("Failed to refresh devices:", err);
+    }
+  };
+
+  const handleSetDeviceActive = async (deviceId) => {
+    setActionLoading(prev => ({ ...prev, [deviceId]: true }));
+    try {
+      await api.put(`/devices/${deviceId}`, {
+        status: "active",
+        fault_reason: null,
+        faulty_since: null,
+        auto_flagged: false
+      });
+      await refreshDevices();
+    } catch (err) {
+      console.error("Failed to set device active:", err);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [deviceId]: false }));
+    }
+  };
+
+  const handleSetSensorActive = async (sensorId) => {
+    setActionLoading(prev => ({ ...prev, [sensorId]: true }));
+    try {
+      await api.put(`/sensors/${sensorId}`, {
+        status: "active",
+        fault_reason: null,
+        faulty_since: null,
+        auto_flagged: false
+      });
+      await refreshDevices();
+    } catch (err) {
+      console.error("Failed to set sensor active:", err);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [sensorId]: false }));
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -347,9 +391,23 @@ function AdminDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleStatusChange = () => {
+      refreshDevices();
+    };
+
+    socket.on("device_status_changed", handleStatusChange);
+    return () => {
+      socket.off("device_status_changed", handleStatusChange);
+    };
+  }, []);
+
   // ── derived stats ─────────────────────────────────────
   const activeDevices = devices.filter(d => d.status === "active").length;
-  const attentionDevices = devices.filter(d => d.status === "faulty" || d.status === "inactive" || d.status === "maintenance");
+  const attentionDevices = devices.filter(
+    d => d.status === "faulty" || d.status === "inactive" || d.status === "maintenance" ||
+         (d.sensors && d.sensors.some(s => s.status === "faulty" || s.status === "inactive"))
+  );
   const unreadAlerts = alerts.filter(a => a.status === "unread").length;
   const recentAlerts = [...alerts]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -370,9 +428,10 @@ function AdminDashboard() {
       siteAttentionMap[site._id] = { siteId: site._id, siteName: site.name, count: 0, worst: 'low', alertsMap: {} };
     }
     const entry = siteAttentionMap[site._id];
-    // Alerts from API are newest-first, so the first one we see is the latest
-    if (!entry.alertsMap[a.parameter_name]) {
-      entry.alertsMap[a.parameter_name] = a;
+    // Key by parameter_name or alert ID to safely support device/system offline alerts
+    const alertKey = a.parameter_name || a._id;
+    if (!entry.alertsMap[alertKey]) {
+      entry.alertsMap[alertKey] = a;
     }
   });
 
@@ -599,17 +658,38 @@ function AdminDashboard() {
                         {/* Expanded detail — parameter breach chart & alert list */}
                         {isOpen && (
                           <div style={{ padding: "14px 18px", background: "#fafcfb", borderTop: "1px solid #edf4ef" }}>
-                            <div style={{ fontWeight: 600, fontSize: "12px", color: "#1c3a2a", marginBottom: "8px" }}>
-                              Active Breaching Parameters:
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                              <span style={{ fontWeight: 600, fontSize: "12px", color: "#1c3a2a" }}>
+                                Active Breaching Parameters:
+                              </span>
+                              <Link to={`/sites/${s.siteId}`} state={{ fromAdmin: true }} style={{ fontSize: "12px", color: "#164e3d", fontWeight: 600, textDecoration: "none" }}>
+                                View site details →
+                              </Link>
                             </div>
                             {s.alerts.map(a => (
-                              <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: severityBg[a.severity_level] || "#fff", borderRadius: "6px", marginBottom: "6px", border: `1px solid ${severityBorder[a.severity_level] || "#ccc"}` }}>
+                              <Link
+                                key={a._id}
+                                to={`/sites/${s.siteId}`}
+                                state={{ fromAdmin: true }}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  padding: "8px 12px",
+                                  background: severityBg[a.severity_level] || "#fff",
+                                  borderRadius: "6px",
+                                  marginBottom: "6px",
+                                  border: `1px solid ${severityBorder[a.severity_level] || "#ccc"}`,
+                                  textDecoration: "none",
+                                  color: "inherit"
+                                }}
+                              >
                                 <div>
-                                  <strong style={{ fontSize: "13px", color: severityText[a.severity_level] }}>{a.parameter_name}: {a.measured_value} {a.unit}</strong>
+                                  <strong style={{ fontSize: "13px", color: severityText[a.severity_level] }}>{a.parameter_name || "Alert"}{a.measured_value !== undefined && a.measured_value !== null ? `: ${a.measured_value} ${a.unit || ""}` : ""}</strong>
                                   <div style={{ fontSize: "11px", color: "#334155", fontWeight: 500 }}>Device: {a.device?.device_id || "—"} · {a.message}</div>
                                 </div>
                                 <span className={`am-badge am-badge--${severityClass(a.severity_level)}`}>{a.severity_level}</span>
-                              </div>
+                              </Link>
                             ))}
 
                             <div style={{ fontSize: "12px", fontWeight: 600, color: "#1c3a2a", margin: "14px 0 6px" }}>
@@ -632,18 +712,103 @@ function AdminDashboard() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                   <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1c3a2a", display: "flex", alignItems: "center", gap: "8px" }}>
                     <Radio size={18} color="#1d7068" />
-                    <span>Devices needing attention</span>
+                    <span>Devices needing maintenance</span>
                   </h2>
                   <Link to="/manage-devices" style={{ fontSize: "12px", color: "#1c3a2a" }}>View all →</Link>
                 </div>
                 {attentionDevices.length === 0 ? (
-                  <p style={{ fontSize: "13px", color: "#3b6d11" }}>All devices online.</p>
-                ) : attentionDevices.slice(0, 5).map(d => (
-                  <div key={d._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid #edf4ef" }}>
-                    <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{d.device_id} <span style={{ color: "#5c7c6a" }}>· {d.site?.name || "—"}</span></span>
-                    <span className={`am-badge am-badge--${statusClass(d.status)}`}>{d.status}</span>
+                  <p style={{ fontSize: "13px", color: "#3b6d11" }}>All devices and sensors online and healthy.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "380px", overflowY: "auto" }}>
+                    {attentionDevices.map(d => {
+                      const isDeviceProblem = d.status === "faulty" || d.status === "inactive" || d.status === "maintenance";
+                      const problemSensors = (d.sensors || []).filter(s => s.status === "faulty" || s.status === "inactive");
+
+                      return (
+                        <div
+                          key={d._id}
+                          style={{
+                            padding: "10px 12px",
+                            background: "#fbfcfb",
+                            border: "1px solid #deeae3",
+                            borderRadius: "8px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px"
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+                            <div>
+                              <span style={{ fontSize: "13px", color: "#1c3a2a", fontWeight: 700 }}>{d.device_id}</span>
+                              <span style={{ fontSize: "12px", color: "#5c7c6a", marginLeft: "6px" }}>· {d.site?.name || "—"}</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span className={`am-badge am-badge--${statusClass(d.status)}`}>{d.status}</span>
+                              {isDeviceProblem && (
+                                <button
+                                  className="am-act am-act--edit"
+                                  style={{ padding: "3px 8px", fontSize: "11px" }}
+                                  disabled={actionLoading[d._id]}
+                                  onClick={() => handleSetDeviceActive(d._id)}
+                                >
+                                  {actionLoading[d._id] ? "Saving…" : "Set Active"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {isDeviceProblem && (
+                            <div style={{ fontSize: "11px", color: "#475569", background: "#f1f5f3", padding: "5px 8px", borderRadius: "5px" }}>
+                              <div><strong>Reason:</strong> {d.fault_reason || (d.status === "maintenance" ? "Scheduled maintenance" : "Manually flagged")}</div>
+                              <div style={{ marginTop: "2px" }}><strong>Since:</strong> {d.faulty_since ? `${new Date(d.faulty_since).toLocaleString()} (${timeAgo(d.faulty_since)})` : (d.updated_at ? new Date(d.updated_at).toLocaleString() : "—")}</div>
+                            </div>
+                          )}
+
+                          {problemSensors.length > 0 && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                              <span style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                Problem Sensors:
+                              </span>
+                              {problemSensors.map(s => (
+                                <div
+                                  key={s._id}
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    padding: "5px 8px",
+                                    background: "#ffffff",
+                                    border: "1px solid #edf4ef",
+                                    borderRadius: "6px",
+                                    fontSize: "11px"
+                                  }}
+                                >
+                                  <div>
+                                    <strong style={{ color: "#1c3a2a" }}>{s.parameter?.label || s.parameter?.key || s.model_name || "Sensor"}</strong>
+                                    <span className={`am-badge am-badge--${statusClass(s.status)}`} style={{ marginLeft: "6px", padding: "2px 7px", fontSize: "10px" }}>
+                                      {s.status}
+                                    </span>
+                                    <div style={{ color: "#64748b", fontSize: "10px", marginTop: "2px" }}>
+                                      Reason: {s.fault_reason || "Manually flagged"} · Since: {s.faulty_since ? `${new Date(s.faulty_since).toLocaleString()} (${timeAgo(s.faulty_since)})` : (s.updated_at ? new Date(s.updated_at).toLocaleString() : "—")}
+                                    </div>
+                                  </div>
+                                  <button
+                                    className="am-act am-act--edit"
+                                    style={{ padding: "3px 8px", fontSize: "11px" }}
+                                    disabled={actionLoading[s._id]}
+                                    onClick={() => handleSetSensorActive(s._id)}
+                                  >
+                                    {actionLoading[s._id] ? "Saving…" : "Set Active"}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                )}
               </div>
 
               <div className="am-card" style={{ padding: "18px 20px" }}>
@@ -658,7 +823,7 @@ function AdminDashboard() {
                   <p style={{ fontSize: "13px", color: "#5c7c6a", fontWeight: 500 }}>No alerts found.</p>
                 ) : recentAlerts.map(a => (
                   <div key={a._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid #edf4ef" }}>
-                    <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{a.parameter_name} <span style={{ color: "#5c7c6a" }}>· {a.device?.device_id || "—"}</span></span>
+                    <span style={{ fontSize: "13px", color: "#2d4a3e", fontWeight: 500 }}>{a.parameter_name || (a.type === 'device_offline' ? 'Device Offline' : a.type === 'system_offline' ? 'System Offline' : 'Alert')} <span style={{ color: "#5c7c6a" }}>· {a.device?.device_id || "—"}</span></span>
                     <span className={`am-badge am-badge--${severityClass(a.severity_level)}`}>{a.severity_level}</span>
                   </div>
                 ))}

@@ -5,9 +5,7 @@ const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
-
-// Connect to MongoDB
-connectDB();
+const { startWatchdog } = require('./services/watchdogService');
 
 const app = express();
 const server = http.createServer(app);
@@ -26,6 +24,11 @@ const io = new Server(server, {
 
 // Make io accessible in controllers via req.app.get('io')
 app.set('io', io);
+
+// Connect to MongoDB and start watchdog
+connectDB().then(() => {
+  startWatchdog(io);
+});
 
 // Socket connection handler
 io.on('connection', (socket) => {

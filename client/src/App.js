@@ -14,6 +14,8 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import UserDashboard from "./pages/UserDashboard";
+import UserDevices from "./pages/UserDevices";
+import UserSensors from "./pages/UserSensors";
 import Alerts from "./pages/Alerts";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -48,6 +50,12 @@ function App() {
           {/* User Pages (behind login) */}
           <Route path="/dashboard" element={
             <ProtectedRoute><UserDashboard /></ProtectedRoute>
+          } />
+          <Route path="/devices" element={
+            <ProtectedRoute><UserDevices /></ProtectedRoute>
+          } />
+          <Route path="/sensors" element={
+            <ProtectedRoute><UserSensors /></ProtectedRoute>
           } />
           <Route path="/sites" element={
             <ProtectedRoute><Sites /></ProtectedRoute>

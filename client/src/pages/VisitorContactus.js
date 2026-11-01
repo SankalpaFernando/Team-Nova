@@ -79,7 +79,7 @@ function VisitorContactus() {
               <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Phone size={24} /> Contact Information</h2>
               <p><strong>Email:</strong> mangroveguard@gmail.com</p>
               <p><strong>Phone:</strong> +94 77 123 4567</p>
-              <p><strong>Address:</strong> University of Jaffna, Sri Lanka</p>
+              <p><strong>Address:</strong> Department of Computer Science &amp; Department of Zoology, Faculty of Science, University of Jaffna, Thirunelvely, Jaffna 40000, Sri Lanka.</p>
             </div>
 
             {!submitted ? (

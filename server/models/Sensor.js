@@ -29,6 +29,22 @@ const sensorSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive', 'faulty'],
     default: 'active'
+  },
+  lastReadingAt: {
+    type: Date,
+    default: null
+  },
+  fault_reason: {
+    type: String,
+    default: null
+  },
+  faulty_since: {
+    type: Date,
+    default: null
+  },
+  auto_flagged: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
