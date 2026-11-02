@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AdminSidebar from '../components/AdminSidebar';
@@ -7,6 +7,7 @@ import './ParameterAdmin.css';
 
 function ParameterAdmin() {
   const { user } = useAuth();
+  const isEngineer = user?.role === 'site_engineer';
   const [parameters, setParameters] = useState([]);
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,7 +145,7 @@ function ParameterAdmin() {
       <main className="mu-main">
         <div className="mu-header">
           <div>
-            <p className="mu-breadcrumb">Admin › Parameter Catalog</p>
+            <p className="mu-breadcrumb">{isEngineer ? 'Site Engineer' : 'Admin'} › Parameter Catalog</p>
             <h1 className="mu-title">Global & Site Parameters</h1>
             <p className="mu-subtitle">
               {user?.role === 'admin'

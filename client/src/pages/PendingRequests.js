@@ -180,6 +180,7 @@ function PendingRequests() {
       <div className="mu-main">
         <header className="mu-header">
           <div>
+            <p className="mu-breadcrumb">Admin › Pending Requests</p>
             <h1 className="mu-title">Pending Approval Requests</h1>
             <p className="mu-subtitle">Review, compare diffs, and approve user registrations and operational changes submitted by Site Engineers</p>
           </div>

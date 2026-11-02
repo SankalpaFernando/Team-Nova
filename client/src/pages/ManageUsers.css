@@ -7,26 +7,9 @@
 
 /* ── Layout ─────────────────────────────────── */
 .mu-page {
-  display: flex;
   min-height: 100vh;
   background: #eef3f0;
-
   color: #1a2e24;
-}
-
-/* ── Sidebar ─────────────────────────────────── */
-.mu-sidebar {
-  width: 248px;
-  min-height: 100vh;
-  background: rgb(10, 89, 63);
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  flex-shrink: 0;
-  border-right: 1px solid rgba(255,255,255,0.04);
 }
 
 .mu-brand {
@@ -148,10 +131,10 @@
 .mu-logout-btn:hover { background: rgba(231,76,60,0.22); }
 
 /* ── Main ────────────────────────────────────── */
+/* margin-left and transition are set in AdminSidebar.css */
 .mu-main {
-  flex: 1;
   padding: 32px 36px 48px;
-  overflow-y: auto;
+  min-height: 100vh;
 }
 
 /* ── Page Header ─────────────────────────────── */
@@ -665,8 +648,7 @@
 }
 
 @media (max-width: 768px) {
-  .mu-sidebar { display: none; }
-  .mu-main    { padding: 20px 16px; }
+    .mu-main    { padding: 20px 16px; }
   .mu-header  { flex-direction: column; gap: 14px; }
   .mu-stats   { grid-template-columns: repeat(2, 1fr); }
   .mu-card    { overflow-x: auto; }

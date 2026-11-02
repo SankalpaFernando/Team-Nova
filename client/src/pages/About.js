@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import "./home.css";
 import UserNavbar from "../components/UserNavbar";
 import Footer from "../components/Footer";
@@ -204,6 +204,13 @@ function About() {
   if (isRegisteredUser) {
     return (
       <UserLayout activePage="about">
+        <div className="ul-header">
+          <div>
+            <p className="ul-breadcrumb">General › About</p>
+            <h1 className="ul-title">About Mangrove Guard</h1>
+            <p className="ul-subtitle">Mission, monitoring parameters, and the research team behind the platform.</p>
+          </div>
+        </div>
         <div style={{ padding: "10px 0" }}>
           <AboutBoxes />
         </div>

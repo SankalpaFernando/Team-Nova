@@ -2,10 +2,8 @@
 
 /* ── Layout ─────────────────────────────────── */
 .am-page {
-  display: flex;
   min-height: 100vh;
   background: #eef3f0;
-
   color: #1a2e24;
 }
 
@@ -134,9 +132,8 @@
 
 /* ── Main ────────────────────────────────────── */
 .am-main {
-  flex: 1;
   padding: 32px 36px 48px;
-  overflow-y: auto;
+  min-height: 100vh;
 }
 
 /* ── Page Header ─────────────────────────────── */
@@ -565,8 +562,7 @@
 }
 
 @media (max-width: 768px) {
-  .am-sidebar { display: none; }
-  .am-main    { padding: 20px 16px; }
+    .am-main    { padding: 20px 16px; }
   .am-header  { flex-direction: column; gap: 14px; }
   .am-stats   { grid-template-columns: repeat(2, 1fr); }
   .am-card    { overflow-x: auto; }

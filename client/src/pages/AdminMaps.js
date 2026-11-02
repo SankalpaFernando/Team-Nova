@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
@@ -8,7 +8,7 @@ import { MapPin, Compass, Waves, ArrowRight, ArrowLeft, Pencil, Sliders, Trash2,
 import "./AdminMaps.css";
 
 const getParamRangeStr = (siteThresholds, paramKey) => {
-  if (!Array.isArray(siteThresholds) || siteThresholds.length === 0) return "—";
+  if (!Array.isArray(siteThresholds) || siteThresholds.length === 0) return "â€”";
   const targetKey = paramKey.toLowerCase();
   const entry = siteThresholds.find(t => {
     const pKey = (t.parameter?.key || "").toLowerCase();
@@ -18,13 +18,14 @@ const getParamRangeStr = (siteThresholds, paramKey) => {
     if ((targetKey === "temperature" || targetKey === "temp") && (pKey === "temperature" || pKey === "temp" || pLabel.includes("temp"))) return true;
     return false;
   });
-  if (!entry || entry.min === undefined || entry.max === undefined) return "—";
-  const unitStr = entry.parameter?.unit ? ` ${entry.parameter.unit}` : (targetKey === 'temperature' || targetKey === 'temp' ? '°C' : '');
-  return `${entry.min}–${entry.max}${unitStr}`;
+  if (!entry || entry.min === undefined || entry.max === undefined) return "â€”";
+  const unitStr = entry.parameter?.unit ? ` ${entry.parameter.unit}` : (targetKey === 'temperature' || targetKey === 'temp' ? 'Â°C' : '');
+  return `${entry.min}â€“${entry.max}${unitStr}`;
 };
 
 function AdminMaps() {
   const { user, logout } = useAuth();
+  const isEngineer = user?.role === 'site_engineer';
   const navigate = useNavigate();
 
   // Data
@@ -60,7 +61,7 @@ function AdminMaps() {
     setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
   };
 
-  // ── fetch ─────────────────────────────────────────────
+  // â”€â”€ fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const load = async () => {
     setLoading(true);
     setError("");
@@ -96,10 +97,10 @@ function AdminMaps() {
     };
   }, []);
 
-  // ── counts ────────────────────────────────────────────
+  // â”€â”€ counts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const byRegion = (r) => sites.filter(s => s.region === r).length;
 
-  // ── add ───────────────────────────────────────────────
+  // â”€â”€ add â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const openAdd = () => {
     setForm({ name: "", location: "", region: "Northern" });
     setFormErr("");
@@ -116,7 +117,7 @@ function AdminMaps() {
     finally { setSaving(false); }
   };
 
-  // ── edit ──────────────────────────────────────────────
+  // â”€â”€ edit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const openEdit = (site) => {
     setSelected(site);
     setForm({ name: site.name, location: site.location, region: site.region });
@@ -134,7 +135,7 @@ function AdminMaps() {
     finally { setSaving(false); }
   };
 
-  // ── thresholds ────────────────────────────────────────
+  // â”€â”€ thresholds â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const getExistingVal = (thresholdsArray, paramKey, field, defaultVal) => {
     if (!Array.isArray(thresholdsArray)) return defaultVal;
     const targetKey = paramKey.toLowerCase();
@@ -232,7 +233,7 @@ function AdminMaps() {
   const setT = (param, bound, val) =>
     setThresh(p => ({ ...p, [param]: { ...p[param], [bound]: parseFloat(val) || 0 } }));
 
-  // ── delete ────────────────────────────────────────────
+  // â”€â”€ delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const openDelete = (site) => { setSelected(site); setShowThresh(false); 
   setShowEdit(false); setShowDelete(true); };
   const doDelete = async () => {
@@ -245,7 +246,7 @@ function AdminMaps() {
     finally { setSaving(false); }
   };
 
-  // ── helpers ───────────────────────────────────────────
+  // â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const fc = (e) => setForm({ ...form, [e.target.name]: e.target.value });
   const regionClass = (r) => ({ Northern:"rn", Southern:"rs", Eastern:"re", Western:"rw" }[r] || "rn");
 
@@ -260,20 +261,20 @@ function AdminMaps() {
       : b.name.localeCompare(a.name)
   );
 
-  // ── render ────────────────────────────────────────────
+  // â”€â”€ render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div className="am-page">
 
-      {/* ── Sidebar ── */}
+      {/* â”€â”€ Sidebar â”€â”€ */}
       <AdminSidebar activePage="sites" />
 
-      {/* ── Main ── */}
+      {/* â”€â”€ Main â”€â”€ */}
       <main className="am-main">
 
         {/* Header */}
         <div className="am-header">
           <div>
-            <p className="am-breadcrumb">Admin › Sites</p>
+            <p className="am-breadcrumb">{isEngineer ? 'Site Engineer' : 'Admin'} › Sites</p>
             <h1 className="am-title">Monitoring Sites</h1>
             <p className="am-subtitle">Manage lagoon monitoring locations and alert thresholds.</p>
           </div>
@@ -319,7 +320,7 @@ function AdminMaps() {
         {loading ? (
           <div className="am-loading">
             <div className="am-spinner" />
-            <p>Loading sites…</p>
+            <p>Loading sitesâ€¦</p>
           </div>
         ) : (
 
@@ -334,7 +335,7 @@ function AdminMaps() {
                     style={{ cursor: "pointer", userSelect: "none" }}
                     title="Click to toggle sort order"
                   >
-                    Site Name {sortOrder === "asc" ? "▲" : "▼"}
+                    Site Name {sortOrder === "asc" ? "â–²" : "â–¼"}
                   </th>
                   <th>Location</th>
                   <th>Region</th>
@@ -381,7 +382,7 @@ function AdminMaps() {
         )}
       </main>
 
-      {/* ═══════ MODALS ═══════ */}
+      {/* â•â•â•â•â•â•â• MODALS â•â•â•â•â•â•â• */}
 
       {/* Add */}
       {showAdd && (
@@ -396,14 +397,14 @@ function AdminMaps() {
               <label className="am-lbl">Site Name</label>
               <input className="am-inp" name="name" value={form.name} onChange={fc} placeholder="e.g. Negombo Lagoon Site" />
               <label className="am-lbl">Location (Coordinates or Address)</label>
-              <input className="am-inp" name="location" value={form.location} onChange={fc} placeholder="e.g. 7.2081° N, 79.8461° E" />
+              <input className="am-inp" name="location" value={form.location} onChange={fc} placeholder="e.g. 7.2081Â° N, 79.8461Â° E" />
               <label className="am-lbl">Region</label>
               <select className="am-inp" name="region" value={form.region} onChange={fc}>
                 <option>Northern</option><option>Southern</option><option>Eastern</option><option>Western</option>
               </select>
               <div className="am-modal-foot">
                 <button type="button" className="am-btn-sec" onClick={() => setShowAdd(false)}>Cancel</button>
-                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Saving…" : "Create Site"}</button>
+                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Savingâ€¦" : "Create Site"}</button>
               </div>
             </form>
           </div>
@@ -430,7 +431,7 @@ function AdminMaps() {
               </select>
               <div className="am-modal-foot">
                 <button type="button" className="am-btn-sec" onClick={() => setShowEdit(false)}>Cancel</button>
-                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</button>
+                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Savingâ€¦" : "Save Changes"}</button>
               </div>
             </form>
           </div>
@@ -443,16 +444,16 @@ function AdminMaps() {
           <div className="am-modal am-modal--wide" onClick={e => e.stopPropagation()}>
             <div className="am-modal-head">
               <h2>Alert Thresholds</h2>
-              <button className="am-close" onClick={() => setShowThresh(false)}>✕</button>
+              <button className="am-close" onClick={() => setShowThresh(false)}>âœ•</button>
             </div>
-            <p className="am-modal-hint">Site: <strong>{selected?.name}</strong> — readings outside these values will trigger alerts.</p>
+            <p className="am-modal-hint">Site: <strong>{selected?.name}</strong> â€” readings outside these values will trigger alerts.</p>
             <form className="am-modal-body" onSubmit={doThresh}>
               {formErr && <p className="am-ferr">{formErr}</p>}
               {[
                 { key: "pH",           label: "pH Level",     unit: ""      },
-                { key: "temperature",  label: "Temperature",  unit: "°C"    },
+                { key: "temperature",  label: "Temperature",  unit: "Â°C"    },
                 { key: "salinity",     label: "Salinity",     unit: "ppt"   },
-                { key: "dissolved_o2", label: "Dissolved O₂", unit: "mg/L"  },
+                { key: "dissolved_o2", label: "Dissolved Oâ‚‚", unit: "mg/L"  },
               ].map(({ key, label, unit }) => (
                 <div className="am-trow" key={key}>
                   <span className="am-tlbl">{label} {unit && <small>({unit})</small>}</span>
@@ -462,7 +463,7 @@ function AdminMaps() {
                       <input type="number" step="0.1" className="am-inp am-inp--sm"
                         value={thresh[key].min} onChange={e => setT(key, "min", e.target.value)} />
                     </div>
-                    <span className="am-tdash">—</span>
+                    <span className="am-tdash">â€”</span>
                     <div className="am-tfield">
                       <label>Max</label>
                       <input type="number" step="0.1" className="am-inp am-inp--sm"
@@ -473,7 +474,7 @@ function AdminMaps() {
           ))}
               <div className="am-modal-foot">
                 <button type="button" className="am-btn-sec" onClick={() => setShowThresh(false)}>Cancel</button>
-                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Saving…" : "Save Thresholds"}</button>
+                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Savingâ€¦" : "Save Thresholds"}</button>
               </div>
             </form>
           </div>
@@ -486,7 +487,7 @@ function AdminMaps() {
                   <div className="am-modal" onClick={e => e.stopPropagation()}>
                     <div className="am-modal-head">
                       <h2>Confirm Delete</h2>
-                      <button className="am-close" onClick={() => setShowDelete(false)}>✕</button>
+                      <button className="am-close" onClick={() => setShowDelete(false)}>âœ•</button>
                     </div>
 
                     <div className="am-modal-body">
@@ -503,7 +504,7 @@ function AdminMaps() {
                           onClick={doDelete} 
                           disabled={saving}
                         >
-                          {saving ? "Deleting…" : "Delete"}
+                          {saving ? "Deletingâ€¦" : "Delete"}
                         </button>
                       </div>
                     </div>
@@ -514,7 +515,7 @@ function AdminMaps() {
       {toast.show && (
         <div className={`am-toast am-toast--${toast.type}`}>
           <span className="am-toast-icon">
-            {toast.type === "delete" ? "🗑️" : "✅"}
+            {toast.type === "delete" ? "ðŸ—‘ï¸" : "âœ…"}
           </span>
           {toast.message}
         </div>

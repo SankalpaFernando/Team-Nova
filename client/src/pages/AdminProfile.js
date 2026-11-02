@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+﻿import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./AdminProfile.css";
 import { useAuth } from "../context/AuthContext";
@@ -6,6 +6,7 @@ import api from "../services/api";
 
 function AdminProfile() {
   const { user, logout, refreshUser } = useAuth();
+  const isEngineer = user?.role === 'site_engineer';
   const navigate = useNavigate();
 
   // ── Avatar ─────────────────────────────────────────────
@@ -154,8 +155,8 @@ function AdminProfile() {
         {/* Header */}
         <div className="mu-header">
           <div>
-            <p className="mu-breadcrumb">Admin › Profile</p>
-            <h1 className="mu-title">Admin Profile</h1>
+            <p className="mu-breadcrumb">{isEngineer ? 'Site Engineer' : 'Admin'} › Profile</p>
+            <h1 className="mu-title">{isEngineer ? 'Site Engineer Profile' : 'Admin Profile'}</h1>
             <p className="mu-subtitle">
               Manage your account details and security settings.
             </p>

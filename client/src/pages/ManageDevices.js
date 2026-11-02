@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -9,6 +9,7 @@ import "./ManageDevices.css";
 
 function ManageDevices() {
   const { user, logout } = useAuth();
+  const isEngineer = user?.role === 'site_engineer';
   const navigate = useNavigate();
 
   // Data
@@ -225,7 +226,7 @@ useEffect(() => {
         {/* Header */}
         <div className="am-header">
           <div>
-            <p className="am-breadcrumb">Admin › Devices</p>
+            <p className="am-breadcrumb">{isEngineer ? 'Site Engineer' : 'Admin'} › Devices</p>
             <h1 className="am-title">Manage Devices</h1>
             <p className="am-subtitle">Monitor and manage sensor devices across all sites.</p>
           </div>

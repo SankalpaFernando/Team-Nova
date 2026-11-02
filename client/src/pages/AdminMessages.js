@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
@@ -9,6 +9,7 @@ import { Mail, Circle, CircleDot, X, CheckCircle, XCircle, Trash2, Send } from '
 
 function AdminMessages() {
   const { user } = useAuth();
+  const isEngineer = user?.role === 'site_engineer';
   const navigate = useNavigate();
 
   const [messages, setMessages]       = useState([]);
@@ -83,7 +84,7 @@ function AdminMessages() {
         {/* Header */}
         <div className="msg-header">
           <div>
-            <p className="msg-breadcrumb">Admin › Messages</p>
+            <p className="msg-breadcrumb">{isEngineer ? 'Site Engineer' : 'Admin'} › Messages</p>
             <h1 className="msg-title">Contact Messages</h1>
             <p className="msg-subtitle">View and manage messages from users and visitors.</p>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AdminSidebar from '../components/AdminSidebar';
@@ -7,6 +7,7 @@ import './ManageSensors.css';
 
 function ManageSensors() {
   const { user } = useAuth();
+  const isEngineer = user?.role === 'site_engineer';
   const [sensors, setSensors] = useState([]);
   const [devices, setDevices] = useState([]);
   const [parameters, setParameters] = useState([]);
@@ -165,7 +166,7 @@ function ManageSensors() {
       <main className="mu-main">
         <div className="mu-header">
           <div>
-            <p className="mu-breadcrumb">Admin › Physical Sensors</p>
+            <p className="mu-breadcrumb">{isEngineer ? 'Site Engineer' : 'Admin'} › Physical Sensors</p>
             <h1 className="mu-title">Sensor Probe Management</h1>
             <p className="mu-subtitle">
               Register, edit, calibrate, and track physical sensor probes attached to hardware monitoring devices.
