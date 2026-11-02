@@ -1,4 +1,4 @@
-/* ═════════════════════════════════════════════════════════
+﻿/* ═════════════════════════════════════════════════════════
    UserLayout.css — Registered User Sidebar & Layout System
    Matches admin panel palette & typography perfectly
    Colours: rgb(10, 89, 63), #6fcf97, #eef3f0, #1a2e24
@@ -409,10 +409,12 @@
 }
 
 .ul-breadcrumb {
-  font-size: 12px;
-  color: #3d6052;
-  margin-bottom: 4px;
-  letter-spacing: 0.3px;
+  font-size: 12px !important;
+  color: #3d6052 !important;
+  font-weight: 500 !important;
+  margin-bottom: 4px !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1.4 !important;
 }
 
 .ul-title {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import socket from "../services/socket";
@@ -73,11 +73,11 @@ function Sites() {
   return (
     <UserLayout activePage="sites">
       {/* Header */}
-      <div className="am-header">
+      <div className="ul-header">
         <div>
-          <p className="am-breadcrumb">Monitoring › Sites</p>
-          <h1 className="am-title">Monitoring Sites</h1>
-          <p className="am-subtitle">Lagoon and wetland monitoring locations across Sri Lanka.</p>
+          <p className="ul-breadcrumb">Monitoring › Sites</p>
+          <h1 className="ul-title">Monitoring Sites</h1>
+          <p className="ul-subtitle">Lagoon and wetland monitoring locations across Sri Lanka.</p>
         </div>
       </div>
 
