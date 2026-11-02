@@ -17,7 +17,9 @@ import {
   LogOut,
   ClipboardList,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Menu,
+  X
 } from 'lucide-react';
 import './AdminSidebar.css';
 import logoImg from '../assests/logo.png';
@@ -29,10 +31,23 @@ function AdminSidebar({ activePage }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingUsersCount, setPendingUsersCount] = useState(0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const accountMenuRef = useRef(null);
 
   const isEngineer = user?.role === 'site_engineer';
 
+  // ── Sync body class for main-content margin offset ───────────────
+  useEffect(() => {
+    if (sidebarCollapsed) {
+      document.body.classList.add('admin-sb--collapsed');
+    } else {
+      document.body.classList.remove('admin-sb--collapsed');
+    }
+    return () => document.body.classList.remove('admin-sb--collapsed');
+  }, [sidebarCollapsed]);
+
+  // ── Outside click closes account dropdown ───────────────────────
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (accountMenuRef.current && !accountMenuRef.current.contains(e.target)) {
@@ -43,6 +58,25 @@ function AdminSidebar({ activePage }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // ── Escape key closes mobile drawer ────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && drawerOpen) setDrawerOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [drawerOpen]);
+
+  // ── Resize: close mobile drawer when returning to desktop ───────
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768 && drawerOpen) setDrawerOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [drawerOpen]);
+
+  // ── Pending counts (admin only) ────────────────────────────────
   useEffect(() => {
     if (user?.role === 'admin') {
       const fetchCounts = async () => {
@@ -51,12 +85,8 @@ function AdminSidebar({ activePage }) {
             api.get('/change-requests/pending-count'),
             api.get('/users/pending-count')
           ]);
-          if (crRes.data?.success) {
-            setPendingCount(crRes.data.count || 0);
-          }
-          if (userRes.data?.success) {
-            setPendingUsersCount(userRes.data.count || 0);
-          }
+          if (crRes.data?.success) setPendingCount(crRes.data.count || 0);
+          if (userRes.data?.success) setPendingUsersCount(userRes.data.count || 0);
         } catch (err) {
           console.error('Failed to fetch pending counts', err);
         }
@@ -66,6 +96,14 @@ function AdminSidebar({ activePage }) {
       return () => clearInterval(interval);
     }
   }, [user]);
+
+  const toggleSidebar = () => {
+    if (window.innerWidth <= 768) {
+      setDrawerOpen(prev => !prev);
+    } else {
+      setSidebarCollapsed(prev => !prev);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -101,12 +139,44 @@ function AdminSidebar({ activePage }) {
 
   return (
     <>
-      <aside className="mu-sidebar">
+      {/* ── Mobile Drawer Backdrop ──────────────────────── */}
+      <div
+        className={`admin-sb-overlay${drawerOpen ? ' admin-sb-overlay--visible' : ''}`}
+        onClick={() => setDrawerOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* ── Floating hamburger button ───────────────────── */}
+      {/* Visible on desktop when collapsed, or always on mobile via CSS */}
+      <button
+        type="button"
+        className={`admin-sb-fab${sidebarCollapsed ? ' admin-sb-fab--show' : ''}`}
+        onClick={toggleSidebar}
+        title="Show navigation"
+        aria-label="Open navigation menu"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* ── Sidebar ────────────────────────────────────── */}
+      <aside className={`mu-sidebar${sidebarCollapsed ? ' mu-sidebar--hidden' : ''}${drawerOpen ? ' mu-sidebar--drawer-open' : ''}`}>
+
+        {/* Brand header */}
         <div className="mu-brand">
-          <img src={logoImg} alt="MangroveGuard Logo" className="mu-brand-icon" style={{ height: "58px", width: "auto" }} />
-          <div>
+          <img src={logoImg} alt="MangroveGuard Logo" className="mu-brand-icon" style={{ height: '58px', width: 'auto' }} />
+          <div style={{ flex: 1 }}>
             <div className="mu-brand-name">MangroveGuard</div>
           </div>
+          {/* X close button */}
+          <button
+            type="button"
+            className="mu-sidebar-close-btn"
+            onClick={toggleSidebar}
+            title="Hide sidebar"
+            aria-label="Hide sidebar"
+          >
+            <X size={16} />
+          </button>
         </div>
 
         <nav className="mu-nav">
@@ -117,6 +187,7 @@ function AdminSidebar({ activePage }) {
                 key={key}
                 to={to}
                 className={`mu-nav-link ${isActive ? 'mu-nav-link--active' : ''}`}
+                onClick={() => setDrawerOpen(false)}
               >
                 <span className="mu-nav-icon">{icon}</span>
                 <span style={{ flex: 1 }}>{label}</span>
@@ -173,7 +244,7 @@ function AdminSidebar({ activePage }) {
         </div>
       </aside>
 
-      {/* Profile Modal Overlay */}
+      {/* Profile Modal */}
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}

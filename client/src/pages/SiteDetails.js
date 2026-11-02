@@ -1,4 +1,4 @@
-import "./SiteDetails.css";
+﻿import "./SiteDetails.css";
 import "./AdminMaps.css";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
@@ -612,7 +612,7 @@ function SiteDetails() {
         <main className="am-main">
           <div className="am-header">
             <div>
-              <p className="am-breadcrumb">Admin › Sites › {site?.name || "Details"}</p>
+              <p className="am-breadcrumb">{isSiteEngineer ? 'Site Engineer' : 'Admin'} › Sites › {site?.name || "Details"}</p>
               <h1 className="am-title">{site?.name || "Site Details"}</h1>
               {site && (
                 <p className="am-subtitle">
