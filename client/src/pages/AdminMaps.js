@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
@@ -8,7 +8,7 @@ import { MapPin, Compass, Waves, ArrowRight, ArrowLeft, Pencil, Sliders, Trash2,
 import "./AdminMaps.css";
 
 const getParamRangeStr = (siteThresholds, paramKey) => {
-  if (!Array.isArray(siteThresholds) || siteThresholds.length === 0) return "â€”";
+  if (!Array.isArray(siteThresholds) || siteThresholds.length === 0) return "—";
   const targetKey = paramKey.toLowerCase();
   const entry = siteThresholds.find(t => {
     const pKey = (t.parameter?.key || "").toLowerCase();
@@ -18,9 +18,9 @@ const getParamRangeStr = (siteThresholds, paramKey) => {
     if ((targetKey === "temperature" || targetKey === "temp") && (pKey === "temperature" || pKey === "temp" || pLabel.includes("temp"))) return true;
     return false;
   });
-  if (!entry || entry.min === undefined || entry.max === undefined) return "â€”";
-  const unitStr = entry.parameter?.unit ? ` ${entry.parameter.unit}` : (targetKey === 'temperature' || targetKey === 'temp' ? 'Â°C' : '');
-  return `${entry.min}â€“${entry.max}${unitStr}`;
+  if (!entry || entry.min === undefined || entry.max === undefined) return "—";
+  const unitStr = entry.parameter?.unit ? ` ${entry.parameter.unit}` : (targetKey === 'temperature' || targetKey === 'temp' ? '°C' : '');
+  return `${entry.min}–${entry.max}${unitStr}`;
 };
 
 function AdminMaps() {
@@ -35,33 +35,33 @@ function AdminMaps() {
   const [error, setError] = useState("");
 
   // Modals
-  const [showAdd, setShowAdd]           = useState(false);
-  const [showEdit, setShowEdit]         = useState(false);
-  const [showThresh, setShowThresh]     = useState(false);
-  const [showDelete, setShowDelete]     = useState(false);
-  const [selected, setSelected]         = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showThresh, setShowThresh] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [selected, setSelected] = useState(null);
 
   // Forms
   const [form, setForm] = useState({ name: "", location: "", region: "Northern" });
   const [thresh, setThresh] = useState({
-    pH:           { min: 6.5,  max: 8.5  },
-    temperature:  { min: 20,   max: 35   },
-    salinity:     { min: 0,    max: 45   },
-    dissolved_o2: { min: 4,    max: 15   },
+    pH: { min: 6.5, max: 8.5 },
+    temperature: { min: 20, max: 35 },
+    salinity: { min: 0, max: 45 },
+    dissolved_o2: { min: 4, max: 15 },
   });
-  const [saving, setSaving]     = useState(false);
-  const [formErr, setFormErr]   = useState("");
+  const [saving, setSaving] = useState(false);
+  const [formErr, setFormErr] = useState("");
 
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
-  
+
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
   };
 
-  // â”€â”€ fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── fetch ─────────────────────────────────────────────
   const load = async () => {
     setLoading(true);
     setError("");
@@ -97,10 +97,10 @@ function AdminMaps() {
     };
   }, []);
 
-  // â”€â”€ counts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── counts ────────────────────────────────────────────
   const byRegion = (r) => sites.filter(s => s.region === r).length;
 
-  // â”€â”€ add â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── add ───────────────────────────────────────────────
   const openAdd = () => {
     setForm({ name: "", location: "", region: "Northern" });
     setFormErr("");
@@ -110,14 +110,15 @@ function AdminMaps() {
     e.preventDefault();
     if (!form.name.trim() || !form.location.trim()) { setFormErr("Name and location are required."); return; }
     setSaving(true);
-    try   { await api.post("/sites", form); setShowAdd(false); load();
+    try {
+      await api.post("/sites", form); setShowAdd(false); load();
       showToast("Site created successfully!");
-     }
+    }
     catch (err) { setFormErr(err.response?.data?.message || "Failed to create site."); }
     finally { setSaving(false); }
   };
 
-  // â”€â”€ edit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── edit ──────────────────────────────────────────────
   const openEdit = (site) => {
     setSelected(site);
     setForm({ name: site.name, location: site.location, region: site.region });
@@ -128,14 +129,15 @@ function AdminMaps() {
     e.preventDefault();
     if (!form.name.trim() || !form.location.trim()) { setFormErr("Name and location are required."); return; }
     setSaving(true);
-    try   { await api.put(`/sites/${selected._id}`, form); setShowEdit(false); load(); 
-  showToast("Site updated successfully!");
-  }
+    try {
+      await api.put(`/sites/${selected._id}`, form); setShowEdit(false); load();
+      showToast("Site updated successfully!");
+    }
     catch (err) { setFormErr(err.response?.data?.message || "Failed to update site."); }
     finally { setSaving(false); }
   };
 
-  // â”€â”€ thresholds â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── thresholds ────────────────────────────────────────
   const getExistingVal = (thresholdsArray, paramKey, field, defaultVal) => {
     if (!Array.isArray(thresholdsArray)) return defaultVal;
     const targetKey = paramKey.toLowerCase();
@@ -155,10 +157,10 @@ function AdminMaps() {
   const openThresh = (site) => {
     setSelected(site);
     setThresh({
-      pH:           { min: getExistingVal(site.thresholds, "ph", "min", 6.5),          max: getExistingVal(site.thresholds, "ph", "max", 8.5)  },
-      temperature:  { min: getExistingVal(site.thresholds, "temperature", "min", 20),   max: getExistingVal(site.thresholds, "temperature", "max", 35) },
-      salinity:     { min: getExistingVal(site.thresholds, "salinity", "min", 0),       max: getExistingVal(site.thresholds, "salinity", "max", 45)   },
-      dissolved_o2: { min: getExistingVal(site.thresholds, "dissolved_o2", "min", 4),   max: getExistingVal(site.thresholds, "dissolved_o2", "max", 15) },
+      pH: { min: getExistingVal(site.thresholds, "ph", "min", 6.5), max: getExistingVal(site.thresholds, "ph", "max", 8.5) },
+      temperature: { min: getExistingVal(site.thresholds, "temperature", "min", 20), max: getExistingVal(site.thresholds, "temperature", "max", 35) },
+      salinity: { min: getExistingVal(site.thresholds, "salinity", "min", 0), max: getExistingVal(site.thresholds, "salinity", "max", 45) },
+      dissolved_o2: { min: getExistingVal(site.thresholds, "dissolved_o2", "min", 4), max: getExistingVal(site.thresholds, "dissolved_o2", "max", 15) },
     });
     setFormErr("");
     setShowThresh(true);
@@ -170,9 +172,9 @@ function AdminMaps() {
     setFormErr("");
     try {
       const keysMap = [
-        { formKey: "pH",           paramKey: "ph" },
-        { formKey: "temperature",  paramKey: "temperature" },
-        { formKey: "salinity",     paramKey: "salinity" },
+        { formKey: "pH", paramKey: "ph" },
+        { formKey: "temperature", paramKey: "temperature" },
+        { formKey: "salinity", paramKey: "salinity" },
         { formKey: "dissolved_o2", paramKey: "dissolved_o2" }
       ];
 
@@ -233,42 +235,47 @@ function AdminMaps() {
   const setT = (param, bound, val) =>
     setThresh(p => ({ ...p, [param]: { ...p[param], [bound]: parseFloat(val) || 0 } }));
 
-  // â”€â”€ delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const openDelete = (site) => { setSelected(site); setShowThresh(false); 
-  setShowEdit(false); setShowDelete(true); };
+  // ── delete ────────────────────────────────────────────
+  const openDelete = (site) => {
+    setSelected(site); setShowThresh(false);
+    setShowEdit(false); setShowDelete(true);
+  };
   const doDelete = async () => {
     setSaving(true);
-    try   { await api.delete(`/sites/${selected._id}`); setShowDelete(false); load(); 
-    showToast("Site deleted successfully.", "delete"); }
-    catch(err){
-       console.error(err);
-       setError("Failed to delete site."); }
+    try {
+      await api.delete(`/sites/${selected._id}`); setShowDelete(false); load();
+      showToast("Site deleted successfully.", "delete");
+    }
+    catch (err) {
+      console.error(err);
+      setError("Failed to delete site.");
+    }
     finally { setSaving(false); }
   };
 
-  // â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── helpers ───────────────────────────────────────────
   const fc = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-  const regionClass = (r) => ({ Northern:"rn", Southern:"rs", Eastern:"re", Western:"rw" }[r] || "rn");
+  const regionClass = (r) => ({ Northern: "rn", Southern: "rs", Eastern: "re", Western: "rw" }[r] || "rn");
 
   const handleLogout = () => { logout(); navigate("/"); };
-  
+
   //filter for site names
   const filteredSites = sites
-  .filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
-  .sort((a, b) =>
-    sortOrder === "asc"
-      ? a.name.localeCompare(b.name)
-      : b.name.localeCompare(a.name)
-  );
+    .filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) =>
+      sortOrder === "asc"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
+    );
 
-  // â”€â”€ render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── render ────────────────────────────────────────────
   return (
     <div className="am-page">
 
-      {/* â”€â”€ Sidebar â”€â”€ */}
+      {/* ── Sidebar ── */}
       <AdminSidebar activePage="sites" />
 
-      {/* â”€â”€ Main â”€â”€ */}
+      {/* ── Main ── */}
       <main className="am-main">
 
         {/* Header */}
@@ -284,11 +291,11 @@ function AdminMaps() {
         {/* Stats */}
         <div className="am-stats">
           {[
-            { icon: <MapPin size={24} color="#3b82f6" />, val: sites.length,                     label: "Total Sites"       },
-            { icon: <Compass size={24} color="#f59e0b" />, val: byRegion("Northern"),             label: "Northern Province" },
-            { icon: <Waves size={24} color="#0ea5e9" />, val: byRegion("Southern"),             label: "Southern Province" },
-            { icon: <ArrowRight size={24} color="#10b981" />, val: byRegion("Eastern"),  label: "Eastern Province" },
-            { icon: <ArrowLeft size={24} color="#8b5cf6" />, val: byRegion("Western"),  label: "Western Province" },
+            { icon: <MapPin size={24} color="#3b82f6" />, val: sites.length, label: "Total Sites" },
+            { icon: <Compass size={24} color="#f59e0b" />, val: byRegion("Northern"), label: "Northern Province" },
+            { icon: <Waves size={24} color="#0ea5e9" />, val: byRegion("Southern"), label: "Southern Province" },
+            { icon: <ArrowRight size={24} color="#10b981" />, val: byRegion("Eastern"), label: "Eastern Province" },
+            { icon: <ArrowLeft size={24} color="#8b5cf6" />, val: byRegion("Western"), label: "Western Province" },
           ].map((s, i) => (
             <div className="am-stat-card" key={i}>
               <span className="am-stat-icon">{s.icon}</span>
@@ -303,13 +310,13 @@ function AdminMaps() {
         {/* Site Filter */}
         <div className="am-card" style={{ padding: "16px 20px", marginBottom: "20px", display: "flex", gap: "14px", alignItems: "center" }}>
           <label className="am-lbl" style={{ margin: 0 }}>Filter by Site Name:</label>
-          <input 
-            type="text" 
-            className="am-inp" 
-            style={{ width: "300px", margin: 0 }} 
-            placeholder="Search sites..." 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
+          <input
+            type="text"
+            className="am-inp"
+            style={{ width: "300px", margin: 0 }}
+            placeholder="Search sites..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
@@ -320,7 +327,7 @@ function AdminMaps() {
         {loading ? (
           <div className="am-loading">
             <div className="am-spinner" />
-            <p>Loading sitesâ€¦</p>
+            <p>Loading sites…</p>
           </div>
         ) : (
 
@@ -330,12 +337,12 @@ function AdminMaps() {
               <thead>
                 <tr>
                   <th></th>
-                  <th 
-                    onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")} 
+                  <th
+                    onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                     style={{ cursor: "pointer", userSelect: "none" }}
                     title="Click to toggle sort order"
                   >
-                    Site Name {sortOrder === "asc" ? "â–²" : "â–¼"}
+                    Site Name {sortOrder === "asc" ? "▲" : "▼"}
                   </th>
                   <th>Location</th>
                   <th>Region</th>
@@ -369,9 +376,9 @@ function AdminMaps() {
                     <td className="am-td-dim">{site.createdBy?.name || "Admin"}</td>
                     <td>
                       <div className="am-actions">
-                        <button className="am-act am-act--edit"   onClick={() => openEdit(site)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Pencil size={14} /> Edit</button>
+                        <button className="am-act am-act--edit" onClick={() => openEdit(site)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Pencil size={14} /> Edit</button>
                         <button className="am-act am-act--thresh" onClick={() => openThresh(site)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Sliders size={14} /> Thresholds</button>
-                        <button className="am-act am-act--del"    onClick={() => openDelete(site)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Trash2 size={14} /> Delete</button>
+                        <button className="am-act am-act--del" onClick={() => openDelete(site)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Trash2 size={14} /> Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -382,7 +389,7 @@ function AdminMaps() {
         )}
       </main>
 
-      {/* â•â•â•â•â•â•â• MODALS â•â•â•â•â•â•â• */}
+      {/* ═══════ MODALS ═══════ */}
 
       {/* Add */}
       {showAdd && (
@@ -397,14 +404,14 @@ function AdminMaps() {
               <label className="am-lbl">Site Name</label>
               <input className="am-inp" name="name" value={form.name} onChange={fc} placeholder="e.g. Negombo Lagoon Site" />
               <label className="am-lbl">Location (Coordinates or Address)</label>
-              <input className="am-inp" name="location" value={form.location} onChange={fc} placeholder="e.g. 7.2081Â° N, 79.8461Â° E" />
+              <input className="am-inp" name="location" value={form.location} onChange={fc} placeholder="e.g. 7.2081° N, 79.8461° E" />
               <label className="am-lbl">Region</label>
               <select className="am-inp" name="region" value={form.region} onChange={fc}>
                 <option>Northern</option><option>Southern</option><option>Eastern</option><option>Western</option>
               </select>
               <div className="am-modal-foot">
                 <button type="button" className="am-btn-sec" onClick={() => setShowAdd(false)}>Cancel</button>
-                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Savingâ€¦" : "Create Site"}</button>
+                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Saving…" : "Create Site"}</button>
               </div>
             </form>
           </div>
@@ -431,7 +438,7 @@ function AdminMaps() {
               </select>
               <div className="am-modal-foot">
                 <button type="button" className="am-btn-sec" onClick={() => setShowEdit(false)}>Cancel</button>
-                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Savingâ€¦" : "Save Changes"}</button>
+                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</button>
               </div>
             </form>
           </div>
@@ -444,16 +451,16 @@ function AdminMaps() {
           <div className="am-modal am-modal--wide" onClick={e => e.stopPropagation()}>
             <div className="am-modal-head">
               <h2>Alert Thresholds</h2>
-              <button className="am-close" onClick={() => setShowThresh(false)}>âœ•</button>
+              <button className="am-close" onClick={() => setShowThresh(false)}>✕</button>
             </div>
-            <p className="am-modal-hint">Site: <strong>{selected?.name}</strong> â€” readings outside these values will trigger alerts.</p>
+            <p className="am-modal-hint">Site: <strong>{selected?.name}</strong> — readings outside these values will trigger alerts.</p>
             <form className="am-modal-body" onSubmit={doThresh}>
               {formErr && <p className="am-ferr">{formErr}</p>}
               {[
-                { key: "pH",           label: "pH Level",     unit: ""      },
-                { key: "temperature",  label: "Temperature",  unit: "Â°C"    },
-                { key: "salinity",     label: "Salinity",     unit: "ppt"   },
-                { key: "dissolved_o2", label: "Dissolved Oâ‚‚", unit: "mg/L"  },
+                { key: "pH", label: "pH Level", unit: "" },
+                { key: "temperature", label: "Temperature", unit: "°C" },
+                { key: "salinity", label: "Salinity", unit: "ppt" },
+                { key: "dissolved_o2", label: "Dissolved O₂", unit: "mg/L" },
               ].map(({ key, label, unit }) => (
                 <div className="am-trow" key={key}>
                   <span className="am-tlbl">{label} {unit && <small>({unit})</small>}</span>
@@ -463,7 +470,7 @@ function AdminMaps() {
                       <input type="number" step="0.1" className="am-inp am-inp--sm"
                         value={thresh[key].min} onChange={e => setT(key, "min", e.target.value)} />
                     </div>
-                    <span className="am-tdash">â€”</span>
+                    <span className="am-tdash">—</span>
                     <div className="am-tfield">
                       <label>Max</label>
                       <input type="number" step="0.1" className="am-inp am-inp--sm"
@@ -471,10 +478,10 @@ function AdminMaps() {
                     </div>
                   </div>
                 </div>
-          ))}
+              ))}
               <div className="am-modal-foot">
                 <button type="button" className="am-btn-sec" onClick={() => setShowThresh(false)}>Cancel</button>
-                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Savingâ€¦" : "Save Thresholds"}</button>
+                <button type="submit" className="am-btn-primary" disabled={saving}>{saving ? "Saving…" : "Save Thresholds"}</button>
               </div>
             </form>
           </div>
@@ -482,44 +489,44 @@ function AdminMaps() {
       )}
 
       {/* Delete */}
-              {showDelete && (
-                <div className="am-overlay" onClick={() => setShowDelete(false)}>
-                  <div className="am-modal" onClick={e => e.stopPropagation()}>
-                    <div className="am-modal-head">
-                      <h2>Confirm Delete</h2>
-                      <button className="am-close" onClick={() => setShowDelete(false)}>âœ•</button>
-                    </div>
+      {showDelete && (
+        <div className="am-overlay" onClick={() => setShowDelete(false)}>
+          <div className="am-modal" onClick={e => e.stopPropagation()}>
+            <div className="am-modal-head">
+              <h2>Confirm Delete</h2>
+              <button className="am-close" onClick={() => setShowDelete(false)}>✕</button>
+            </div>
 
-                    <div className="am-modal-body">
-                      <p>Are you sure you want to delete <strong>{selected?.name}</strong>?</p>
+            <div className="am-modal-body">
+              <p>Are you sure you want to delete <strong>{selected?.name}</strong>?</p>
 
-                      <div className="am-modal-foot">
-                        <button 
-                          type="button"className="am-btn-sec" onClick={() => setShowDelete(false)}>
-                          Cancel
-                        </button>
-                        <button 
-                          type="button"
-                          className="am-btn-danger" 
-                          onClick={doDelete} 
-                          disabled={saving}
-                        >
-                          {saving ? "Deletingâ€¦" : "Delete"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="am-modal-foot">
+                <button
+                  type="button" className="am-btn-sec" onClick={() => setShowDelete(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="am-btn-danger"
+                  onClick={doDelete}
+                  disabled={saving}
+                >
+                  {saving ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast.show && (
         <div className={`am-toast am-toast--${toast.type}`}>
           <span className="am-toast-icon">
-            {toast.type === "delete" ? "ðŸ—‘ï¸" : "âœ…"}
+            {toast.type === "delete" ? "🗑️" : "✅"}
           </span>
           {toast.message}
         </div>
-      )} 
+      )}
 
     </div>
   );
