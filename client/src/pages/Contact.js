@@ -142,7 +142,7 @@ function Contact() {
                   </div>
                   <div>
                     <strong style={{ color: "#152b1f", display: "block", fontSize: "13px" }}>Phone:</strong>
-                    <span style={{ color: "#374151" }}>+94 77 123 4567</span>
+                    <span style={{ color: "#374151" }}>+94 70 488 4982</span>
                   </div>
                 </div>
 

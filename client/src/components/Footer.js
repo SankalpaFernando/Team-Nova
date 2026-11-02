@@ -42,9 +42,9 @@ function Footer() {
               <Mail size={16} />
               <span>mangroveguard.team@gmail.com</span>
             </a>
-            <a href="tel:+94112345678" className="footer-contact-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <a href="tel:+94704884982" className="footer-contact-item" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Phone size={16} />
-              <span>+94 11 234 5678</span>
+              <span>+94 70 488 4982</span>
             </a>
             <a href="https://www.google.com/maps/search/?api=1&query=University+of+Jaffna" target="_blank" rel="noreferrer" className="footer-contact-item" style={{ textDecoration: 'none', color: 'inherit' }}>
               <MapPin size={16} />
