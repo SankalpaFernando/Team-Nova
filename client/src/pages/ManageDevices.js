@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -113,10 +113,14 @@ useEffect(() => {
     }
     setSaving(true);
     try {
-      await api.post("/devices", form);
+      const res = await api.post("/devices", form);
       setShowAdd(false);
-      load();
-      showToast("Device created successfully!");
+      if (res.data?.pendingApproval) {
+        showToast("Device creation request submitted for admin approval.", "success");
+      } else {
+        load();
+        showToast("Device created successfully!");
+      }
     } catch (err) {
       setFormErr(err.response?.data?.message || "Failed to create device.");
     } finally {

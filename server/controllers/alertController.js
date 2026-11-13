@@ -7,7 +7,11 @@ const Device = require('../models/Device');
 exports.getAlerts = async (req, res, next) => {
   try {
     const { status, severity, site, page = 1, limit = 20 } = req.query;
-    const query = {};
+    
+    // Always exclude system-level watchdog alerts and alerts without devices
+    const query = {
+      type: { $ne: 'system_offline' }
+    };
 
     if (status) query.status = status;
     if (severity) query.severity_level = severity;
@@ -23,6 +27,10 @@ exports.getAlerts = async (req, res, next) => {
     } else if (site) {
       const siteDevices = await Device.find({ site }).select('_id');
       query.device = { $in: siteDevices.map(d => d._id) };
+    } else {
+      // General view: only include alerts belonging to devices that have a valid site
+      const allSiteDevices = await Device.find({ site: { $ne: null } }).select('_id');
+      query.device = { $in: allSiteDevices.map(d => d._id) };
     }
 
     const pageNum = parseInt(page);
@@ -39,13 +47,16 @@ exports.getAlerts = async (req, res, next) => {
       Alert.countDocuments(query)
     ]);
 
+    // Ensure any alert without populated device or site is filtered out
+    const cleanAlerts = alerts.filter(a => a.device && (a.device.site || a.device.site?.name));
+
     res.status(200).json({
       success: true,
-      count: alerts.length,
+      count: cleanAlerts.length,
       total,
       page: pageNum,
       pages: Math.ceil(total / limitNum),
-      data: alerts
+      data: cleanAlerts
     });
   } catch (error) {
     next(error);
@@ -125,7 +136,20 @@ exports.markAllRead = async (req, res, next) => {
 // @access  Private
 exports.getUnreadCount = async (req, res, next) => {
   try {
-    const query = { status: 'unread' };
+    const allSiteDevices = await Device.find({ site: { $ne: null } }).select('_id');
+    const query = { 
+      status: 'unread',
+      type: { $ne: 'system_offline' },
+      device: { $in: allSiteDevices.map(d => d._id) }
+    };
+
+    if (req.user && req.user.role === 'site_engineer') {
+      const assignedSite = req.user.assignedSite;
+      if (!assignedSite) return res.status(200).json({ success: true, count: 0 });
+      const siteDevices = await Device.find({ site: assignedSite }).select('_id');
+      query.device = { $in: siteDevices.map(d => d._id) };
+    }
+
     const count = await Alert.countDocuments(query);
     res.status(200).json({ success: true, count });
   } catch (error) {
@@ -138,7 +162,12 @@ exports.getUnreadCount = async (req, res, next) => {
 // @access  Private
 exports.getTotalCount = async (req, res, next) => {
   try {
-    const query = {};
+    const allSiteDevices = await Device.find({ site: { $ne: null } }).select('_id');
+    const query = {
+      type: { $ne: 'system_offline' },
+      device: { $in: allSiteDevices.map(d => d._id) }
+    };
+
     if (req.user && req.user.role === 'site_engineer') {
       const assignedSite = req.user.assignedSite;
       if (!assignedSite) {
@@ -147,6 +176,7 @@ exports.getTotalCount = async (req, res, next) => {
       const siteDevices = await Device.find({ site: assignedSite }).select('_id');
       query.device = { $in: siteDevices.map(d => d._id) };
     }
+
     const count = await Alert.countDocuments(query);
     res.status(200).json({ success: true, count });
   } catch (error) {

@@ -2,6 +2,8 @@ const ChangeRequest = require('../models/ChangeRequest');
 const Device = require('../models/Device');
 const Sensor = require('../models/Sensor');
 const Parameter = require('../models/Parameter');
+const Site = require('../models/Site');
+const User = require('../models/User');
 const crypto = require('crypto');
 
 // @desc    Get change requests (Admin gets all, Site Engineer gets their own or site-scoped)
@@ -108,6 +110,35 @@ exports.approveChangeRequest = async (req, res, next) => {
         if (!targetId) return res.status(400).json({ success: false, message: 'Missing targetId for delete action' });
         // Deactivate parameter
         await Parameter.findByIdAndUpdate(targetId, { active: false }, { new: true });
+      }
+    } else if (entityType === 'site') {
+      if (action === 'create') {
+        const siteData = { ...dataToApply, createdBy: request.requestedBy };
+        const newSite = await Site.create(siteData);
+        const io = req.app.get('io');
+        if (io) io.emit('site_created', newSite);
+      } else if (action === 'update') {
+        if (!targetId) return res.status(400).json({ success: false, message: 'Missing targetId for update action' });
+        // Handle threshold-only updates
+        const updatePayload = payload.isThresholdUpdate
+          ? { thresholds: dataToApply.thresholds }
+          : dataToApply;
+        const updatedSite = await Site.findByIdAndUpdate(targetId, updatePayload, { new: true, runValidators: true })
+          .populate('thresholds.parameter', 'key label unit');
+        const io = req.app.get('io');
+        if (io) io.emit('site_updated', updatedSite);
+      } else if (action === 'delete') {
+        if (!targetId) return res.status(400).json({ success: false, message: 'Missing targetId for delete action' });
+        const siteToDelete = await Site.findById(targetId);
+        if (siteToDelete) {
+          if (siteToDelete.assignedEngineer) {
+            await User.findByIdAndUpdate(siteToDelete.assignedEngineer, { assignedSite: null, role: 'registered_user' });
+          }
+          await Device.deleteMany({ site: targetId });
+          await siteToDelete.deleteOne();
+        }
+        const io = req.app.get('io');
+        if (io) io.emit('site_deleted', targetId);
       }
     }
 

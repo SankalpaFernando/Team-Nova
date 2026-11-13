@@ -18,6 +18,6 @@ router.get('/:id', getDevice);
 router.post('/', authorize('admin', 'site_engineer'), createDevice);
 router.put('/:id', authorize('admin', 'site_engineer'), updateDevice);
 router.delete('/:id', authorize('admin', 'site_engineer'), deleteDevice);
-router.put('/:id/regen-key', authorize('admin', 'site_engineer'), regenerateApiKey);
+router.put('/:id/regen-key', authorize('admin'), regenerateApiKey);
 
 module.exports = router;

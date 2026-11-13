@@ -92,10 +92,6 @@ async function runWatchdogCheck() {
           status: 'unread'
         });
 
-        if (cachedIo) {
-          cachedIo.emit('new_alert', systemAlert);
-        }
-
         await processAlertSms(systemAlert, null, null);
         await processAlertEmail(systemAlert, null, null);
       }

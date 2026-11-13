@@ -25,8 +25,26 @@ const io = new Server(server, {
 // Make io accessible in controllers via req.app.get('io')
 app.set('io', io);
 
-// Connect to MongoDB and start watchdog
-connectDB().then(() => {
+// Connect to MongoDB, clean up legacy watchdog/orphan alerts, and start watchdog
+connectDB().then(async () => {
+  try {
+    const Alert = require('./models/Alert');
+    const Device = require('./models/Device');
+    const validDevices = await Device.find({ site: { $ne: null } }).select('_id');
+    const validDeviceIds = validDevices.map(d => d._id);
+    const deleteRes = await Alert.deleteMany({
+      $or: [
+        { type: 'system_offline' },
+        { device: null },
+        { device: { $nin: validDeviceIds } }
+      ]
+    });
+    if (deleteRes.deletedCount > 0) {
+      console.log(`🧹 Cleaned up ${deleteRes.deletedCount} watchdog/orphan alerts without device or site.`);
+    }
+  } catch (err) {
+    console.error('Initial alert cleanup notice:', err.message);
+  }
   startWatchdog(io);
 });
 
@@ -51,7 +69,7 @@ app.use(express.json());
 
 // Health check route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     success: true,
     message: 'Mangrove Monitor API is running',
     timestamp: new Date().toISOString()
@@ -59,23 +77,23 @@ app.get('/', (req, res) => {
 });
 
 // Mount routes
-app.use('/api/auth',       require('./routes/auth'));
-app.use('/api/users',      require('./routes/user'));
-app.use('/api/sites',      require('./routes/site'));
-app.use('/api/devices',    require('./routes/device'));
-app.use('/api/sensors',    require('./routes/sensor'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/user'));
+app.use('/api/sites', require('./routes/site'));
+app.use('/api/devices', require('./routes/device'));
+app.use('/api/sensors', require('./routes/sensor'));
 app.use('/api/parameters', require('./routes/parameter'));
-app.use('/api/readings',   require('./routes/sensorreading'));
-app.use('/api/alerts',     require('./routes/alert'));
-app.use('/api/messages',   require('./routes/message'));
-app.use('/api/search',     require('./routes/search'));
+app.use('/api/readings', require('./routes/sensorreading'));
+app.use('/api/alerts', require('./routes/alert'));
+app.use('/api/messages', require('./routes/message'));
+app.use('/api/search', require('./routes/search'));
 app.use('/api/change-requests', require('./routes/changeRequest'));
 
 // 404 handler — catches any route that doesn't match above
 app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: `Route ${req.originalUrl} not found` 
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
@@ -83,7 +101,7 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, '::', () => {
   console.log(`🌿 Server running on port ${PORT}`);
   console.log(`🔌 Socket.io ready`);
 });

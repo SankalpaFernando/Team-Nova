@@ -63,7 +63,11 @@ function AdminAlerts() {
       if (severityFilter) params.severity = severityFilter;
       if (siteFilter) params.site = siteFilter;
       const res = await api.get("/alerts", { params });
-      setAlerts(res.data.data || []);
+      const raw = res.data.data || [];
+      const cleanAlerts = raw.filter(
+        a => a.type !== 'system_offline' && a.device && (a.device.site || a.device.site?.name)
+      );
+      setAlerts(cleanAlerts);
     } catch {
       setError("Could not load alerts. Check that the backend is running.");
     } finally {

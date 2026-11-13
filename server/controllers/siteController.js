@@ -1,6 +1,7 @@
 const Site = require('../models/Site');
 const Device = require('../models/Device');
 const User = require('../models/User');
+const ChangeRequest = require('../models/ChangeRequest');
 
 // @desc    Get all sites
 // @route   GET /api/sites
@@ -46,9 +47,31 @@ exports.getSite = async (req, res, next) => {
 
 // @desc    Create site
 // @route   POST /api/sites
-// @access  Private/Admin, Site Engineer
+// @access  Private/Admin, Site Engineer (via ChangeRequest)
 exports.createSite = async (req, res, next) => {
   try {
+    // Site engineers submit a ChangeRequest — admin approves to actually create
+    if (req.user.role === 'site_engineer') {
+      const changeRequest = await ChangeRequest.create({
+        requestedBy: req.user._id,
+        site: null,
+        entityType: 'site',
+        action: 'create',
+        payload: { 
+          form: req.body, 
+          name: req.body.name,
+          targetSummary: `New Site: ${req.body.name || 'unnamed'}` 
+        },
+        status: 'pending'
+      });
+      return res.status(200).json({
+        success: true,
+        pendingApproval: true,
+        message: 'Site creation request submitted for admin approval.',
+        data: changeRequest
+      });
+    }
+
     req.body.createdBy = req.user.id;
     const site = await Site.create(req.body);
 
@@ -69,24 +92,52 @@ exports.createSite = async (req, res, next) => {
 
 // @desc    Update site
 // @route   PUT /api/sites/:id
-// @access  Private (Admin or assigned Site Engineer)
+// @access  Private (Admin or assigned Site Engineer via ChangeRequest)
 exports.updateSite = async (req, res, next) => {
   try {
     delete req.body.createdBy;
 
-    // Site engineer scope check
-    if (req.user.role === 'site_engineer') {
-      const userAssignedSite = req.user.assignedSite ? req.user.assignedSite.toString() : null;
-      if (!userAssignedSite || userAssignedSite !== req.params.id) {
-        return res.status(403).json({
-          success: false,
-          message: 'Forbidden: You are only authorized to update your assigned site.'
-        });
-      }
-      delete req.body.assignedEngineer; // Engineers cannot reassign themselves or others
+    const site = await Site.findById(req.params.id);
+    if (!site) {
+      return res.status(404).json({ success: false, message: 'Site not found' });
     }
 
-    const site = await Site.findByIdAndUpdate(
+    if (req.user.role === 'site_engineer') {
+      delete req.body.assignedEngineer;
+
+      const changes = {};
+      Object.keys(req.body).forEach(key => {
+        const oldVal = site[key] !== undefined ? site[key] : null;
+        const newVal = req.body[key];
+        if (String(oldVal ?? '') !== String(newVal ?? '')) {
+          changes[key] = { old: oldVal, new: newVal };
+        }
+      });
+
+      const changeRequest = await ChangeRequest.create({
+        requestedBy: req.user._id,
+        site: site._id,
+        entityType: 'site',
+        action: 'update',
+        targetId: site._id,
+        payload: { 
+          form: req.body, 
+          changes,
+          name: site.name,
+          targetSummary: `Site: ${site.name}` 
+        },
+        status: 'pending'
+      });
+
+      return res.status(200).json({
+        success: true,
+        pendingApproval: true,
+        message: 'Site update request submitted for admin approval.',
+        data: changeRequest
+      });
+    }
+
+    const updatedSite = await Site.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
@@ -95,16 +146,12 @@ exports.updateSite = async (req, res, next) => {
       .populate('assignedEngineer', 'name email')
       .populate('thresholds.parameter', 'key label unit');
 
-    if (!site) {
-      return res.status(404).json({ success: false, message: 'Site not found' });
-    }
-
     const io = req.app.get('io');
     if (io) {
-      io.emit('site_updated', site);
+      io.emit('site_updated', updatedSite);
     }
 
-    res.status(200).json({ success: true, data: site });
+    res.status(200).json({ success: true, data: updatedSite });
   } catch (error) {
     next(error);
   }
@@ -112,11 +159,38 @@ exports.updateSite = async (req, res, next) => {
 
 // @desc    Delete site
 // @route   DELETE /api/sites/:id
-// @access  Private/Admin, Site Engineer
+// @access  Private/Admin, Site Engineer (via ChangeRequest)
 exports.deleteSite = async (req, res, next) => {
   try {
     const site = await Site.findById(req.params.id);
     if (!site) return res.status(404).json({ success: false, message: 'Site not found' });
+
+    if (req.user.role === 'site_engineer') {
+      const changeRequest = await ChangeRequest.create({
+        requestedBy: req.user._id,
+        site: site._id,
+        entityType: 'site',
+        action: 'delete',
+        targetId: site._id,
+        payload: { 
+          name: site.name,
+          location: site.location,
+          targetSummary: `Site: ${site.name}` 
+        },
+        status: 'pending'
+      });
+
+      return res.status(200).json({
+        success: true,
+        pendingApproval: true,
+        message: 'Site deletion request submitted for admin approval.',
+        data: changeRequest
+      });
+    }
+
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Forbidden: Admin access required.' });
+    }
 
     // Unassign engineer if assigned -> revert role to registered_user
     if (site.assignedEngineer) {
@@ -143,6 +217,9 @@ exports.deleteSite = async (req, res, next) => {
 exports.assignEngineer = async (req, res, next) => {
   try {
     const { userId: targetUserId } = req.body;
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Forbidden: Admin access required.' });
+    }
     const site = await Site.findById(req.params.id);
     if (!site) {
       return res.status(404).json({ success: false, message: 'Site not found' });
@@ -191,6 +268,9 @@ exports.assignEngineer = async (req, res, next) => {
 // @access  Private/Admin
 exports.unassignEngineer = async (req, res, next) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Forbidden: Admin access required.' });
+    }
     const site = await Site.findById(req.params.id);
     if (!site) {
       return res.status(404).json({ success: false, message: 'Site not found' });
@@ -217,32 +297,47 @@ exports.unassignEngineer = async (req, res, next) => {
 
 // @desc    Update site thresholds
 // @route   PUT /api/sites/:id/thresholds
-// @access  Private (Admin or assigned Site Engineer)
+// @access  Private (Admin or assigned Site Engineer via ChangeRequest)
 exports.updateThresholds = async (req, res, next) => {
   try {
     const { thresholds } = req.body;
     const thresholdData = Array.isArray(thresholds) ? thresholds : req.body;
 
-    // Site engineer scope check
+    const site = await Site.findById(req.params.id);
+    if (!site) return res.status(404).json({ success: false, message: 'Site not found' });
+
+    // Site engineer scope check — goes through ChangeRequest
     if (req.user.role === 'site_engineer') {
-      const userAssignedSite = req.user.assignedSite ? req.user.assignedSite.toString() : null;
-      if (!userAssignedSite || userAssignedSite !== req.params.id) {
-        return res.status(403).json({
-          success: false,
-          message: 'Forbidden: You are only authorized to update thresholds for your assigned site.'
-        });
-      }
+      const changeRequest = await ChangeRequest.create({
+        requestedBy: req.user._id,
+        site: site._id,
+        entityType: 'site',
+        action: 'update',
+        targetId: site._id,
+        payload: { 
+          form: { thresholds: thresholdData }, 
+          name: site.name,
+          targetSummary: `Thresholds for Site: ${site.name}`, 
+          isThresholdUpdate: true 
+        },
+        status: 'pending'
+      });
+
+      return res.status(200).json({
+        success: true,
+        pendingApproval: true,
+        message: 'Threshold update request submitted for admin approval.',
+        data: changeRequest
+      });
     }
 
-    const site = await Site.findByIdAndUpdate(
+    const updatedSite = await Site.findByIdAndUpdate(
       req.params.id,
       { thresholds: thresholdData },
       { new: true, runValidators: true }
     ).populate('thresholds.parameter', 'key label unit valid_min valid_max');
 
-    if (!site) return res.status(404).json({ success: false, message: 'Site not found' });
-
-    res.status(200).json({ success: true, data: site });
+    res.status(200).json({ success: true, data: updatedSite });
   } catch (error) {
     next(error);
   }
