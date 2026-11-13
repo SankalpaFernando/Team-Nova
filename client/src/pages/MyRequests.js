@@ -40,9 +40,21 @@ function MyRequests() {
     const { changes, form, targetSummary } = payload;
 
     if (req.action === 'delete') {
+      const entityLabel = targetSummary 
+        || (payload.device_id ? `Device ${payload.device_id}` : null)
+        || (payload.name ? `Site "${payload.name}"` : null)
+        || (req.entityType === 'site' && req.site?.name ? `Site "${req.site.name}"` : null)
+        || (req.entityType === 'device' && payload.device_id ? `Device ${payload.device_id}` : null)
+        || 'target entity';
+
       return (
-        <div className="mr-diff-delete-notice" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <AlertTriangle size={16} /> <strong>Deletion Request</strong> for {targetSummary || 'target entity'}
+        <div className="mr-diff-delete-notice" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <AlertTriangle size={16} /> <strong>Deletion Request</strong> for {entityLabel}
+          {payload.device_id && !targetSummary?.includes(payload.device_id) && (
+            <span style={{ fontWeight: 700, background: '#fee2e2', padding: '2px 8px', borderRadius: '4px', color: '#991b1b', fontSize: '0.875rem' }}>
+              Device ID: {payload.device_id}
+            </span>
+          )}
         </div>
       );
     }
@@ -103,7 +115,7 @@ function MyRequests() {
           <div className="mr-filters-bar">
             <div className="mr-filter-group">
               <span className="mr-filter-label">Category:</span>
-              {['all', 'device', 'sensor', 'parameter'].map((cat) => (
+              {['all', 'site', 'device', 'sensor', 'parameter'].map((cat) => (
                 <button
                   key={cat}
                   className={`mr-filter-btn ${categoryFilter === cat ? 'mr-filter-btn--active' : ''}`}
@@ -157,11 +169,21 @@ function MyRequests() {
                   <div className="mr-card-body">
                     <div className="mr-info-grid">
                       <div>
-                        <strong>Target Site:</strong> {req.site?.name || 'Site'}
+                        <strong>Target Site:</strong> {req.site?.name || (req.entityType === 'site' && (req.payload?.name || req.payload?.form?.name)) || 'Site'}
                       </div>
                       <div>
                         <strong>Submitted:</strong> {new Date(req.createdAt).toLocaleString()}
                       </div>
+                      {(req.payload?.device_id || req.payload?.targetSummary || req.payload?.name || req.payload?.form?.name || req.payload?.form?.device_id) && (
+                        <div style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '6px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                          <strong style={{ color: '#0f172a' }}>Target {req.entityType ? req.entityType.toUpperCase() : 'ENTITY'}:</strong>
+                          <span style={{ fontWeight: 700, color: req.action === 'delete' ? '#dc2626' : '#047857' }}>
+                            {req.payload?.device_id 
+                              ? `Device ID: ${req.payload.device_id}` 
+                              : (req.payload?.targetSummary || req.payload?.name || req.payload?.form?.name || req.payload?.form?.device_id || '—')}
+                          </span>
+                        </div>
+                      )}
                       {req.reviewedAt && (
                         <div>
                           <strong>Reviewed:</strong> {new Date(req.reviewedAt).toLocaleString()} by{' '}

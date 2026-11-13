@@ -85,7 +85,7 @@ exports.createDevice = async (req, res, next) => {
     const site = await Site.findById(siteId);
     if (!site) return res.status(404).json({ success: false, message: 'Target site not found' });
 
-    // Site engineer scope check
+    // Site engineer scope check — goes through ChangeRequest
     if (req.user.role === 'site_engineer') {
       const userAssignedSite = req.user.assignedSite ? req.user.assignedSite.toString() : null;
       if (!userAssignedSite || userAssignedSite !== siteId.toString()) {
@@ -94,6 +94,23 @@ exports.createDevice = async (req, res, next) => {
           message: 'Forbidden: You are only authorized to add devices to your assigned site.'
         });
       }
+
+      // Submit as ChangeRequest for admin approval
+      const changeRequest = await ChangeRequest.create({
+        requestedBy: req.user._id,
+        site: siteId,
+        entityType: 'device',
+        action: 'create',
+        payload: { form: req.body, targetSummary: `New Device: ${device_id}` },
+        status: 'pending'
+      });
+
+      return res.status(200).json({
+        success: true,
+        pendingApproval: true,
+        message: 'Device creation request submitted for admin approval.',
+        data: changeRequest
+      });
     } else if (req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Forbidden: Insufficient privileges' });
     }
@@ -259,7 +276,10 @@ exports.deleteDevice = async (req, res, next) => {
         entityType: 'device',
         action: 'delete',
         targetId: device._id,
-        payload: { device_id: device.device_id },
+        payload: { 
+          device_id: device.device_id,
+          targetSummary: `Device ${device.device_id}`
+        },
         status: 'pending'
       });
 

@@ -111,8 +111,14 @@ function AdminMaps() {
     if (!form.name.trim() || !form.location.trim()) { setFormErr("Name and location are required."); return; }
     setSaving(true);
     try {
-      await api.post("/sites", form); setShowAdd(false); load();
-      showToast("Site created successfully!");
+      const res = await api.post("/sites", form);
+      setShowAdd(false);
+      if (res.data?.pendingApproval) {
+        showToast("Site creation request submitted for admin approval.", "success");
+      } else {
+        load();
+        showToast("Site created successfully!");
+      }
     }
     catch (err) { setFormErr(err.response?.data?.message || "Failed to create site."); }
     finally { setSaving(false); }
@@ -130,8 +136,14 @@ function AdminMaps() {
     if (!form.name.trim() || !form.location.trim()) { setFormErr("Name and location are required."); return; }
     setSaving(true);
     try {
-      await api.put(`/sites/${selected._id}`, form); setShowEdit(false); load();
-      showToast("Site updated successfully!");
+      const res = await api.put(`/sites/${selected._id}`, form);
+      setShowEdit(false);
+      if (res.data?.pendingApproval) {
+        showToast("Site update request submitted for admin approval.", "success");
+      } else {
+        load();
+        showToast("Site updated successfully!");
+      }
     }
     catch (err) { setFormErr(err.response?.data?.message || "Failed to update site."); }
     finally { setSaving(false); }
@@ -222,10 +234,14 @@ function AdminMaps() {
         });
       }
 
-      await api.put(`/sites/${selected._id}/thresholds`, { thresholds: formattedThresholds });
+      const res = await api.put(`/sites/${selected._id}/thresholds`, { thresholds: formattedThresholds });
       setShowThresh(false);
-      load();
-      showToast("Thresholds updated successfully!");
+      if (res.data?.pendingApproval) {
+        showToast("Threshold update request submitted for admin approval.", "success");
+      } else {
+        load();
+        showToast("Thresholds updated successfully!");
+      }
     } catch (err) {
       setFormErr(err.response?.data?.message || "Failed to update thresholds.");
     } finally {
@@ -243,12 +259,20 @@ function AdminMaps() {
   const doDelete = async () => {
     setSaving(true);
     try {
-      await api.delete(`/sites/${selected._id}`); setShowDelete(false); load();
-      showToast("Site deleted successfully.", "delete");
+      const res = await api.delete(`/sites/${selected._id}`);
+      setShowDelete(false);
+      if (res.data?.pendingApproval) {
+        showToast("Site deletion request submitted for admin approval.", "success");
+      } else {
+        load();
+        showToast("Site deleted successfully.", "delete");
+      }
     }
     catch (err) {
       console.error(err);
-      setError("Failed to delete site.");
+      const msg = err.response?.data?.message || "Failed to delete site.";
+      setError(msg);
+      showToast(msg, "delete");
     }
     finally { setSaving(false); }
   };

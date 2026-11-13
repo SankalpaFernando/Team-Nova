@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import api from '../services/api';
-import { AlertTriangle, ArrowRight, Radio, Microscope, Settings, CheckCircle2, Check, X, Users, UserCheck } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Radio, Microscope, Settings, CheckCircle2, Check, X, Users, UserCheck, MapPin } from 'lucide-react';
 import './PendingRequests.css';
 
 function PendingRequests() {
@@ -125,9 +125,21 @@ function PendingRequests() {
     const { changes, form, targetSummary } = payload;
 
     if (req.action === 'delete') {
+      const entityLabel = targetSummary 
+        || (payload.device_id ? `Device ${payload.device_id}` : null)
+        || (payload.name ? `Site "${payload.name}"` : null)
+        || (req.entityType === 'site' && req.site?.name ? `Site "${req.site.name}"` : null)
+        || (req.entityType === 'device' && payload.device_id ? `Device ${payload.device_id}` : null)
+        || 'target entity';
+
       return (
-        <div className="pr-diff-delete-notice" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <AlertTriangle size={16} /> <strong>Deletion Request</strong> for {targetSummary || 'target entity'}
+        <div className="pr-diff-delete-notice" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <AlertTriangle size={16} /> <strong>Deletion Request</strong> for {entityLabel}
+          {payload.device_id && !targetSummary?.includes(payload.device_id) && (
+            <span style={{ fontWeight: 700, background: '#fee2e2', padding: '2px 8px', borderRadius: '4px', color: '#991b1b', fontSize: '0.875rem' }}>
+              Device ID: {payload.device_id}
+            </span>
+          )}
         </div>
       );
     }
@@ -195,6 +207,7 @@ function PendingRequests() {
             {[
               { id: 'all', label: 'All Requests' },
               { id: 'user', label: <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>User Registrations <Users size={14} /></span> },
+              { id: 'site', label: <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>Sites <MapPin size={14} /></span> },
               { id: 'device', label: <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>Devices <Radio size={14} /></span> },
               { id: 'sensor', label: <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>Sensors <Microscope size={14} /></span> },
               { id: 'parameter', label: <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>Parameters <Settings size={14} /></span> }
@@ -265,11 +278,21 @@ function PendingRequests() {
                       <>
                         <div className="pr-info-grid">
                           <div>
-                            <strong>Site:</strong> {req.site?.name || 'Unknown Site'} ({req.site?.location || ''})
+                            <strong>Site:</strong> {req.site?.name || (req.entityType === 'site' && (req.payload?.name || req.payload?.form?.name)) || 'Unknown Site'} {req.site?.location ? `(${req.site.location})` : ''}
                           </div>
                           <div>
                             <strong>Requester:</strong> {req.requestedBy?.name || 'Engineer'} ({req.requestedBy?.email || ''})
                           </div>
+                          {(req.payload?.device_id || req.payload?.targetSummary || req.payload?.name || req.payload?.form?.name || req.payload?.form?.device_id) && (
+                            <div style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '6px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                              <strong style={{ color: '#0f172a' }}>Target {req.entityType ? req.entityType.toUpperCase() : 'ENTITY'}:</strong>
+                              <span style={{ fontWeight: 700, color: req.action === 'delete' ? '#dc2626' : '#047857' }}>
+                                {req.payload?.device_id 
+                                  ? `Device ID: ${req.payload.device_id}` 
+                                  : (req.payload?.targetSummary || req.payload?.name || req.payload?.form?.name || req.payload?.form?.device_id || '—')}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="pr-payload-box">

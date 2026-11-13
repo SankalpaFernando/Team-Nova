@@ -9,11 +9,11 @@ const changeRequestSchema = new mongoose.Schema({
   site: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Site',
-    required: [true, 'Site is required']
+    default: null
   },
   entityType: {
     type: String,
-    enum: ['device', 'sensor', 'parameter'],
+    enum: ['device', 'sensor', 'parameter', 'site'],
     required: [true, 'Entity type is required']
   },
   action: {

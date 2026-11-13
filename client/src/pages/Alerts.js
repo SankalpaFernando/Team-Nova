@@ -67,7 +67,10 @@ function Alerts() {
       if (siteFilter) params.site = siteFilter;
 
       const res = await api.get('/alerts', { params });
-      const newAlerts = res.data.data || [];
+      const raw = res.data.data || [];
+      const newAlerts = raw.filter(
+        a => a.type !== 'system_offline' && a.device && (a.device.site || a.device.site?.name)
+      );
       setAlerts(prev => (reset || pageNum === 1) ? newAlerts : [...prev, ...newAlerts]);
       setHasMore(pageNum < (res.data.pages || 1));
     } catch (err) {
@@ -92,7 +95,7 @@ function Alerts() {
   // Socket listener for new incoming alerts
   useEffect(() => {
     const handleNewAlert = (newAlert) => {
-      if (!newAlert) return;
+      if (!newAlert || newAlert.type === 'system_offline' || !newAlert.device) return;
       setAlerts(prev => [newAlert, ...prev]);
     };
     socket.on('new_alert', handleNewAlert);

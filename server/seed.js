@@ -11,6 +11,11 @@ const Alert = require('./models/Alert');
 const connectDB = require('./config/db');
 
 const seed = async () => {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ CRITICAL ERROR: seed.js execution is strictly prohibited in production.');
+    process.exit(1);
+  }
+
   await connectDB();
 
   console.log(' Seeding database...');
