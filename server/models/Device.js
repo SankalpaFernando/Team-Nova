@@ -40,4 +40,7 @@ const deviceSchema = new mongoose.Schema({
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
+deviceSchema.index({ site: 1 });
+deviceSchema.index({ status: 1 });
+
 module.exports = mongoose.model('Device', deviceSchema);

@@ -62,7 +62,7 @@ function Navbar() {
       else navigate("/dashboard");
     } catch (err) {
       if (err.response?.status === 403) {
-        setLoginError(err.response.data?.message || "Your account is pending administrator approval.");
+        setLoginError(err.response?.data?.message || "Your account is pending administrator approval.");
       } else if (err.response?.status === 401) {
         setLoginError("Invalid email or password. Please check your credentials and try again.");
       } else if (err.response?.data?.message) {

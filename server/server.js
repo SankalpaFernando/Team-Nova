@@ -10,6 +10,64 @@ const { startWatchdog } = require('./services/watchdogService');
 const app = express();
 const server = http.createServer(app);
 
+// Enable trust proxy in production for reverse proxies (Nginx, Cloudflare, Heroku, etc.)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
+// Security headers middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
+
+// Lightweight in-memory rate limiter
+const createRateLimiter = (windowMs, maxRequests, message) => {
+  const requests = new Map();
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of requests.entries()) {
+      if (now - entry.startTime > windowMs) {
+        requests.delete(ip);
+      }
+    }
+  }, 300000);
+
+  return (req, res, next) => {
+    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+    const now = Date.now();
+    let entry = requests.get(ip);
+
+    if (!entry || now - entry.startTime > windowMs) {
+      entry = { startTime: now, count: 1 };
+      requests.set(ip, entry);
+      return next();
+    }
+
+    entry.count++;
+    if (entry.count > maxRequests) {
+      return res.status(429).json({
+        success: false,
+        message: message || 'Too many requests, please try again later.'
+      });
+    }
+
+    next();
+  };
+};
+
+const authLimiter = createRateLimiter(15 * 60 * 1000, 30, 'Too many login attempts, please try again after 15 minutes.');
+const ingestLimiter = createRateLimiter(60 * 1000, 300, 'Ingest rate limit exceeded.');
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/readings', ingestLimiter);
+
 // Socket.io setup
 const io = new Server(server, {
   cors: {
@@ -25,26 +83,12 @@ const io = new Server(server, {
 // Make io accessible in controllers via req.app.get('io')
 app.set('io', io);
 
-// Connect to MongoDB, clean up legacy watchdog/orphan alerts, and start watchdog
+// Connect to MongoDB and start watchdog
 connectDB().then(async () => {
   try {
     const Alert = require('./models/Alert');
-    const Device = require('./models/Device');
-    const validDevices = await Device.find({ site: { $ne: null } }).select('_id');
-    const validDeviceIds = validDevices.map(d => d._id);
-    const deleteRes = await Alert.deleteMany({
-      $or: [
-        { type: 'system_offline' },
-        { device: null },
-        { device: { $nin: validDeviceIds } }
-      ]
-    });
-    if (deleteRes.deletedCount > 0) {
-      console.log(`🧹 Cleaned up ${deleteRes.deletedCount} watchdog/orphan alerts without device or site.`);
-    }
-  } catch (err) {
-    console.error('Initial alert cleanup notice:', err.message);
-  }
+    await Alert.deleteMany({ $or: [{ type: 'system_offline' }, { device: null }] });
+  } catch (err) {}
   startWatchdog(io);
 });
 
@@ -101,8 +145,10 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, '::', () => {
-  console.log(`🌿 Server running on port ${PORT}`);
+const HOST = process.env.HOST || '::';
+
+server.listen(PORT, HOST, () => {
+  console.log(`🌿 Server running on port ${PORT} (host: ${HOST})`);
   console.log(`🔌 Socket.io ready`);
 });
 

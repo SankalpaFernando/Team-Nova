@@ -1,6 +1,8 @@
 const ChangeRequest = require('../models/ChangeRequest');
 const Device = require('../models/Device');
 const Sensor = require('../models/Sensor');
+const SensorReading = require('../models/SensorReading');
+const Alert = require('../models/Alert');
 const Parameter = require('../models/Parameter');
 const Site = require('../models/Site');
 const User = require('../models/User');
@@ -88,7 +90,12 @@ exports.approveChangeRequest = async (req, res, next) => {
         await Device.findByIdAndUpdate(targetId, dataToApply, { new: true, runValidators: true });
       } else if (action === 'delete') {
         if (!targetId) return res.status(400).json({ success: false, message: 'Missing targetId for delete action' });
-        await Device.findByIdAndDelete(targetId);
+        await Promise.all([
+          Sensor.deleteMany({ device: targetId }),
+          SensorReading.deleteMany({ device: targetId }),
+          Alert.deleteMany({ device: targetId }),
+          Device.findByIdAndDelete(targetId)
+        ]);
       }
     } else if (entityType === 'sensor') {
       if (action === 'create') {
@@ -134,8 +141,15 @@ exports.approveChangeRequest = async (req, res, next) => {
           if (siteToDelete.assignedEngineer) {
             await User.findByIdAndUpdate(siteToDelete.assignedEngineer, { assignedSite: null, role: 'registered_user' });
           }
-          await Device.deleteMany({ site: targetId });
-          await siteToDelete.deleteOne();
+          const siteDevices = await Device.find({ site: targetId }).select('_id');
+          const siteDevIds = siteDevices.map(d => d._id);
+          await Promise.all([
+            Sensor.deleteMany({ device: { $in: siteDevIds } }),
+            SensorReading.deleteMany({ device: { $in: siteDevIds } }),
+            Alert.deleteMany({ device: { $in: siteDevIds } }),
+            Device.deleteMany({ site: targetId }),
+            siteToDelete.deleteOne()
+          ]);
         }
         const io = req.app.get('io');
         if (io) io.emit('site_deleted', targetId);
