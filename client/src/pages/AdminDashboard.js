@@ -183,7 +183,14 @@ function SiteHistoryChart({ siteId, devices, sites }) {
   }
 
   const chartData = buildSeriesWithGaps(historyData, selectedParam);
-  const xTicks = getDayTicks(chartData);
+  const xTicks = getDayTicks(chartData, rangeHours);
+
+  const xDomain = (() => {
+    if (!chartData || chartData.length === 0) return [0, 1];
+    const min = chartData[0]?.timeKey;
+    const max = chartData[chartData.length - 1]?.timeKey;
+    return min === max ? [min - 3600000, max + 3600000] : [min, max];
+  })();
 
   const renderCustomDot = (props, paramKey) => {
     const { cx, cy, value } = props;
@@ -226,7 +233,16 @@ function SiteHistoryChart({ siteId, devices, sites }) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e1e0d9" />
-            <XAxis dataKey="timeKey" height={40} ticks={xTicks} interval={0} tick={makeDayAwareTick(xTicks, { fontSize: 11, fill: "#898781" })} />
+            <XAxis
+              dataKey="timeKey"
+              type="number"
+              scale="time"
+              domain={xDomain}
+              height={40}
+              ticks={xTicks}
+              interval={0}
+              tick={makeDayAwareTick(xTicks, { fontSize: 11, fill: "#898781", timeRange: rangeHours })}
+            />
             <YAxis tick={{ fontSize: 11, fill: "#898781" }} />
             <Tooltip content={<CustomTooltip />} />
             <Line
