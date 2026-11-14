@@ -6,6 +6,7 @@ const sendEmail = require('../utils/sendEmail');
 const { processAlertSms } = require('./smsService');
 const { processAlertEmail } = require('./emailAlertService');
 
+const DEVICE_SILENCE_LIMIT_SECONDS = 9 * 3600; // 32,400 seconds (9 hours)
 const SYSTEM_OFFLINE_COOLDOWN_MS = 9 * 60 * 60 * 1000; // 9 hours
 
 let serverStartTime = Date.now();
@@ -29,14 +30,11 @@ function formatDuration(seconds) {
 }
 
 /**
- * Calculate the silent limit: 3 × sampling_interval + margin.
- * With the device default of 10800 s (3 h): 3 × 10800 = 32400 s = 9 h.
- * Margin is capped at max(10 min, 10% of interval).
+ * Calculate the silent limit: fixed at 9 hours (32,400 seconds)
+ * Ensures devices are never falsely marked faulty after just 55 minutes.
  */
-function getLimitSeconds(samplingIntervalSeconds) {
-  const interval = samplingIntervalSeconds || 10800; // default 3 hours
-  const margin = interval >= 600 ? Math.max(600, 0.1 * interval) : Math.max(5, 0.1 * interval);
-  return (3 * interval) + margin;
+function getLimitSeconds(_samplingIntervalSeconds) {
+  return DEVICE_SILENCE_LIMIT_SECONDS;
 }
 
 /**
