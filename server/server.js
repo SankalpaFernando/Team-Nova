@@ -6,18 +6,14 @@ require('dotenv').config();
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const { startWatchdog } = require('./services/watchdogService');
-const cors = require('cors');
 
 const app = express();
-
 const server = http.createServer(app);
 
 // Enable trust proxy in production for reverse proxies (Nginx, Cloudflare, Heroku, etc.)
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
-
-app.use(cors())
 
 // Security headers middleware
 app.use((req, res, next) => {
