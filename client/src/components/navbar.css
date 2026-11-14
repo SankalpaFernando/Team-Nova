@@ -1,0 +1,571 @@
+/* ==========================
+   NAVBAR
+========================== */
+
+.navbar{
+
+  width:100%;
+
+  position:fixed;
+
+  top:0;
+
+  left:0;
+
+  z-index:1000;
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  padding:6px 60px;
+
+  background:rgba(0,98,65,.92);
+
+  backdrop-filter:blur(8px);
+
+}
+
+/* ==========================
+   LOGO
+========================== */
+
+.logo {
+
+  font-size:24px;
+
+  font-weight:800;
+
+  color:white;
+
+  text-decoration:none;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  font-family:var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+
+  letter-spacing:-0.02em;
+
+}
+
+.logo-icon {
+
+}
+
+/* ==========================
+   NAVIGATION LINKS
+========================== */
+
+.nav-links{
+
+  display:flex;
+
+  list-style:none;
+
+  align-items:center;
+
+  gap:35px;
+
+}
+
+.nav-links li{
+
+  list-style:none;
+
+}
+
+.nav-links a{
+
+  color:white;
+
+  text-decoration:none;
+
+  font-size:17px;
+
+  font-weight:500;
+
+  transition:.3s;
+
+}
+
+.nav-links a:hover{
+
+  color:#bfe9d2;
+
+}
+
+.nav-links a.active{
+
+  color:#ffd166;
+
+  font-weight:700;
+
+}
+
+/* ==========================
+   SEARCH BAR
+========================== */
+
+.search-form{
+
+  display:flex;
+
+  align-items:center;
+
+  background:white;
+
+  border-radius:30px;
+
+  overflow:hidden;
+
+}
+
+.search-input{
+
+  width:220px;
+
+  border:none;
+
+  outline:none;
+
+  padding:11px 15px;
+
+  font-size:15px;
+
+  background:white;
+
+}
+
+.search-input::placeholder{
+
+  color:#777;
+
+}
+
+.search-icon-btn{
+
+  width:48px;
+
+  height:42px;
+
+  border:none;
+
+  background:white;
+
+  color:#006241;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  cursor:pointer;
+
+  font-size:18px;
+
+  transition:.3s;
+
+}
+
+.search-icon-btn:hover{
+
+  background:#d7efe2;
+
+}
+
+/* ==========================
+   LOGIN BUTTON
+========================== */
+
+.nav-buttons{
+
+  display:flex;
+
+  align-items:center;
+
+}
+
+.login-nav-btn{
+
+  background:white;
+
+  color:#006241;
+
+  border:none;
+
+  border-radius:30px;
+
+  padding:10px 28px;
+
+  font-size:16px;
+
+  font-weight:bold;
+
+  cursor:pointer;
+
+  transition:.3s;
+
+}
+
+.login-nav-btn:hover{
+
+  background:#d7efe2;
+
+  transform:translateY(-2px);
+
+}
+
+/* ==========================
+   LOGIN POPUP
+========================== */
+
+.popup-overlay{
+
+  position:fixed;
+
+  inset:0;
+
+  background:rgba(0,0,0,.55);
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  z-index:2000;
+
+}
+
+.login-popup{
+
+  width:420px;
+
+  max-width:90%;
+
+  background:white;
+
+  border-radius:18px;
+
+  padding:35px;
+
+  position:relative;
+
+  box-shadow:0 15px 35px rgba(0,0,0,.25);
+
+  animation:popupFade .3s ease;
+
+}
+
+@keyframes popupFade{
+
+  from{
+
+    opacity:0;
+
+    transform:translateY(-30px) scale(.95);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:translateY(0) scale(1);
+
+  }
+
+}
+
+.login-popup h2{
+
+  text-align:center;
+
+  color:#006241;
+
+  margin-bottom:20px;
+
+  font-size:30px;
+
+}
+
+.login-error-alert{
+
+  background-color:#fde8e8;
+
+  color:#c81e1e;
+
+  border:1px solid #f8b4b4;
+
+  border-radius:10px;
+
+  padding:12px 16px;
+
+  font-size:14px;
+
+  margin-bottom:20px;
+
+  line-height:1.4;
+
+  text-align:center;
+
+  font-weight:500;
+
+}
+
+/* ==========================
+   CLOSE BUTTON
+========================== */
+
+.close-btn{
+
+  position:absolute;
+
+  top:15px;
+
+  right:18px;
+
+  background:none;
+
+  border:none;
+
+  font-size:30px;
+
+  cursor:pointer;
+
+  color:#555;
+
+}
+
+.close-btn:hover{
+
+  color:red;
+
+}
+
+/* ==========================
+   FORM
+========================== */
+
+.login-popup form{
+
+  display:flex;
+
+  flex-direction:column;
+
+}
+
+.login-popup label{
+
+  margin-top:15px;
+
+  margin-bottom:8px;
+
+  font-weight:600;
+
+  color:#333;
+
+}
+
+.login-popup input{
+
+  padding:12px 15px;
+
+  border:1px solid #ccc;
+
+  border-radius:8px;
+
+  outline:none;
+
+  font-size:15px;
+
+}
+
+.login-popup input:focus{
+
+  border-color:#006241;
+
+  box-shadow:0 0 5px rgba(0,98,65,.25);
+
+}
+
+/* ==========================
+   LOGIN BUTTON
+========================== */
+
+.popup-login-btn{
+
+  margin-top:28px;
+
+  background:#006241;
+
+  color:white;
+
+  border:none;
+
+  border-radius:30px;
+
+  padding:13px;
+
+  font-size:17px;
+
+  font-weight:bold;
+
+  cursor:pointer;
+
+  transition:.3s;
+
+}
+
+.popup-login-btn:hover{
+
+  background:#008657;
+
+}
+
+/* ==========================
+   EXTRA LINKS
+========================== */
+
+.forgot-password{
+
+  text-align:center;
+
+  margin-top:18px;
+
+  color:#006241;
+
+  cursor:pointer;
+
+}
+
+.forgot-password a{
+
+  color:inherit;
+
+  text-decoration:none;
+
+  cursor:pointer;
+
+}
+
+.forgot-password:hover a{
+
+  text-decoration:underline;
+
+}
+
+.register-link{
+
+  margin-top:25px;
+
+  text-align:center;
+
+  color:#555;
+
+}
+
+.register-link a{
+
+  color:#006241;
+
+  margin-left:6px;
+
+  text-decoration:none;
+
+  font-weight:bold;
+
+}
+
+.register-link a:hover{
+
+  text-decoration:underline;
+
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media(max-width:1100px){
+
+  .navbar{
+
+    padding:15px 25px;
+
+  }
+
+  .nav-links{
+
+    gap:20px;
+
+  }
+
+  .search-input{
+
+    width:170px;
+
+  }
+
+}
+
+@media(max-width:800px){
+
+  .navbar{
+
+    flex-direction:column;
+
+    gap:15px;
+
+    padding:20px;
+
+  }
+
+  .nav-links{
+
+    flex-wrap:wrap;
+
+    justify-content:center;
+
+    gap:15px;
+
+  }
+
+  .search-form{
+
+    width:100%;
+
+    max-width:400px;
+
+  }
+
+  .search-input{
+
+    width:100%;
+
+  }
+
+  .nav-buttons{
+
+    justify-content:center;
+
+    width:100%;
+
+  }
+
+  .login-popup{
+
+    width:95%;
+
+    padding:25px;
+
+  }
+
+}

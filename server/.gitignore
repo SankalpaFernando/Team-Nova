@@ -1,0 +1,6 @@
+node_modules/
+.env
+.env.*
+*.env
+seeded-device-keys.txt
+*.log

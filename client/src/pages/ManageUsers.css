@@ -1,0 +1,656 @@
+/* ═══════════════════════════════════════════════
+   ManageUsers.css  —  MangroveGuard Admin Panel
+   Design: matches Sites page (AdminMaps) style
+═══════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Layout ─────────────────────────────────── */
+.mu-page {
+  min-height: 100vh;
+  background: #eef3f0;
+  color: #1a2e24;
+}
+
+.mu-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 26px 20px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.mu-brand-icon { font-size: 30px; line-height: 1; }
+
+.mu-brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.2px;
+}
+
+.mu-brand-role {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6fcf97;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* Nav */
+.mu-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  flex: 1;
+  gap: 2px;
+}
+
+.mu-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 9px;
+  color: rgba(255,255,255,0.65);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.mu-nav-link:hover {
+  background: rgba(255,255,255,0.09);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.mu-nav-link--active {
+  background: rgba(111,207,151,0.18) !important;
+  color: #6fcf97 !important;
+  font-weight: 600;
+  transform: none !important;
+}
+
+.mu-nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* Bottom user card */
+.mu-sidebar-bottom {
+  padding: 16px 14px 20px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.mu-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.mu-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #27ae60, #1a6640);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mu-user-name  { font-size: 13px; font-weight: 600; color: #fff; }
+.mu-user-email {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.mu-logout-btn {
+  width: 100%;
+  padding: 9px;
+  background: rgba(231,76,60,0.12);
+  border: 1px solid rgba(231,76,60,0.25);
+  border-radius: 8px;
+  color: #e27a73;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mu-logout-btn:hover { background: rgba(231,76,60,0.22); }
+
+/* ── Main ────────────────────────────────────── */
+/* margin-left and transition are set in AdminSidebar.css */
+.mu-main {
+  padding: 32px 36px 48px;
+  min-height: 100vh;
+}
+
+/* ── Page Header ─────────────────────────────── */
+.mu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 26px;
+}
+
+.mu-breadcrumb { font-size: 12px; color: #5a7a6c; margin-bottom: 5px; letter-spacing: 0.3px; font-weight: 600; }
+.mu-title      { font-size: 26px; font-weight: 700; color: #152b1f; letter-spacing: -0.4px; }
+.mu-subtitle   { font-size: 13px; color: #3d6052; margin-top: 4px; font-weight: 500; }
+
+/* ── Buttons ─────────────────────────────────── */
+.mu-btn-primary {
+  background: #1c3a2a;
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+.mu-btn-primary:hover   { background: #27523c; }
+.mu-btn-primary:active  { transform: scale(0.97); }
+.mu-btn-primary:disabled { background: #9bbdad; cursor: not-allowed; }
+
+.mu-btn-sec {
+  background: transparent;
+  color: #4a6b5d;
+  border: 1.5px solid #c4d8ce;
+  padding: 10px 20px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mu-btn-sec:hover { background: #eaf2ed; border-color: #9abfb0; }
+
+.mu-btn-danger {
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mu-btn-danger:hover    { background: #e74c3c; }
+.mu-btn-danger:disabled { background: #e0a09a; cursor: not-allowed; }
+
+/* ── Stats Row ───────────────────────────────── */
+.mu-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.mu-stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #deeae3;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mu-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(15, 56, 44, 0.09);
+  border-color: #c5ded5;
+}
+
+.mu-stat-card--highlight {
+  border-color: #f59e0b;
+  background: #fffdfa;
+}
+
+.mu-stat-card--highlight:hover {
+  border-color: #d97706;
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.12);
+}
+
+.mu-stat-icon { font-size: 28px; }
+.mu-stat-val  { font-size: 26px; font-weight: 700; color: #1c3a2a; line-height: 1; }
+.mu-stat-lbl  { font-size: 12px; color: #3d6052; margin-top: 3px; font-weight: 600; }
+
+/* ── Pending Banner Alert ───────────────────── */
+.mu-pending-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08);
+}
+
+.mu-pending-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mu-pending-banner-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mu-pending-banner-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 3px;
+}
+
+.mu-pending-banner-sub {
+  font-size: 13px;
+  color: #b45309;
+  margin: 0;
+}
+
+.mu-pending-banner-btn {
+  background: #d97706;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.mu-pending-banner-btn:hover {
+  background: #b45309;
+}
+
+/* ── Filter Tabs ────────────────────────────── */
+.mu-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.mu-filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fff;
+  border: 1px solid #deeae3;
+  border-radius: 8px;
+  color: #4a6b5d;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mu-filter-tab:hover {
+  background: #f0f7f3;
+  border-color: #b8dfc8;
+  color: #1c3a2a;
+}
+
+.mu-filter-tab--active {
+  background: #1c3a2a !important;
+  color: #fff !important;
+  border-color: #1c3a2a !important;
+}
+
+.mu-tab-badge {
+  background: #d97706;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+/* ── Error / Loading ─────────────────────────── */
+.mu-error {
+  background: #fde8e8;
+  color: #b03020;
+  border: 1px solid #f0c0b8;
+  border-radius: 9px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.mu-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: #6a8878;
+  gap: 14px;
+  font-size: 15px;
+}
+
+.mu-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid #cce0d6;
+  border-top-color: #1c3a2a;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Table Card ──────────────────────────────── */
+.mu-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  border: 1px solid #deeae3;
+  overflow: hidden;
+}
+
+.mu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.mu-table thead tr { background: #1c3a2a; }
+
+.mu-table thead th {
+  color: rgba(255,255,255,0.82);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mu-tr {
+  border-bottom: 1px solid #edf4ef;
+  transition: background 0.12s;
+}
+.mu-tr:last-child { border-bottom: none; }
+.mu-tr:hover      { background: #f5fbf7; }
+
+.mu-table td { padding: 13px 16px; vertical-align: middle; color: #2d4a3e; }
+
+.mu-td-num   { color: #5a7a6c !important; font-weight: 700; width: 40px; }
+.mu-td-name  { font-weight: 600; color: #1c3a2a !important; }
+.mu-td-email { font-size: 13px; color: #2d4a3e !important; font-weight: 500; }
+.mu-td-dim   { font-size: 13px; color: #4a6b5d !important; font-weight: 500; }
+
+.mu-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mu-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #27ae60, #1a6640);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mu-empty {
+  text-align: center;
+  padding: 64px 20px !important;
+  color: #4a6b5d;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ── Badges ──────────────────────────────────── */
+.mu-badge {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.mu-badge--admin    { background: #fde8e8; color: #b03020; }
+.mu-badge--engineer { background: #e6fcf5; color: #0ca678; }
+.mu-badge--user     { background: #eef0ff; color: #1a40a8; }
+.mu-badge--visitor  { background: #eef8f2; color: #1a6640; }
+.mu-badge--pending  { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; display: inline-flex; align-items: center; gap: 4px; }
+.mu-badge--approved { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; display: inline-flex; align-items: center; gap: 4px; }
+.mu-badge--rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 4px; }
+
+/* ── Action Buttons ──────────────────────────── */
+.mu-actions { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+
+.mu-act {
+  padding: 6px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+
+.mu-act--edit { background: #eef8f2; color: #1a6640; border-color: #b8dfc8; }
+.mu-act--edit:hover { background: #d4eede; }
+
+.mu-act--approve { background: #dcfce7; color: #15803d; border: 1.5px solid #86efac; display: inline-flex; align-items: center; gap: 4px; }
+.mu-act--approve:hover { background: #bbf7d0; }
+.mu-act--approve:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.mu-act--reject  { background: #fee2e2; color: #b91c1c; border: 1.5px solid #fca5a5; display: inline-flex; align-items: center; gap: 4px; }
+.mu-act--reject:hover  { background: #fecaca; }
+.mu-act--reject:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.mu-act--del  { background: #fff0f0; color: #b03020; border-color: #f0b8b0; }
+.mu-act--del:hover  { background: #fdd8d4; }
+
+/* ── Modal Overlay ───────────────────────────── */
+.mu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 24, 16, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* ── Modal ───────────────────────────────────── */
+.mu-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+  overflow: hidden;
+  animation: modal-in 0.2s ease;
+}
+
+.mu-modal--sm { max-width: 400px; }
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.mu-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #edf4ef;
+}
+
+.mu-modal-head h2 { font-size: 18px; font-weight: 700; color: #1c3a2a; }
+
+.mu-close {
+  background: none;
+  border: none;
+  font-size: 17px;
+  color: #8aaa98;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+.mu-close:hover { background: #edf4ef; color: #1c3a2a; }
+
+.mu-modal-body { padding: 16px 24px 8px; }
+
+.mu-lbl {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d4a3e;
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+.mu-lbl:first-of-type { margin-top: 0; }
+
+.mu-inp {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid #cce0d6;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1c3a2a;
+  background: #f7fbf9;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  font-family: inherit;
+}
+.mu-inp:focus {
+  border-color: #1c3a2a;
+  box-shadow: 0 0 0 3px rgba(28,58,42,0.1);
+  background: #fff;
+}
+
+.mu-ferr {
+  background: #fde8e8;
+  color: #b03020;
+  border: 1px solid #f0c0b0;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.mu-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px 20px;
+  border-top: 1px solid #edf4ef;
+  margin-top: 12px;
+}
+
+/* ── Delete Confirm ──────────────────────────── */
+.mu-del-body {
+  text-align: center;
+  padding: 24px 24px 8px;
+}
+.mu-del-icon { font-size: 44px; margin-bottom: 14px; }
+.mu-del-body p { font-size: 15px; color: #2d4a3e; margin-bottom: 8px; }
+.mu-del-warn {
+  font-size: 13px !important;
+  color: #8aaa98 !important;
+  line-height: 1.55;
+}
+
+/* ── Toast ───────────────────────────────────── */
+.mu-toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 2000;
+  animation: toast-in 0.25s ease;
+}
+
+.mu-toast--success {
+  background: #1c3a2a;
+  color: #fff;
+  border-left: 4px solid #6fcf97;
+}
+
+.mu-toast--delete {
+  background: #3a1c1c;
+  color: #fff;
+  border-left: 4px solid #e74c3c;
+}
+
+.mu-toast-icon { font-size: 16px; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 1100px) {
+  .mu-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .mu-main    { padding: 20px 16px; }
+  .mu-header  { flex-direction: column; gap: 14px; }
+  .mu-stats   { grid-template-columns: repeat(2, 1fr); }
+  .mu-card    { overflow-x: auto; }
+  .mu-table   { min-width: 600px; }
+}

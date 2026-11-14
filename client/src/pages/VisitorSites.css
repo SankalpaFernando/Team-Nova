@@ -1,0 +1,357 @@
+/* ===========================
+   PAGE & HERO SINGLE-PAGE VIEW
+=========================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.visitor-sites-page {
+
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.visitor-sites-hero {
+    width: 100%;
+    min-height: calc(100vh - 80px);
+    flex: 1;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    display: flex;
+}
+
+.visitor-sites-overlay {
+    width: 100%;
+    min-height: 100%;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 100px 30px 40px;
+}
+
+.visitor-sites-content {
+    width: 100%;
+    max-width: 1300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.visitor-sites-title {
+    color: white;
+    font-size: 38px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.6);
+    text-align: center;
+}
+
+/* ===========================
+   SRI LANKA MAP WRAPPER
+=========================== */
+
+.visitor-map-section {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 520px;
+}
+
+.sri-lanka-map-wrapper {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    min-height: 520px;
+    height: 560px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.sri-lanka-map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 12px;
+}
+
+.map-title-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.map-live-badge {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f4d3a;
+}
+
+.map-instruction {
+    font-size: 13px;
+    color: #555;
+    background: #f0f4f1;
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+.map-count {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 4px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.map-viewport-container {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.sri-lanka-map-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+/* ===========================
+   RED DOT MARKERS ANIMATION
+=========================== */
+
+.custom-red-dot-wrapper {
+    background: transparent;
+    border: none;
+}
+
+.red-dot-container {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.red-dot-core {
+    width: 18px;
+    height: 18px;
+    background-color: #ff2a2a;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(255, 42, 42, 0.9), 0 2px 6px rgba(0, 0, 0, 0.4);
+    transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.red-dot-pulse {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-color: rgba(255, 42, 42, 0.45);
+    border-radius: 50%;
+    animation: red-pulse-ring 1.8s infinite ease-in-out;
+}
+
+.red-dot-container.selected .red-dot-core {
+    background-color: #d00000;
+    transform: scale(1.4);
+    box-shadow: 0 0 18px rgba(208, 0, 0, 1), 0 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes red-pulse-ring {
+    0% {
+        transform: scale(0.5);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(1.7);
+        opacity: 0;
+    }
+}
+
+/* ===========================
+   POP-UP FLASHCARD MODAL OVERLAY
+=========================== */
+
+.map-popup-flashcard-overlay {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 340px;
+    max-width: calc(100% - 40px);
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(10px);
+    border-left: 6px solid #e63946;
+    border-radius: 16px;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+    animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.flashcard-card-content {
+    padding: 20px;
+    position: relative;
+}
+
+.flashcard-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #f0f0f0;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.flashcard-close-btn:hover {
+    background: #e63946;
+    color: white;
+}
+
+.flashcard-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.flashcard-badge {
+    background: #ffebee;
+    color: #c62828;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+}
+
+.flashcard-site-name {
+    color: #1f4d3a;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.flashcard-body {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.6;
+}
+
+.flashcard-body p {
+    margin-bottom: 8px;
+}
+
+.flashcard-footer {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px dashed #ddd;
+}
+
+.flashcard-action-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: #1f4d3a;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.flashcard-action-btn:hover {
+    background: #143528;
+}
+
+.flashcard-visitor-hint {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.map-loading-box {
+    color: white;
+    font-size: 18px;
+    text-align: center;
+    padding: 40px;
+}
+
+.visitor-sites-error {
+    background: #fdecea;
+    color: #b3261e;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+
+@media (max-width: 768px) {
+    .visitor-sites-overlay {
+        padding: 90px 16px 16px;
+    }
+
+    .visitor-sites-title {
+        font-size: 28px;
+        margin-bottom: 12px;
+    }
+
+    .map-title-area {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .map-popup-flashcard-overlay {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+    }
+}
