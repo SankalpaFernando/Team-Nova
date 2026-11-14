@@ -1,13 +1,13 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./AdminProfile.css";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import AdminSidebar from "../components/AdminSidebar";
+import { User, Check, X, Pencil } from "lucide-react";
 
 function AdminProfile() {
-  const { user, logout, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const isEngineer = user?.role === 'site_engineer';
-  const navigate = useNavigate();
 
   // ── Avatar ─────────────────────────────────────────────
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -92,62 +92,11 @@ function AdminProfile() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
   return (
     <div className="mu-page">
 
-      {/* ── Sidebar (same as other admin pages) ── */}
-      <aside className="mu-sidebar">
-        <div className="mu-brand">
-          <span className="mu-brand-icon">🌿</span>
-          <div>
-            <div className="mu-brand-name">MangroveGuard</div>
-            <div className="mu-brand-role">Admin Panel</div>
-          </div>
-        </div>
-
-        <nav className="mu-nav">
-          {[
-            { to: "/admin-dashboard", icon: "⬛", label: "Dashboard" },
-            { to: "/manage-users",    icon: "👥", label: "Users"    },
-            { to: "/manage-devices",  icon: "📡", label: "Devices"  },
-            { to: "/manage-sensors",  icon: "🔬", label: "Sensors"  },
-            { to: "/parameter-admin", icon: "⚙️", label: "Parameters"},
-            { to: "/admin-alerts",    icon: "🔔", label: "Alerts"   },
-            { to: "/admin-maps",      icon: "📍", label: "Sites"    },
-            { to: "/admin-messages",  icon: "✉️", label: "Messages" },
-            { to: "/admin-profile",   icon: "👤", label: "Profile", active: true },
-          ].map(({ to, icon, label, active }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`mu-nav-link ${active ? "mu-nav-link--active" : ""}`}
-            >
-              <span className="mu-nav-icon">{icon}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="mu-sidebar-bottom">
-          <div className="mu-user-card">
-            <div className="mu-user-avatar">
-              {user?.name?.[0]?.toUpperCase() || "A"}
-            </div>
-            <div>
-              <div className="mu-user-name">{user?.name || "Admin"}</div>
-              <div className="mu-user-email">{user?.email || ""}</div>
-            </div>
-          </div>
-          <button className="mu-logout-btn" onClick={handleLogout}>
-            ⏻ Logout
-          </button>
-        </div>
-      </aside>
+      {/* ── Standard Admin Sidebar ── */}
+      <AdminSidebar activePage="profile" />
 
       {/* ── Main ── */}
       <main className="mu-main">
@@ -172,7 +121,7 @@ function AdminProfile() {
                 <img src={avatarPreview} alt="Admin" />
               ) : (
                 <div className="ap-default-avatar">
-                  {user?.name?.[0]?.toUpperCase() || "👤"}
+                  {user?.name?.[0]?.toUpperCase() || <User size={40} />}
                 </div>
               )}
             </div>
@@ -205,13 +154,13 @@ function AdminProfile() {
                       onChange={(e) => setName(e.target.value)}
                       autoFocus
                     />
-                    <button className="ap-save-btn" onClick={saveName} disabled={saving}>✓</button>
-                    <button className="ap-cancel-btn" onClick={cancelEdit} disabled={saving}>✕</button>
+                    <button className="ap-save-btn" onClick={saveName} disabled={saving}><Check size={14} /></button>
+                    <button className="ap-cancel-btn" onClick={cancelEdit} disabled={saving}><X size={14} /></button>
                   </div>
                 ) : (
                   <div className="ap-value-inline">
                     <strong>{user?.name}</strong>
-                    <button className="ap-pencil-btn" onClick={() => startEdit("name")}>✎</button>
+                    <button className="ap-pencil-btn" onClick={() => startEdit("name")} title="Edit name"><Pencil size={13} /></button>
                   </div>
                 )}
               </div>
@@ -231,7 +180,7 @@ function AdminProfile() {
               <div className="ap-row">
                 <span>Role</span>
                 <div className="ap-value-inline">
-                  <strong className="ap-role-badge">Admin</strong>
+                  <strong className="ap-role-badge">{isEngineer ? 'Site Engineer' : 'Admin'}</strong>
                 </div>
               </div>
 
@@ -272,7 +221,7 @@ function AdminProfile() {
                 ) : (
                   <div className="ap-value-inline">
                     <strong>••••••••</strong>
-                    <button className="ap-pencil-btn" onClick={() => startEdit("password")}>✎</button>
+                    <button className="ap-pencil-btn" onClick={() => startEdit("password")} title="Change password"><Pencil size={13} /></button>
                   </div>
                 )}
               </div>

@@ -27,11 +27,11 @@ const deviceSchema = new mongoose.Schema({
     ref: 'Site',
     required: [true, 'Site is required']
   },
-  // Default is 900 seconds (15 min) for field deployment (battery/solar).
+  // 10800 s = 3 hours. Watchdog fires after 3 missed intervals (3 × 3h = 9h).
   // For wall-powered prototype/demo devices, can be set lower (e.g. 30s).
   sampling_interval_seconds: {
     type: Number,
-    default: 900
+    default: 10800
   },
   lastSeen: { type: Date, default: null },
   fault_reason: { type: String, default: null },

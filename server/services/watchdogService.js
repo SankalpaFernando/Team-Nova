@@ -6,8 +6,7 @@ const sendEmail = require('../utils/sendEmail');
 const { processAlertSms } = require('./smsService');
 const { processAlertEmail } = require('./emailAlertService');
 
-const MISSED_INTERVALS_BEFORE_FAULT = 3;
-const SYSTEM_OFFLINE_COOLDOWN_MS = 55 * 60 * 1000; // 55 minutes
+const SYSTEM_OFFLINE_COOLDOWN_MS = 9 * 60 * 60 * 1000; // 9 hours
 
 let serverStartTime = Date.now();
 let lastSystemOfflineNotice = 0;
@@ -30,13 +29,14 @@ function formatDuration(seconds) {
 }
 
 /**
- * Calculate the silent limit in seconds: 3 * sampling_interval + margin
+ * Calculate the silent limit: 3 × sampling_interval + margin.
+ * With the device default of 10800 s (3 h): 3 × 10800 = 32400 s = 9 h.
+ * Margin is capped at max(10 min, 10% of interval).
  */
 function getLimitSeconds(samplingIntervalSeconds) {
   const interval = samplingIntervalSeconds || 10800; // default 3 hours
-  // Margin: max(10 min, 10% of interval) for production; scaled down for fast test intervals (e.g. 30s)
   const margin = interval >= 600 ? Math.max(600, 0.1 * interval) : Math.max(5, 0.1 * interval);
-  return (MISSED_INTERVALS_BEFORE_FAULT * interval) + margin;
+  return (3 * interval) + margin;
 }
 
 /**
@@ -84,8 +84,7 @@ async function runWatchdogCheck() {
     if (allSilent) {
       if (now - lastSystemOfflineNotice > SYSTEM_OFFLINE_COOLDOWN_MS) {
         lastSystemOfflineNotice = now;
-        console.log('⚠️ [WATCHDOG] Every active device is silent. Dispatching 55-min outage notice to admin.');
-
+        console.log('⚠️ [WATCHDOG] Every active device is silent. Dispatching 9-hour outage notice to admin.');
         const admins = await User.find({ role: 'admin' });
         for (const admin of admins) {
           if (admin.email) {
@@ -107,7 +106,7 @@ async function runWatchdogCheck() {
 
       if (deviceIsSilent) {
         // The WHOLE DEVICE is silent: mark device faulty, sensors are not flagged separately
-        const reason = `No data received for ${formatDuration(limitSeconds)}`;
+        const reason = `No data received for over 9 hours`;
         d.status = 'faulty';
         d.fault_reason = reason;
         d.faulty_since = new Date();
@@ -127,8 +126,10 @@ async function runWatchdogCheck() {
           const deviceAlert = await Alert.create({
             type: 'device_offline',
             device: d._id,
+            parameter_name: 'Device Offline',
+            measured_value: null,
             severity_level: 'critical',
-            message: `Device ${d.device_id} at ${d.site?.name || 'site'} is offline. ${reason}.`,
+            message: `Device ${d.device_id} at ${d.site?.name || 'monitoring site'} has been silent for over 9 hours. No data received. Please inspect power, solar panel, and LoRa gateway connection.`,
             status: 'unread'
           });
 

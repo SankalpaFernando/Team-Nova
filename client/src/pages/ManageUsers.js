@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
 import {
@@ -14,15 +12,11 @@ import {
   X,
   CheckCircle2,
   Check,
-  Clock,
-  AlertCircle
+  Clock
 } from "lucide-react";
 import "./ManageUsers.css";
 
 function ManageUsers() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
   // ── Data state ─────────────────────────────────────────
   const [users, setUsers]         = useState([]);
   const [sites, setSites]         = useState([]);

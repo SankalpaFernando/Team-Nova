@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import "./AdminMessages.css";
@@ -10,7 +9,6 @@ import { Mail, Circle, CircleDot, X, CheckCircle, XCircle, Trash2, Send } from '
 function AdminMessages() {
   const { user } = useAuth();
   const isEngineer = user?.role === 'site_engineer';
-  const navigate = useNavigate();
 
   const [messages, setMessages]       = useState([]);
   const [loading, setLoading]         = useState(true);

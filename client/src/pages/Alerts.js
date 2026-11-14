@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import UserLayout from '../components/UserLayout';
 import api from '../services/api';
 import socket from '../services/socket';
-import { Bell, AlertOctagon, CheckCircle2 } from 'lucide-react';
 
 const STATUS_LABEL = {
   unread: 'Pending',
@@ -69,7 +68,7 @@ function Alerts() {
       const res = await api.get('/alerts', { params });
       const raw = res.data.data || [];
       const newAlerts = raw.filter(
-        a => a.type !== 'system_offline' && a.device && (a.device.site || a.device.site?.name)
+        a => a.type !== 'system_offline' && a.device
       );
       setAlerts(prev => (reset || pageNum === 1) ? newAlerts : [...prev, ...newAlerts]);
       setHasMore(pageNum < (res.data.pages || 1));

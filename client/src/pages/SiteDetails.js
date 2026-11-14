@@ -1,6 +1,6 @@
 import "./SiteDetails.css";
 import "./AdminMaps.css";
-import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
 import socket from "../services/socket";
@@ -16,7 +16,6 @@ import { ChevronDown, ChevronUp, Cpu } from "lucide-react";
 
 function SiteDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
   const { user, isAdmin, isSiteEngineer } = useAuth();
   

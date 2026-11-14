@@ -4,7 +4,7 @@ import "./Profile.css";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import UserLayout from "../components/UserLayout";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Check, X, Pencil } from "lucide-react";
 
 function Profile() {
   const { user, logout, refreshUser } = useAuth();
@@ -145,13 +145,13 @@ function Profile() {
                     onChange={(e) => setName(e.target.value)}
                     autoFocus
                   />
-                  <button className="save-btn" onClick={saveName} disabled={saving}>✓</button>
-                  <button className="cancel-btn" onClick={cancelEdit} disabled={saving}>✕</button>
+                  <button className="save-btn" onClick={saveName} disabled={saving}><Check size={14} /></button>
+                  <button className="cancel-btn" onClick={cancelEdit} disabled={saving}><X size={14} /></button>
                 </div>
               ) : (
                 <div className="value-inline">
                   <strong>{user?.name}</strong>
-                  <button className="pencil-btn" onClick={() => startEdit("name")}>✎</button>
+                  <button className="pencil-btn" onClick={() => startEdit("name")} title="Edit name"><Pencil size={13} /></button>
                 </div>
               )}
             </div>
@@ -200,7 +200,7 @@ function Profile() {
               ) : (
                 <div className="value-inline">
                   <strong>••••••••</strong>
-                  <button className="pencil-btn" onClick={() => startEdit("password")}>✎</button>
+                  <button className="pencil-btn" onClick={() => startEdit("password")} title="Change password"><Pencil size={13} /></button>
                 </div>
               )}
             </div>
