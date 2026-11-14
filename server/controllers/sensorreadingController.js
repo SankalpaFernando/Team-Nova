@@ -58,6 +58,26 @@ const generateAlertForReading = async (readingDoc, sensorDoc, deviceDoc, siteDoc
   const direction = breached === 'min' ? 'dropped below minimum' : 'exceeded maximum';
   const message = `${parameter.label} level of ${value}${unitStr} has ${direction} threshold of ${thresholdValue}${unitStr} at site ${siteDoc.name}.`;
 
+  // Check for existing active/unread alert within cooldown window (15 minutes) to avoid flooding
+  const ALERT_COOLDOWN_MS = 15 * 60 * 1000;
+  const recentAlert = await Alert.findOne({
+    device: deviceDoc._id,
+    parameter: parameter._id,
+    type: 'threshold',
+    status: { $in: ['unread', 'active'] },
+    created_at: { $gte: new Date(Date.now() - ALERT_COOLDOWN_MS) }
+  });
+
+  if (recentAlert) {
+    // Update measured value and message on the existing alert instead of creating duplicates
+    recentAlert.measured_value = value;
+    recentAlert.reading = readingDoc._id;
+    recentAlert.message = message;
+    recentAlert.severity_level = severity;
+    await recentAlert.save();
+    return { alert: recentAlert, nearThreshold, deduplicated: true };
+  }
+
   // Create Alert document (persisting denormalized parameter_name and unit)
   const alert = await Alert.create({
     type: 'threshold',

@@ -1,5 +1,8 @@
 const Site = require('../models/Site');
 const Device = require('../models/Device');
+const Sensor = require('../models/Sensor');
+const SensorReading = require('../models/SensorReading');
+const Alert = require('../models/Alert');
 const User = require('../models/User');
 const ChangeRequest = require('../models/ChangeRequest');
 
@@ -197,8 +200,16 @@ exports.deleteSite = async (req, res, next) => {
       await User.findByIdAndUpdate(site.assignedEngineer, { assignedSite: null, role: 'registered_user' });
     }
 
-    await Device.deleteMany({ site: req.params.id });
-    await site.deleteOne();
+    // Cascade cleanup: delete all sensors, readings, and alerts for devices at this site
+    const siteDevices = await Device.find({ site: req.params.id }).select('_id');
+    const siteDevIds = siteDevices.map(d => d._id);
+    await Promise.all([
+      Sensor.deleteMany({ device: { $in: siteDevIds } }),
+      SensorReading.deleteMany({ device: { $in: siteDevIds } }),
+      Alert.deleteMany({ device: { $in: siteDevIds } }),
+      Device.deleteMany({ site: req.params.id }),
+      site.deleteOne()
+    ]);
 
     const io = req.app.get('io');
     if (io) {

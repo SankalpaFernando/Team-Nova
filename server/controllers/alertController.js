@@ -118,13 +118,25 @@ exports.updateAlertStatus = async (req, res, next) => {
   }
 };
 
-// @desc    Mark all alerts as read for the current user
+// @desc    Mark all alerts as read for the current user (site-scoped for engineers)
 // @route   PUT /api/alerts/markallread
 // @access  Private
 exports.markAllRead = async (req, res, next) => {
   try {
-    const query = {};
-    await Alert.updateMany({ ...query, status: 'unread' }, { status: 'read' });
+    const query = { status: 'unread' };
+
+    if (req.user && req.user.role === 'site_engineer') {
+      const assignedSite = req.user.assignedSite;
+      if (!assignedSite) {
+        return res.status(200).json({ success: true, message: 'No site assigned.' });
+      }
+      const siteDevices = await Device.find({ site: assignedSite }).select('_id');
+      query.device = { $in: siteDevices.map(d => d._id) };
+    } else if (req.user && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Forbidden: Insufficient privileges' });
+    }
+
+    await Alert.updateMany(query, { status: 'read' });
     res.status(200).json({ success: true, message: 'All alerts marked as read' });
   } catch (error) {
     next(error);

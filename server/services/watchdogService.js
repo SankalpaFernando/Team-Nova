@@ -1,12 +1,16 @@
 const Device = require('../models/Device');
 const Sensor = require('../models/Sensor');
 const Alert = require('../models/Alert');
+const User = require('../models/User');
+const sendEmail = require('../utils/sendEmail');
 const { processAlertSms } = require('./smsService');
 const { processAlertEmail } = require('./emailAlertService');
 
 const MISSED_INTERVALS_BEFORE_FAULT = 3;
+const SYSTEM_OFFLINE_COOLDOWN_MS = 55 * 60 * 1000; // 55 minutes
 
 let serverStartTime = Date.now();
+let lastSystemOfflineNotice = 0;
 let watchdogTimer = null;
 let cachedIo = null;
 
@@ -74,26 +78,25 @@ async function runWatchdogCheck() {
 
     // 4. Global Outage Check:
     // If EVERY active device is silent at the same time (when multiple devices exist),
-    // do not mark them all faulty. Create ONE system alert instead.
+    // do not mark them all faulty. Notify admin directly every 55 minutes without polluting the Alert table.
     const allSilent = evaluableDevices.length > 1 && evaluableDevices.every(d => deviceSilenceMap.get(d._id.toString())?.isSilent);
 
     if (allSilent) {
-      console.log('⚠️ [WATCHDOG] Every active device is silent at the same time. Raising system_offline alert.');
-      const existingAlert = await Alert.findOne({
-        type: 'system_offline',
-        status: { $ne: 'resolved' }
-      });
+      if (now - lastSystemOfflineNotice > SYSTEM_OFFLINE_COOLDOWN_MS) {
+        lastSystemOfflineNotice = now;
+        console.log('⚠️ [WATCHDOG] Every active device is silent. Dispatching 55-min outage notice to admin.');
 
-      if (!existingAlert) {
-        const systemAlert = await Alert.create({
-          type: 'system_offline',
-          severity_level: 'critical',
-          message: 'No data from any device - check the base station, radio link and network',
-          status: 'unread'
-        });
-
-        await processAlertSms(systemAlert, null, null);
-        await processAlertEmail(systemAlert, null, null);
+        const admins = await User.find({ role: 'admin' });
+        for (const admin of admins) {
+          if (admin.email) {
+            await sendEmail({
+              to: admin.email,
+              subject: '[MangroveGuard Alert] CRITICAL - System Offline',
+              text: 'No data from any device - check the base station, radio link and network.',
+              html: '<p><strong>CRITICAL ALERT: System Offline</strong></p><p>No data from any device - check the base station, radio link and network.</p>'
+            }).catch(err => console.error('Watchdog notification error:', err.message));
+          }
+        }
       }
       return;
     }

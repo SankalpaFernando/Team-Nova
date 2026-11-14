@@ -1,5 +1,7 @@
 const Device = require('../models/Device');
 const Sensor = require('../models/Sensor');
+const SensorReading = require('../models/SensorReading');
+const Alert = require('../models/Alert');
 const Site = require('../models/Site');
 const ChangeRequest = require('../models/ChangeRequest');
 const crypto = require('crypto');
@@ -293,7 +295,13 @@ exports.deleteDevice = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Forbidden: Insufficient privileges' });
     }
 
-    await device.deleteOne();
+    // Cascade cleanup: delete associated sensors, readings, and alerts for this device
+    await Promise.all([
+      Sensor.deleteMany({ device: device._id }),
+      SensorReading.deleteMany({ device: device._id }),
+      Alert.deleteMany({ device: device._id }),
+      device.deleteOne()
+    ]);
 
     const io = req.app.get('io');
     if (io) {

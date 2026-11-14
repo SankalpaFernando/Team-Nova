@@ -42,4 +42,7 @@ const siteSchema = new mongoose.Schema({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
+siteSchema.index({ assignedEngineer: 1 });
+siteSchema.index({ region: 1 });
+
 module.exports = mongoose.model('Site', siteSchema);

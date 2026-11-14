@@ -18,6 +18,18 @@ router.post('/:id/reply', protect, authorize('admin', 'site_engineer'), async (r
     const message = await Message.findById(req.params.id);
     if (!message) return res.status(404).json({ success: false, message: 'Message not found' });
 
+    // Ensure site engineers can only reply to messages associated with their assigned site
+    if (req.user.role === 'site_engineer') {
+      const userSite = req.user.assignedSite ? req.user.assignedSite.toString() : null;
+      const msgSite = message.site ? message.site.toString() : null;
+      if (!userSite || userSite !== msgSite) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: You are only authorized to reply to messages for your assigned site.'
+        });
+      }
+    }
+
     await sendEmail({
       to: message.email,
       subject,

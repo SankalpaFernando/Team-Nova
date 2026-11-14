@@ -1,4 +1,4 @@
-﻿import "./SiteDetails.css";
+import "./SiteDetails.css";
 import "./AdminMaps.css";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
