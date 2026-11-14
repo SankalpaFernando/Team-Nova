@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
-import { Radio, CheckCircle2, Wrench, AlertCircle, Pencil, Trash2, X } from "lucide-react";
+import { Radio, CheckCircle2, Wrench, AlertCircle, Pencil, Trash2 } from "lucide-react";
 import "./ManageDevices.css";
 
 function ManageDevices() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isEngineer = user?.role === 'site_engineer';
-  const navigate = useNavigate();
 
   // Data
   const [devices, setDevices] = useState([]);
@@ -190,7 +188,6 @@ useEffect(() => {
   const fc = (e) => setForm({ ...form, [e.target.name]: e.target.value });
   const statusClass = (s) => ({ active: "rn", inactive: "rs", maintenance: "re", faulty: "rw" }[s] || "rn");
   const formatDate = (d) => d ? new Date(d).toLocaleDateString() : "—";
-  const handleLogout = () => { logout(); navigate("/"); };
 
   const toggleFilter = (name, event) => {
   if (openFilter === name) {

@@ -24,11 +24,58 @@ exports.getChangeRequests = async (req, res, next) => {
       filter.requestedBy = req.user._id;
     }
 
-    const requests = await ChangeRequest.find(filter)
+    const rawRequests = await ChangeRequest.find(filter)
       .populate('requestedBy', 'name email role')
-      .populate('site', 'name location region')
+      .populate({ path: 'site', select: 'name location region thresholds' })
       .populate('reviewedBy', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const allParams = await Parameter.find().lean();
+    const paramMap = new Map(allParams.map(p => [p._id.toString(), p]));
+
+    const requests = rawRequests.map(r => {
+      const p = r.payload || {};
+      if (p.isThresholdUpdate || (p.form && p.form.thresholds) || p.thresholds) {
+        const siteThreshMap = new Map((r.site?.thresholds || []).map(st => [st.parameter?.toString(), st]));
+        const rawList = p.changedThresholds || (p.form && p.form.thresholds) || p.thresholds || [];
+
+        // Enrich parameter names, units, and previous values
+        const enriched = rawList.map(t => {
+          const paramDoc = paramMap.get(t.parameter?.toString());
+          const existing = siteThreshMap.get(t.parameter?.toString());
+          return {
+            parameter: t.parameter,
+            parameter_name: paramDoc?.label || paramDoc?.key || t.parameter_name || 'Parameter',
+            unit: paramDoc?.unit || t.unit || '',
+            min: Number(t.min),
+            max: Number(t.max),
+            previous_min: t.previous_min !== undefined && t.previous_min !== null
+              ? t.previous_min
+              : (existing ? Number(existing.min) : null),
+            previous_max: t.previous_max !== undefined && t.previous_max !== null
+              ? t.previous_max
+              : (existing ? Number(existing.max) : null)
+          };
+        });
+
+        // Filter to ONLY parameters that actually changed if multiple are present
+        const actuallyChanged = enriched.filter(t => {
+          if (t.previous_min === null || t.previous_min === undefined) return true;
+          return Number(t.previous_min) !== Number(t.min) || Number(t.previous_max) !== Number(t.max);
+        });
+
+        const displayList = actuallyChanged.length > 0 ? actuallyChanged : enriched;
+        const changedNames = displayList.map(t => t.parameter_name).join(', ');
+
+        r.payload = {
+          ...p,
+          changedThresholds: displayList,
+          targetSummary: `Threshold change for ${changedNames || 'Parameters'} at ${r.site?.name || 'Site'}`
+        };
+      }
+      return r;
+    });
 
     res.status(200).json({
       success: true,
@@ -126,14 +173,39 @@ exports.approveChangeRequest = async (req, res, next) => {
         if (io) io.emit('site_created', newSite);
       } else if (action === 'update') {
         if (!targetId) return res.status(400).json({ success: false, message: 'Missing targetId for update action' });
-        // Handle threshold-only updates
-        const updatePayload = payload.isThresholdUpdate
-          ? { thresholds: dataToApply.thresholds }
-          : dataToApply;
-        const updatedSite = await Site.findByIdAndUpdate(targetId, updatePayload, { new: true, runValidators: true })
-          .populate('thresholds.parameter', 'key label unit');
-        const io = req.app.get('io');
-        if (io) io.emit('site_updated', updatedSite);
+        // Handle threshold-only updates: merge changed thresholds without wiping others
+        if (payload.isThresholdUpdate) {
+          const targetSite = await Site.findById(targetId);
+          if (targetSite) {
+            const listToApply = payload.changedThresholds || (payload.form && payload.form.thresholds) || payload.thresholds || [];
+            const changeMap = new Map(listToApply.map(c => [c.parameter.toString(), c]));
+            
+            // Update existing matching parameters
+            targetSite.thresholds = targetSite.thresholds || [];
+            for (let i = 0; i < targetSite.thresholds.length; i++) {
+              const pId = targetSite.thresholds[i].parameter?.toString();
+              if (changeMap.has(pId)) {
+                const c = changeMap.get(pId);
+                targetSite.thresholds[i].min = c.min;
+                targetSite.thresholds[i].max = c.max;
+                changeMap.delete(pId);
+              }
+            }
+            // Add any newly specified parameters
+            for (const [pId, c] of changeMap.entries()) {
+              targetSite.thresholds.push({ parameter: c.parameter, min: c.min, max: c.max });
+            }
+            await targetSite.save();
+            const updatedSite = await Site.findById(targetId).populate('thresholds.parameter', 'key label unit');
+            const io = req.app.get('io');
+            if (io) io.emit('site_updated', updatedSite);
+          }
+        } else {
+          const updatedSite = await Site.findByIdAndUpdate(targetId, dataToApply, { new: true, runValidators: true })
+            .populate('thresholds.parameter', 'key label unit');
+          const io = req.app.get('io');
+          if (io) io.emit('site_updated', updatedSite);
+        }
       } else if (action === 'delete') {
         if (!targetId) return res.status(400).json({ success: false, message: 'Missing targetId for delete action' });
         const siteToDelete = await Site.findById(targetId);

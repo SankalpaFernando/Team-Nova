@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import "./AdminAlerts.css";
 import AdminSidebar from "../components/AdminSidebar";
-import { Check, Clock, AlertOctagon, CheckCircle, Eye, AlertTriangle, X, Info } from 'lucide-react';
+import { Check, Clock, AlertOctagon, CheckCircle, Eye, AlertTriangle, X } from 'lucide-react';
 
 
 function AdminAlerts() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [alerts, setAlerts] = useState([]);
   const [sites, setSites] = useState([]);
@@ -64,8 +62,9 @@ function AdminAlerts() {
       if (siteFilter) params.site = siteFilter;
       const res = await api.get("/alerts", { params });
       const raw = res.data.data || [];
+      // Keep all device-linked alerts; drop system_offline and true orphans (no device at all)
       const cleanAlerts = raw.filter(
-        a => a.type !== 'system_offline' && a.device && (a.device.site || a.device.site?.name)
+        a => a.type !== 'system_offline' && a.device
       );
       setAlerts(cleanAlerts);
     } catch {
@@ -121,7 +120,6 @@ function AdminAlerts() {
   // ── helpers ───────────────────────────────────────────
   const severityClass = (s) => ({ low: "rn", medium: "rs", high: "re", critical: "rw" }[s] || "rn");
   const formatTime = (d) => d ? new Date(d).toLocaleString() : "—";
-  const handleLogout = () => { logout(); navigate("/"); };
 
   const toggleFilter = (name, event) => {
     if (openFilter === name) {
@@ -366,14 +364,20 @@ function AdminAlerts() {
                 ) : alerts.map((alert, i) => (
                   <tr key={alert._id} className="am-tr">
                     <td className="am-td-num">{i + 1}</td>
-                    <td className="am-td-name">{alert.parameter_name}</td>
+                    <td className="am-td-name">
+                      {alert.parameter_name || (alert.type === 'device_offline' ? 'Device Offline' : '—')}
+                    </td>
                     <td>
                       <span className={`am-badge am-badge--${severityClass(alert.severity_level)}`}>{alert.severity_level}</span>
                     </td>
                     <td className="am-td-loc">
                       {alert.device?.device_id || "—"}{alert.device?.site?.name ? ` · ${alert.device.site.name}` : ""}
                     </td>
-                    <td className="am-td-data">{alert.measured_value}</td>
+                    <td className="am-td-data">
+                      {alert.measured_value !== null && alert.measured_value !== undefined
+                        ? alert.measured_value
+                        : (alert.type === 'device_offline' ? 'Offline (>9h)' : '—')}
+                    </td>
                     <td>
                       <span className={`am-badge am-badge--${statusClass(alert.status)}`}>
                         {alert.status === 'pending_confirmation' ? '⏳ Pending Conf.' : alert.status}
@@ -402,9 +406,9 @@ function AdminAlerts() {
               <button className="am-close" onClick={() => setShowDetail(false)}><X size={18} /></button>
             </div>
             <div className="am-modal-body">
-              <p><strong>Parameter:</strong> {selected.parameter_name}</p>
+              <p><strong>Parameter:</strong> {selected.parameter_name || (selected.type === 'device_offline' ? 'Device Offline' : '—')}</p>
               <p><strong>Severity:</strong> {selected.severity_level}</p>
-              <p><strong>Measured Value:</strong> {selected.measured_value}</p>
+              <p><strong>Measured Value:</strong> {selected.measured_value !== null && selected.measured_value !== undefined ? selected.measured_value : (selected.type === 'device_offline' ? 'Offline (>9h)' : '—')}</p>
               <p><strong>Device:</strong> {selected.device?.device_id || "—"}</p>
               <p><strong>Site:</strong> {selected.device?.site?.name || "—"}</p>
               <p><strong>Message:</strong> {selected.message}</p>

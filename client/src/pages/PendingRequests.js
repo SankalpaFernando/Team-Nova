@@ -13,6 +13,17 @@ function PendingRequests() {
   const [adminNote, setAdminNote] = useState('');
   const [processingId, setProcessingId] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [paramMap, setParamMap] = useState({});
+
+  useEffect(() => {
+    api.get('/parameters?includeInactive=true').then(res => {
+      const map = {};
+      (res.data?.data || []).forEach(p => {
+        if (p._id) map[String(p._id)] = { label: p.label || p.key, unit: p.unit || '' };
+      });
+      setParamMap(map);
+    }).catch(() => {});
+  }, []);
 
   const fetchPendingRequests = async () => {
     try {
@@ -125,19 +136,26 @@ function PendingRequests() {
     const { changes, form, targetSummary } = payload;
 
     if (req.action === 'delete') {
-      const entityLabel = targetSummary 
-        || (payload.device_id ? `Device ${payload.device_id}` : null)
-        || (payload.name ? `Site "${payload.name}"` : null)
-        || (req.entityType === 'site' && req.site?.name ? `Site "${req.site.name}"` : null)
-        || (req.entityType === 'device' && payload.device_id ? `Device ${payload.device_id}` : null)
+      const isSite = req.entityType === 'site';
+      const isDevice = req.entityType === 'device';
+
+      // Build a readable label for what is being deleted
+      const entityLabel = payload.targetSummary
+        || (isDevice && payload.device_id ? `Device ${payload.device_id}` : null)
+        || (isSite && (payload.name || req.site?.name) ? `Site "${payload.name || req.site?.name}"` : null)
         || 'target entity';
 
       return (
         <div className="pr-diff-delete-notice" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <AlertTriangle size={16} /> <strong>Deletion Request</strong> for {entityLabel}
-          {payload.device_id && !targetSummary?.includes(payload.device_id) && (
+          {isDevice && payload.device_id && (
             <span style={{ fontWeight: 700, background: '#fee2e2', padding: '2px 8px', borderRadius: '4px', color: '#991b1b', fontSize: '0.875rem' }}>
               Device ID: {payload.device_id}
+            </span>
+          )}
+          {isSite && (payload.location || payload.name) && (
+            <span style={{ fontWeight: 600, background: '#fef3c7', padding: '2px 8px', borderRadius: '4px', color: '#92400e', fontSize: '0.875rem' }}>
+              {payload.name}{payload.location ? ` — ${payload.location}` : ''}
             </span>
           )}
         </div>
@@ -164,8 +182,53 @@ function PendingRequests() {
       );
     }
 
+    // Threshold update — formatted with parameter names, units, and diffs (only changed parameters)
+    if (payload.isThresholdUpdate) {
+      const thresholds = payload.changedThresholds || form?.thresholds || payload.thresholds || [];
+      if (thresholds.length === 0) return <em>No threshold changes specified</em>;
+      const siteName = req.site?.name || payload.name || 'Site';
+
+      return (
+        <div className="pr-diff-container">
+          <div className="pr-diff-header">
+            <strong>Proposed Parameter Thresholds ({siteName}):</strong>
+          </div>
+          <div className="pr-diff-list">
+            {thresholds.map((t, idx) => {
+              const pId = t.parameter?._id ? String(t.parameter._id) : String(t.parameter);
+              const pInfo = paramMap[pId] || {};
+              const name = t.parameter_name || pInfo.label || t.parameter?.label || t.parameter?.key || 'Parameter';
+              const unit = t.unit || pInfo.unit || t.parameter?.unit || '';
+              const hasPrev = t.previous_min !== null && t.previous_min !== undefined && t.previous_max !== null && t.previous_max !== undefined;
+
+              return (
+                <div key={idx} className="pr-diff-row">
+                  <span className="pr-diff-fieldname">{name} {unit ? `(${unit})` : ''}:</span>
+                  {hasPrev ? (
+                    <>
+                      <span className="pr-diff-old">
+                        Min: {t.previous_min}, Max: {t.previous_max}
+                      </span>
+                      <span className="pr-diff-arrow"><ArrowRight size={14} /></span>
+                      <span className="pr-diff-new">
+                        Min: {t.min}, Max: {t.max}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="pr-diff-new">
+                      Min: {t.min}, Max: {t.max}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
     const dataObj = form || payload;
-    const entries = Object.entries(dataObj).filter(([k]) => !['changes', 'form', 'targetSummary'].includes(k));
+    const entries = Object.entries(dataObj).filter(([k]) => !['changes', 'form', 'targetSummary', 'isThresholdUpdate', 'thresholds'].includes(k));
 
     if (entries.length === 0) return <em>No payload details specified</em>;
 

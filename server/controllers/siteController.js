@@ -5,6 +5,7 @@ const SensorReading = require('../models/SensorReading');
 const Alert = require('../models/Alert');
 const User = require('../models/User');
 const ChangeRequest = require('../models/ChangeRequest');
+const Parameter = require('../models/Parameter');
 
 // @desc    Get all sites
 // @route   GET /api/sites
@@ -319,6 +320,36 @@ exports.updateThresholds = async (req, res, next) => {
 
     // Site engineer scope check — goes through ChangeRequest
     if (req.user.role === 'site_engineer') {
+      const existingMap = new Map((site.thresholds || []).map(t => [t.parameter?.toString(), t]));
+      const changedThresholds = [];
+
+      for (const t of thresholdData) {
+        const existing = existingMap.get(t.parameter?.toString());
+        const minChanged = !existing || Number(existing.min) !== Number(t.min);
+        const maxChanged = !existing || Number(existing.max) !== Number(t.max);
+
+        if (minChanged || maxChanged) {
+          const param = await Parameter.findById(t.parameter).select('label key unit').lean();
+          changedThresholds.push({
+            parameter: t.parameter,
+            parameter_name: param?.label || param?.key || String(t.parameter),
+            unit: param?.unit || '',
+            min: Number(t.min),
+            max: Number(t.max),
+            previous_min: existing ? Number(existing.min) : null,
+            previous_max: existing ? Number(existing.max) : null
+          });
+        }
+      }
+
+      if (changedThresholds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'No threshold values were changed from current settings.'
+        });
+      }
+
+      const paramNames = changedThresholds.map(t => t.parameter_name).join(', ');
       const changeRequest = await ChangeRequest.create({
         requestedBy: req.user._id,
         site: site._id,
@@ -326,9 +357,10 @@ exports.updateThresholds = async (req, res, next) => {
         action: 'update',
         targetId: site._id,
         payload: { 
-          form: { thresholds: thresholdData }, 
+          form: { thresholds: changedThresholds },
+          changedThresholds,
           name: site.name,
-          targetSummary: `Thresholds for Site: ${site.name}`, 
+          targetSummary: `Threshold change for ${paramNames} at ${site.name}`, 
           isThresholdUpdate: true 
         },
         status: 'pending'

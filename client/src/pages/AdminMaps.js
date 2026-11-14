@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
 import api from "../services/api";
@@ -24,9 +24,8 @@ const getParamRangeStr = (siteThresholds, paramKey) => {
 };
 
 function AdminMaps() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isEngineer = user?.role === 'site_engineer';
-  const navigate = useNavigate();
 
   // Data
   const [sites, setSites] = useState([]);
@@ -208,7 +207,7 @@ function AdminMaps() {
         const paramId = paramDoc?._id || selected?.thresholds?.find(t => {
           const k = (t.parameter?.key || "").toLowerCase();
           const l = (t.parameter?.label || "").toLowerCase();
-          return k === paramKey || (paramKey === "ph" && k === "ph") || (paramKey === "temperature" && (k === "temperature" || k === "temp"));
+          return k === paramKey || (paramKey === "ph" && (k === "ph" || l.includes("ph"))) || (paramKey === "temperature" && (k === "temperature" || k === "temp" || l.includes("temp")));
         })?.parameter?._id;
 
         if (paramId) {
@@ -280,8 +279,6 @@ function AdminMaps() {
   // ── helpers ───────────────────────────────────────────
   const fc = (e) => setForm({ ...form, [e.target.name]: e.target.value });
   const regionClass = (r) => ({ Northern: "rn", Southern: "rs", Eastern: "re", Western: "rw" }[r] || "rn");
-
-  const handleLogout = () => { logout(); navigate("/"); };
 
   //filter for site names
   const filteredSites = sites
