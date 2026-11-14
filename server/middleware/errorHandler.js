@@ -32,6 +32,32 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Database / Network Connection Errors (offline, DNS lookup failure, connection reset, timeout)
+  const isDbNetworkError =
+    err.name === 'MongoNetworkError' ||
+    err.name === 'MongooseServerSelectionError' ||
+    err.name === 'MongoServerSelectionError' ||
+    err.name === 'MongoTimeoutError' ||
+    err.code === 'ENOTFOUND' ||
+    err.code === 'ECONNRESET' ||
+    err.code === 'ETIMEDOUT' ||
+    err.code === 'ECONNREFUSED' ||
+    (typeof err.message === 'string' && (
+      err.message.includes('ENOTFOUND') ||
+      err.message.includes('ECONNRESET') ||
+      err.message.includes('ETIMEDOUT') ||
+      err.message.includes('mongodb.net') ||
+      err.message.includes('Server selection timed out') ||
+      err.message.includes('connection closed')
+    ));
+
+  if (isDbNetworkError) {
+    return res.status(503).json({
+      success: false,
+      message: 'Unable to connect to the cloud database. Please verify your internet connection and try again.'
+    });
+  }
+
   // Default
   res.status(err.statusCode || 500).json({
     success: false,

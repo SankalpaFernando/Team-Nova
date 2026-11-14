@@ -67,6 +67,8 @@ function Navbar() {
         setLoginError("Invalid email or password. Please check your credentials and try again.");
       } else if (err.response?.data?.message) {
         setLoginError(err.response.data.message);
+      } else if (err.message === "Network Error" || !err.response) {
+        setLoginError("Unable to reach the server. Please check your internet connection and try again.");
       } else {
         setLoginError("Something went wrong. Please try again later.");
       }
